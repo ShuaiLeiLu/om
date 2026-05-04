@@ -81,6 +81,12 @@ export class QuotaService {
   async consumeTokens(userId: string, tokens: bigint, relatedId: string) {
     if (tokens <= BigInt(0)) return
     await this.prisma.$transaction(async (tx) => {
+      await this.consumeTokensInTransaction(tx, userId, tokens, relatedId)
+    })
+  }
+
+  async consumeTokensInTransaction(tx: Prisma.TransactionClient, userId: string, tokens: bigint, relatedId: string) {
+    if (tokens <= BigInt(0)) return
       let remaining = tokens
       const grants = await tx.tokenGrant.findMany({
         where: { userId, status: 'active', remainingTokens: { gt: 0 }, expiresAt: { gt: new Date() } },
@@ -110,6 +116,5 @@ export class QuotaService {
           remark: 'Sub2API usage token consumption'
         }
       })
-    })
   }
 }

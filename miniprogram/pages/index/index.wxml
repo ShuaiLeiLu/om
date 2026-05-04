@@ -28,13 +28,14 @@
         <view class="reward-title">今日奖励</view>
         <view class="reward-amount">+{{rewardConfig.rewardTokens || 0}} tokens / 次</view>
         <view class="reward-desc">完整观看激励视频后发放，可用于网页版 AI 对话。</view>
+        <view wx:if="{{rewardState.statusText}}" class="status-text">{{rewardState.statusText}}</view>
         <button
           class="btn-primary"
           loading="{{claiming}}"
-          disabled="{{claiming || !rewardConfig.enabled || rewardConfig.remainingToday <= 0}}"
+          disabled="{{claiming || !rewardState.canClaim}}"
           bindtap="watchAdAndClaim"
         >
-          {{rewardConfig.remainingToday <= 0 ? '今日已领完' : '看广告领取 Token'}}
+          {{rewardState.buttonText}}
         </button>
       </view>
 

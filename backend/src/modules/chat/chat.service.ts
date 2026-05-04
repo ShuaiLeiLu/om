@@ -5,8 +5,10 @@ import { randomToken } from '../../common/http'
 import { ModelsService } from '../models/models.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { QuotaService } from '../quota/quota.service'
+import { Sub2apiService } from '../sub2api/sub2api.service'
 
 type ChatMessageInput = { role: 'user' | 'assistant' | 'system'; content: string; images?: string[] }
+type StreamUsage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number; promptTokens?: number; completionTokens?: number; totalTokens?: number }
 
 @Injectable()
 export class ChatService {
@@ -14,7 +16,8 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly quota: QuotaService,
     private readonly models: ModelsService,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    private readonly sub2api: Sub2apiService
   ) {}
 
   async conversations(userId: string) {
@@ -86,18 +89,29 @@ export class ChatService {
 
       const upstream = await fetch(`${sub2apiBaseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${gatewayKey}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${gatewayKey}`,
+          'X-Chatty-Request-Id': requestId
+        },
         body: JSON.stringify({
           model: model.sub2apiModel,
           messages: input.messages.map((message) => ({ role: message.role, content: message.content })),
-          stream: true
+          stream: true,
+          stream_options: { include_usage: true }
         }),
         signal: AbortSignal.timeout(120000)
       })
       if (!upstream.ok || !upstream.body) throw new Error(`sub2api_http_${upstream.status}`)
+      const sub2apiRequestId = this.extractUpstreamRequestId(upstream) || requestId
+      await this.prisma.llmRequest.update({
+        where: { id: llmRequest.id },
+        data: { sub2apiRequestId }
+      })
       const reader = upstream.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
+      let usage: StreamUsage | undefined
       while (true) {
         const { value, done } = await reader.read()
         if (done) break
@@ -109,7 +123,8 @@ export class ChatService {
           if (!text.startsWith('data:')) continue
           const payload = text.slice(5).trim()
           if (payload === '[DONE]') continue
-          const parsed = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> }
+          const parsed = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }>; usage?: StreamUsage }
+          if (parsed.usage) usage = parsed.usage
           const delta = parsed.choices?.[0]?.delta?.content || ''
           if (delta) {
             assistantContent += delta
@@ -131,7 +146,14 @@ export class ChatService {
         where: { id: llmRequest.id },
         data: { status: 'completed', completedAt: new Date() }
       })
-      this.writeSse(res, 'message.done', { requestId, conversationId: conversation.id })
+      const usageResult = await this.sub2api.ingestCompletionUsage({
+        requestId,
+        sub2apiRequestId,
+        model: model.sub2apiModel,
+        usage,
+        raw: { source: 'chat_stream', sub2apiRequestId }
+      })
+      this.writeSse(res, 'message.done', { requestId, conversationId: conversation.id, usage: usageResult })
     } catch (error) {
       await this.prisma.llmRequest.update({
         where: { id: llmRequest.id },
@@ -152,5 +174,13 @@ export class ChatService {
   private writeSse(res: Response, event: string, data: unknown) {
     res.write(`event: ${event}\n`)
     res.write(`data: ${JSON.stringify(data)}\n\n`)
+  }
+
+  private extractUpstreamRequestId(res: globalThis.Response) {
+    for (const header of ['x-request-id', 'x-sub2api-request-id', 'openai-request-id']) {
+      const value = res.headers.get(header)
+      if (value) return value
+    }
+    return ''
   }
 }

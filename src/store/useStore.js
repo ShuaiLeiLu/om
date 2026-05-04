@@ -12,6 +12,22 @@ export const useChatStore = create(
       addConversation: (conv) => set((state) => ({
         conversations: [conv, ...state.conversations]
       })),
+
+      replaceConversationId: (oldId, newId, updates = {}) => set((state) => {
+        if (!oldId || !newId || oldId === newId) return state
+        const oldMessages = state.history[oldId] || []
+        const { [oldId]: _, ...remainingHistory } = state.history
+        return {
+          conversations: state.conversations.map((conversation) => (
+            conversation.id === oldId ? { ...conversation, ...updates, id: newId } : conversation
+          )),
+          history: {
+            ...remainingHistory,
+            [newId]: oldMessages
+          },
+          activeConversationId: state.activeConversationId === oldId ? newId : state.activeConversationId
+        }
+      }),
       
       deleteConversation: (id) => set((state) => {
         const { [id]: _, ...remainingHistory } = state.history
@@ -75,17 +91,3 @@ export const useModelStore = create((set) => ({
   setSelectedProvider: (provider) => set({ selectedProvider: provider }),
   setSelectedModel: (model) => set({ selectedModel: model }),
 }))
-
-export const useConfigStore = create(
-  persist(
-    (set) => ({
-      customApiKeys: {}, // providerId -> apiKey
-      setCustomApiKey: (providerId, key) => set((state) => ({
-        customApiKeys: { ...state.customApiKeys, [providerId]: key }
-      })),
-    }),
-    {
-      name: 'chatty-config',
-    }
-  )
-)

@@ -54,4 +54,34 @@ export class AdminController {
   adjustQuota(@CurrentAdmin() admin: { id: string }, @Param('id') id: string, @Body() body: { tokens?: string | number; validDays?: number; remark?: string }) {
     return this.admin.adjustQuota(admin.id, id, body)
   }
+
+  @UseGuards(AdminSessionGuard)
+  @Get('llm-requests')
+  llmRequests(@Query() query: { userId?: string; status?: string; page?: string; pageSize?: string }) {
+    return this.admin.listLlmRequests(query)
+  }
+
+  @UseGuards(AdminSessionGuard)
+  @Get('quota-ledger')
+  quotaLedger(@Query() query: { userId?: string; type?: string; page?: string; pageSize?: string }) {
+    return this.admin.listQuotaLedger(query)
+  }
+
+  @UseGuards(AdminSessionGuard)
+  @Get('audit-logs')
+  auditLogs(@Query() query: { adminUserId?: string; action?: string; page?: string; pageSize?: string }) {
+    return this.admin.listAuditLogs(query)
+  }
+
+  @UseGuards(AdminSessionGuard)
+  @Get('wechat/accounts')
+  wechatAccounts(@Query() query: { q?: string; page?: string; pageSize?: string }) {
+    return this.admin.listWechatAccounts(query)
+  }
+
+  @UseGuards(AdminSessionGuard)
+  @Post('wechat/accounts/:id/unbind')
+  unbindWechat(@CurrentAdmin() admin: { id: string }, @Param('id') id: string) {
+    return this.admin.unbindWechatAccount(admin.id, id)
+  }
 }

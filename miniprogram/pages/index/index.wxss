@@ -61,7 +61,17 @@
   color: #6b7280;
   font-size: 26rpx;
   line-height: 1.6;
-  margin: 18rpx 0 36rpx;
+  margin: 18rpx 0 24rpx;
+}
+
+.status-text {
+  color: #b45309;
+  background: #fffbeb;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  margin-bottom: 24rpx;
+  padding: 18rpx 20rpx;
 }
 
 .state-card {

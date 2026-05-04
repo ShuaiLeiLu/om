@@ -9,17 +9,17 @@ Page({
   data: {
     userInfo: null,
     rewardConfig: null,
+    rewardState: {
+      canClaim: false,
+      buttonText: '看广告领取 Token',
+      statusText: ''
+    },
     loading: true,
     claiming: false,
     error: ''
   },
 
   onLoad: function () {
-    this.refreshData();
-  },
-
-  onShow: function () {
-    // 每次进入页面刷新余额
     this.refreshData();
   },
 
@@ -41,6 +41,7 @@ Page({
       this.setData({
         userInfo,
         rewardConfig,
+        rewardState: this.buildRewardState(userInfo, rewardConfig),
         loading: false
       });
     } catch (error) {
@@ -54,6 +55,10 @@ Page({
 
   watchAdAndClaim: async function () {
     if (this.data.claiming) return;
+    if (!this.data.userInfo || !this.data.userInfo.bound) {
+      wx.showToast({ title: '请先在网页端完成微信登录', icon: 'none' });
+      return;
+    }
     if (!this.data.rewardConfig || !this.data.rewardConfig.enabled) {
       wx.showToast({ title: '活动暂未开放', icon: 'none' });
       return;
@@ -138,6 +143,35 @@ Page({
           .catch(onError);
       });
     });
+  },
+
+  buildRewardState: function (userInfo, rewardConfig) {
+    if (!userInfo || !userInfo.bound) {
+      return {
+        canClaim: false,
+        buttonText: '请先完成网页版微信登录',
+        statusText: '请先在网页版完成微信登录后再领取 Token'
+      };
+    }
+    if (!rewardConfig || !rewardConfig.enabled) {
+      return {
+        canClaim: false,
+        buttonText: '活动暂未开放',
+        statusText: '广告领 Token 活动暂未开放'
+      };
+    }
+    if (Number(rewardConfig.remainingToday || 0) <= 0) {
+      return {
+        canClaim: false,
+        buttonText: '今日已领完',
+        statusText: '今日领取次数已用完'
+      };
+    }
+    return {
+      canClaim: true,
+      buttonText: '看广告领取 Token',
+      statusText: ''
+    };
   },
 
   normalizeError: function (error) {
