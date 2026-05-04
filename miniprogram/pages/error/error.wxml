@@ -1,0 +1,8 @@
+<view class="container error-page">
+  <view class="error-content">
+    <icon type="warn" size="80"></icon>
+    <view class="error-title">网络开小差了</view>
+    <view class="error-desc">{{message || '请检查你的网络连接或稍后重试'}}</view>
+    <button class="btn-primary" bindtap="retry">重新加载</button>
+  </view>
+</view>

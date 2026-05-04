@@ -1,0 +1,92 @@
+.header {
+  padding: 72rpx 40rpx 88rpx;
+  background-color: #0f766e;
+  color: #fff;
+}
+
+.brand {
+  font-size: 48rpx;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 24rpx;
+  opacity: 0.86;
+  margin-top: 10rpx;
+}
+
+.balance-card {
+  margin: -48rpx 24rpx 24rpx;
+  padding: 50rpx 40rpx;
+  text-align: center;
+}
+
+.balance-card .label {
+  font-size: 28rpx;
+  color: #8a8a8a;
+  margin-bottom: 20rpx;
+}
+
+.balance-card .balance {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: #0f766e;
+  margin-bottom: 20rpx;
+}
+
+.info-row {
+  font-size: 24rpx;
+  color: #8a8a8a;
+}
+
+.reward-card {
+  margin: 24rpx;
+  padding: 40rpx;
+}
+
+.reward-title {
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.reward-amount {
+  color: #0f766e;
+  font-size: 44rpx;
+  font-weight: 800;
+  margin-top: 18rpx;
+}
+
+.reward-desc {
+  color: #6b7280;
+  font-size: 26rpx;
+  line-height: 1.6;
+  margin: 18rpx 0 36rpx;
+}
+
+.state-card {
+  margin: 40rpx 24rpx;
+  padding: 56rpx 40rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  text-align: center;
+}
+
+.state-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.state-text {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+.tips {
+  margin: 28rpx 40rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+  line-height: 1.8;
+}

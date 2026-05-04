@@ -1,0 +1,43 @@
+.support-page {
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.support-content {
+  padding: 100rpx 60rpx;
+  text-align: center;
+}
+
+.support-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin: 40rpx 0 20rpx;
+}
+
+.support-desc {
+  font-size: 28rpx;
+  color: #8a8a8a;
+  margin-bottom: 60rpx;
+  line-height: 1.6;
+}
+
+.other-support {
+  padding: 40rpx 60rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.other-support .item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.item .label {
+  color: #8a8a8a;
+  font-size: 26rpx;
+}
+
+.item .value {
+  color: #0052d9;
+  font-size: 26rpx;
+}

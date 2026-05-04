@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="content">
+    <view class="icon-box">
+      <icon type="info" size="80" color="#0052d9"></icon>
+    </view>
+    <view class="title">确认登录万模AI网页版</view>
+    <view class="desc">你正在登录 aihelp.shuai.help</view>
+    
+    <view class="info-card" wx:if="{{sessionInfo}}">
+      <view class="info-item">
+        <text class="label">设备信息</text>
+        <text class="value">{{sessionInfo.userAgent || '未知设备'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="label">登录时间</text>
+        <text class="value">{{sessionInfo.createdAt || '刚刚'}}</text>
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="btn-primary" bindtap="confirmLogin" loading="{{loading}}" disabled="{{loading || expired}}">
+        确认登录
+      </button>
+      <button class="btn-secondary" bindtap="cancelLogin" disabled="{{loading}}">
+        取消
+      </button>
+    </view>
+
+    <view class="error-tips" wx:if="{{expired}}">
+      二维码已过期，请回到网页刷新
+    </view>
+
+    <view class="footer">
+      <text>请确认是你本人正在网页端发起登录。\n不要为陌生设备确认登录。</text>
+    </view>
+  </view>
+</view>

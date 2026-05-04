@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.gitignore
+Dockerfile
+README.md
+*.log
+backend/node_modules
+backend/dist
+backend/.npm-cache
+backend/.env

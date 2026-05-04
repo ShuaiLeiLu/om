@@ -1,0 +1,38 @@
+<view class="container help-container">
+  <view class="section">
+    <view class="section-title">Token 是什么？</view>
+    <view class="section-content">
+      Token 是万模AI中的模型使用额度。不同的模型在处理相同数量的文字时，消耗的 Token 数量可能会有所不同。
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">如何获得 Token？</view>
+    <view class="section-content">
+      <view class="li">1. <text class="bold">看广告领取：</text>在首页或领 Token 页观看激励视频，每天可多次领取。</view>
+      <view class="li">2. <text class="bold">兑换码：</text>通过官方活动、内测邀请或第三方购买获得的兑换码。</view>
+      <view class="li">3. <text class="bold">活动赠送：</text>新用户注册或参与官方特定活动时，系统会自动赠送。</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">Token 有有效期吗？</view>
+    <view class="section-content">
+      是的。不同来源的 Token 有不同的有效期：
+      <view class="li">· 广告奖励：通常有效期为 7 天。</view>
+      <view class="li">· 兑换码：视具体活动而定，通常为 30-365 天。</view>
+      过期后的 Token 将无法使用，请及时消耗。
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">如何使用网页版？</view>
+    <view class="section-content">
+      在电脑浏览器打开 https://aihelp.shuai.help，点击登录并使用微信扫描页面上的二维码，即可在小程序中确认登录，实现多端 Token 同步。
+    </view>
+  </view>
+
+  <view class="footer-btn">
+    <button class="btn-primary" open-type="contact">还有疑问？联系客服</button>
+  </view>
+</view>

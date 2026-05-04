@@ -1,0 +1,48 @@
+<view class="container">
+  <view class="header">
+    <view class="brand">万模AI</view>
+    <view class="subtitle">看广告领取 AI Token</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-card">
+    <view class="state-title">正在加载</view>
+    <view class="state-text">正在读取你的 Token 信息</view>
+  </view>
+
+  <block wx:else>
+    <view wx:if="{{error}}" class="state-card">
+      <view class="state-title">加载失败</view>
+      <view class="state-text">{{error}}</view>
+    </view>
+
+    <view wx:else>
+      <view class="card balance-card">
+        <view class="label">当前 Token</view>
+        <view class="balance">{{userInfo.tokenBalance || 0}}</view>
+        <view class="info-row">
+          <text>今日还可领取 {{rewardConfig.remainingToday || 0}} 次</text>
+        </view>
+      </view>
+
+      <view class="card reward-card">
+        <view class="reward-title">今日奖励</view>
+        <view class="reward-amount">+{{rewardConfig.rewardTokens || 0}} tokens / 次</view>
+        <view class="reward-desc">完整观看激励视频后发放，可用于网页版 AI 对话。</view>
+        <button
+          class="btn-primary"
+          loading="{{claiming}}"
+          disabled="{{claiming || !rewardConfig.enabled || rewardConfig.remainingToday <= 0}}"
+          bindtap="watchAdAndClaim"
+        >
+          {{rewardConfig.remainingToday <= 0 ? '今日已领完' : '看广告领取 Token'}}
+        </button>
+      </view>
+
+      <view class="tips">
+        <view>每日领取次数由活动规则决定。</view>
+        <view>中途关闭广告不会发放 Token。</view>
+        <view>Token 余额以服务器记录为准。</view>
+      </view>
+    </view>
+  </block>
+</view>

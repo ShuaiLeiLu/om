@@ -1,0 +1,28 @@
+<view class="container">
+  <view class="ledger-list" wx:if="{{list.length > 0}}">
+    <view class="ledger-item" wx:for="{{list}}" wx:key="id">
+      <view class="item-left">
+        <view class="type">{{item.typeText}}</view>
+        <view class="time">{{item.createdAt}}</view>
+        <view class="remark" wx:if="{{item.remark}}">{{item.remark}}</view>
+      </view>
+      <view class="item-right">
+        <view class="amount {{item.deltaTokens > 0 ? 'plus' : 'minus'}}">
+          {{item.deltaTokens > 0 ? '+' : ''}}{{item.deltaTokens}}
+        </view>
+        <view class="balance" wx:if="{{item.balanceAfter}}">余额: {{item.balanceAfter}}</view>
+      </view>
+    </view>
+    
+    <view class="load-more">
+      <text wx:if="{{hasMore}}">正在加载...</text>
+      <text wx:else class="no-more">没有更多记录了</text>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <image class="empty-icon" src="/images/empty-ledger.png" mode="aspectFit"></image>
+    <view class="empty-text">暂无 token 明细</view>
+    <view class="empty-desc">看广告或输入兑换码后，这里会显示记录</view>
+  </view>
+</view>

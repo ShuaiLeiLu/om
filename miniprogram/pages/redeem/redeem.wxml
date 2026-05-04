@@ -1,0 +1,22 @@
+<view class="container">
+  <view class="redeem-box">
+    <view class="title">使用兑换码</view>
+    <view class="input-container">
+      <input class="redeem-input" placeholder="请输入兑换码" value="{{code}}" bindinput="onInput" placeholder-style="color: #ccc;" />
+    </view>
+    <button class="btn-primary" bindtap="redeem" loading="{{loading}}" disabled="{{!code || loading}}">立即兑换</button>
+    <view class="tips">兑换成功后 token 将自动进入你的账户。不同兑换码可能有不同有效期。</view>
+  </view>
+
+  <view class="help-box">
+    <view class="help-title">常见问题</view>
+    <view class="help-item">
+      <text class="q">Q: 哪里可以获得兑换码？</text>
+      <text class="a">A: 关注官方活动、参与内测或购买指定套餐可获得兑换码。</text>
+    </view>
+    <view class="help-item">
+      <text class="q">Q: 兑换码显示无效怎么办？</text>
+      <text class="a">A: 请检查输入是否正确，注意区分大小写。如果确认无误，请联系客服处理。</text>
+    </view>
+  </view>
+</view>
