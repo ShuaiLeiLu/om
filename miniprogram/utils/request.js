@@ -1,22 +1,31 @@
 const config = require('./config');
 
-function request(opt) {
+function request(options) {
   const token = wx.getStorageSync(config.STORAGE.TOKEN);
-  const header = { ...opt.header };
-  if (token) header['Authorization'] = `Bearer ${token}`;
+  const header = {
+    'content-type': 'application/json',
+    ...(options.header || {})
+  };
+
+  if (token) {
+    header.Authorization = `Bearer ${token}`;
+  }
 
   return new Promise((resolve, reject) => {
     wx.request({
-      url: opt.url,
-      method: opt.method || 'GET',
-      data: opt.data || {},
+      url: options.url,
+      method: options.method || 'GET',
+      data: options.data || {},
       header,
       success: (res) => {
-        if (res.statusCode >= 200 && res.statusCode < 300) resolve(res.data);
-        else if (res.statusCode === 401) {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res.data);
+          return;
+        }
+        if (res.statusCode === 401) {
           wx.removeStorageSync(config.STORAGE.TOKEN);
-          reject(res);
-        } else reject(res);
+        }
+        reject(res);
       },
       fail: reject
     });

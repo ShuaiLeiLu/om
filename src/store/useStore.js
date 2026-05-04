@@ -91,3 +91,23 @@ export const useModelStore = create((set) => ({
   setSelectedProvider: (provider) => set({ selectedProvider: provider }),
   setSelectedModel: (model) => set({ selectedModel: model }),
 }))
+
+export const useAuthStore = create((set) => ({
+  user: null,
+  quota: null,
+  isLoading: false,
+  isAuthenticated: false,
+  setAuthLoading: (isLoading) => set({ isLoading }),
+  setSession: ({ user, quota }) => set({
+    user: user || null,
+    quota: quota || null,
+    isAuthenticated: Boolean(user),
+    isLoading: false
+  }),
+  clearSession: () => set({
+    user: null,
+    quota: null,
+    isAuthenticated: false,
+    isLoading: false
+  })
+}))

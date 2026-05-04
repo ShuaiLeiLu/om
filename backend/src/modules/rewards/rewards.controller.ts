@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common'
 import { Request } from 'express'
+import { CurrentAdmin } from '../../common/current-user'
 import { AdminSessionGuard } from '../../common/session.guard'
 import { RewardsService } from './rewards.service'
 
@@ -28,14 +29,14 @@ export class RewardsController {
 
   @UseGuards(AdminSessionGuard)
   @Get('admin/wechat/reward-config')
-  adminConfig(@Req() req: Request) {
-    return this.rewards.config(bearer(req)).catch(() => this.rewards.updateConfig({}))
+  adminConfig() {
+    return this.rewards.adminConfig()
   }
 
   @UseGuards(AdminSessionGuard)
   @Patch('admin/wechat/reward-config')
-  update(@Body() body: { enabled?: boolean; adUnitId?: string; rewardTokens?: string | number; dailyLimitPerUser?: number; rewardTokenValidDays?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
-    return this.rewards.updateConfig(body)
+  update(@CurrentAdmin() admin: { id: string }, @Body() body: { enabled?: boolean; adUnitId?: string; rewardTokens?: string | number; dailyLimitPerUser?: number; rewardTokenValidDays?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
+    return this.rewards.updateConfig(admin.id, body)
   }
 
   @UseGuards(AdminSessionGuard)

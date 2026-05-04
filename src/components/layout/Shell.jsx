@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, X, Plus, MessageSquare, Trash2, Settings, User } from 'lucide-react'
-import { useUIStore, useChatStore, useModelStore } from '@/store/useStore'
+import { useUIStore, useChatStore, useModelStore, useAuthStore } from '@/store/useStore'
 import SettingsModal from './SettingsModal'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -13,8 +15,9 @@ function cn(...inputs) {
 
 export default function Shell({ children }) {
   const { isSidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore()
-  const { conversations, activeConversationId, setActiveConversationId, deleteConversation, addConversation } = useChatStore()
+  const { conversations, activeConversationId, setActiveConversationId, deleteConversation } = useChatStore()
   const { setSelectedModel, setSelectedProvider } = useModelStore()
+  const { user, quota, isAuthenticated } = useAuthStore()
   const [isMobile, setIsMobile] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
@@ -61,6 +64,21 @@ export default function Shell({ children }) {
         )}
       >
         <div className="flex h-full flex-col p-4">
+          <Link href="/" className="mb-5 flex items-center gap-3 rounded-xl px-1 py-1.5">
+            <Image
+              src="/logo.png"
+              alt="万模AI"
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-xl object-cover"
+              priority
+            />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold tracking-tight text-slate-100">万模AI</p>
+              <p className="truncate text-[11px] text-slate-500">多模型智能助手</p>
+            </div>
+          </Link>
+
           {/* New Chat Button */}
           <button 
             onClick={createNewChat}
@@ -115,15 +133,17 @@ export default function Shell({ children }) {
               <Settings size={18} />
               <span>设置</span>
             </button>
-            <div className="flex items-center gap-3 rounded-xl bg-slate-800/30 px-3 py-2.5 border border-slate-800/50">
+            <Link href={isAuthenticated ? '/profile' : '/login'} className="flex items-center gap-3 rounded-xl bg-slate-800/30 px-3 py-2.5 border border-slate-800/50 transition-colors hover:bg-slate-800">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400">
                 <User size={16} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold">演示用户</p>
-                <p className="truncate text-[10px] text-slate-500">免费计划</p>
+                <p className="truncate text-xs font-semibold">{isAuthenticated ? user?.displayName || '微信用户' : '未登录'}</p>
+                <p className="truncate text-[10px] text-slate-500">
+                  {isAuthenticated ? `${formatToken(quota?.tokenBalance || 0)} Token` : '微信扫码登录'}
+                </p>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </aside>
@@ -138,7 +158,17 @@ export default function Shell({ children }) {
           >
             <Menu size={20} />
           </button>
-          <span className="text-sm font-bold tracking-tight">万模AI</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="万模AI"
+              width={28}
+              height={28}
+              className="h-7 w-7 rounded-lg object-cover"
+              priority
+            />
+            <span className="text-sm font-bold tracking-tight">万模AI</span>
+          </Link>
           <button 
             onClick={createNewChat}
             className="flex h-10 w-10 items-center justify-center rounded-xl text-indigo-400 hover:bg-slate-900"
@@ -156,4 +186,10 @@ export default function Shell({ children }) {
       />
     </div>
   )
+}
+
+function formatToken(value) {
+  const numberValue = Number(value || 0)
+  if (!Number.isFinite(numberValue)) return String(value || 0)
+  return numberValue.toLocaleString('en-US')
 }

@@ -19,7 +19,24 @@ export class ModelsService {
     return model
   }
 
-  update(id: string, data: { enabled?: boolean; displayName?: string; sortOrder?: number; remark?: string }) {
-    return this.prisma.modelConfig.update({ where: { id }, data })
+  async update(adminId: string, id: string, data: { enabled?: boolean; displayName?: string; sortOrder?: number; remark?: string }) {
+    const before = await this.prisma.modelConfig.findUnique({ where: { id } })
+    const model = await this.prisma.modelConfig.update({ where: { id }, data })
+    await this.prisma.adminAuditLog.create({
+      data: {
+        adminUserId: adminId,
+        action: 'model_update',
+        targetType: 'model_config',
+        targetId: id,
+        beforeJson: this.auditJson(before),
+        afterJson: this.auditJson(model)
+      }
+    })
+    return model
+  }
+
+  private auditJson(value: unknown) {
+    if (value === null) return undefined
+    return JSON.parse(JSON.stringify(value, (_key, item) => (typeof item === 'bigint' ? item.toString() : item)))
   }
 }

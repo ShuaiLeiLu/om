@@ -20,3 +20,4 @@ pnpm-debug.log*
 .vscode/
 
 miniprogram/project.private.config.json
+miniprogram/utils/config.local.js

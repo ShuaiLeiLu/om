@@ -43,12 +43,16 @@ export class WechatService {
     }
   }
 
-  async getWebLoginSession(sessionId: string) {
+  async getWebLoginSession(sessionId: string, res?: Response, meta?: { ip: string; userAgent: string }) {
     const session = await this.prisma.wechatQrSession.findUnique({ where: { sessionId } })
     if (!session) throw new BadRequestException('qr_session_not_found')
     if (session.status === 'pending' && session.expiresAt <= new Date()) {
       await this.prisma.wechatQrSession.update({ where: { sessionId }, data: { status: 'expired' } })
       return { status: 'expired', message: '二维码已过期' }
+    }
+    if (session.status === 'confirmed' && session.userId && res && meta) {
+      await this.auth.createUserSession(session.userId, res, meta)
+      return { status: 'confirmed', message: '登录成功' }
     }
     return { status: session.status, message: session.status }
   }
@@ -130,7 +134,7 @@ export class WechatService {
     return { status: updated.status }
   }
 
-  async confirm(scene: string, sessionToken: string, res?: Response, meta?: { ip: string; userAgent: string }) {
+  async confirm(scene: string, sessionToken: string) {
     const mini = await this.verifyMiniappSession(sessionToken)
     const qr = await this.prisma.wechatQrSession.findUnique({ where: { scene } })
     if (!qr) throw new BadRequestException('qr_session_not_found')
@@ -165,9 +169,6 @@ export class WechatService {
       data: { status: 'confirmed', confirmedAt: new Date(), userId: user.id, openid: mini.openid, unionid: mini.unionid }
     })
 
-    if (res && meta) {
-      await this.auth.createUserSession(user.id, res, meta)
-    }
     return { status: 'confirmed', userId: user.id }
   }
 
@@ -191,7 +192,16 @@ export class WechatService {
     url.searchParams.set('grant_type', 'authorization_code')
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
     const data = (await res.json()) as Code2SessionResponse
-    if (!res.ok || data.errcode) throw new UnauthorizedException('wechat_code_invalid')
+    if (!res.ok || data.errcode) {
+      if (this.config.get<string>('NODE_ENV') !== 'production') {
+        throw new UnauthorizedException({
+          code: 'wechat_code_invalid',
+          errcode: data.errcode,
+          errmsg: data.errmsg
+        })
+      }
+      throw new UnauthorizedException('wechat_code_invalid')
+    }
     return data
   }
 

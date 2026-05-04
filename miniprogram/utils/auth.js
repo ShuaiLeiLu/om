@@ -2,29 +2,41 @@ const config = require('./config');
 const request = require('./request');
 
 async function login() {
-  const { code } = await new Promise((rs, rj) => wx.login({ success: rs, fail: rj }));
+  const { code } = await new Promise((resolve, reject) => {
+    wx.login({ success: resolve, fail: reject });
+  });
+
   const res = await request({
     url: config.API.LOGIN,
     method: 'POST',
     data: { code }
   });
-  if (res.miniappSessionToken) {
-    wx.setStorageSync(config.STORAGE.TOKEN, res.miniappSessionToken);
-    if (res.user) wx.setStorageSync(config.STORAGE.USER, res.user);
-    return res;
+
+  if (!res.miniappSessionToken) {
+    throw new Error('miniapp_session_missing');
   }
-  throw new Error('AUTH_FAIL');
-}
 
-async function ensureLogin() {
-  if (!wx.getStorageSync(config.STORAGE.TOKEN)) return await login();
-  return true;
-}
-
-async function fetchUserInfo() {
-  const res = await request({ url: config.API.ME });
-  wx.setStorageSync(config.STORAGE.USER, res);
+  wx.setStorageSync(config.STORAGE.TOKEN, res.miniappSessionToken);
+  if (res.user) {
+    wx.setStorageSync(config.STORAGE.USER, res.user);
+  }
   return res;
 }
 
-module.exports = { login, ensureLogin, fetchUserInfo };
+async function ensureLogin() {
+  const token = wx.getStorageSync(config.STORAGE.TOKEN);
+  if (token) return true;
+  return login();
+}
+
+async function fetchUserInfo() {
+  const user = await request({ url: config.API.ME });
+  wx.setStorageSync(config.STORAGE.USER, user);
+  return user;
+}
+
+module.exports = {
+  login,
+  ensureLogin,
+  fetchUserInfo
+};

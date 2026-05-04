@@ -1,43 +1,11 @@
 page {
+  background: #f5f6fa;
+  color: #141821;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  background-color: #f6f6f6;
-  color: #333;
   font-size: 28rpx;
   line-height: 1.5;
 }
 
-.container {
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  min-height: 100vh;
-}
-
-.btn-primary {
-  background-color: #0f766e;
-  color: #fff;
-  border-radius: 8rpx;
-  padding: 20rpx 0;
-  text-align: center;
-  font-weight: 500;
-  font-size: 32rpx;
+button::after {
   border: none;
-  margin: 20rpx 0;
-}
-
-.btn-primary:active {
-  background-color: #115e59;
-}
-
-.btn-primary[disabled] {
-  background-color: #ccc;
-  color: #fff;
-}
-
-.card {
-  background-color: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin: 20rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }

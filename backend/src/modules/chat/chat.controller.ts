@@ -35,4 +35,18 @@ export class ChatController {
     res.setHeader('Connection', 'keep-alive')
     await this.chat.streamCompletion(user.id, { conversationId: body.conversationId, model: String(body.model || ''), messages: body.messages || [] }, res)
   }
+
+  @Post('images/generations')
+  generateImage(
+    @CurrentUser() user: { id: string },
+    @Body() body: { conversationId?: string; model?: string; prompt?: string; size?: string; n?: number }
+  ) {
+    return this.chat.generateImage(user.id, {
+      conversationId: body.conversationId,
+      model: String(body.model || ''),
+      prompt: String(body.prompt || ''),
+      size: body.size,
+      n: body.n
+    })
+  }
 }

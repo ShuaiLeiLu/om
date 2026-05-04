@@ -106,6 +106,39 @@ export class AdminService {
     if (tokens === BigInt(0)) throw new BadRequestException('tokens_required')
     const expiresAt = new Date(Date.now() + validDays * 24 * 60 * 60 * 1000)
     const result = await this.prisma.$transaction(async (tx) => {
+      if (tokens < BigInt(0)) {
+        let remaining = -tokens
+        const grants = await tx.tokenGrant.findMany({
+          where: { userId, status: 'active', remainingTokens: { gt: 0 }, expiresAt: { gt: new Date() } },
+          orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }]
+        })
+        for (const grant of grants) {
+          if (remaining <= BigInt(0)) break
+          const deduct = grant.remainingTokens < remaining ? grant.remainingTokens : remaining
+          remaining -= deduct
+          await tx.tokenGrant.update({
+            where: { id: grant.id },
+            data: {
+              remainingTokens: grant.remainingTokens - deduct,
+              status: grant.remainingTokens - deduct === BigInt(0) ? 'exhausted' : grant.status
+            }
+          })
+        }
+        if (remaining > BigInt(0)) throw new BadRequestException('token_insufficient')
+        const balance = await this.balance(tx, userId)
+        const ledger = await tx.quotaLedger.create({
+          data: {
+            userId,
+            type: 'manual_adjustment',
+            deltaTokens: tokens,
+            balanceAfter: balance,
+            relatedId: adminId,
+            remark: input.remark || ''
+          }
+        })
+        return { grant: null, ledger, balance }
+      }
+
       const grant = await tx.tokenGrant.create({
         data: {
           userId,

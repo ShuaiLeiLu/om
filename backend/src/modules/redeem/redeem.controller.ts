@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common'
-import { CurrentUser } from '../../common/current-user'
+import { CurrentAdmin, CurrentUser } from '../../common/current-user'
 import { UserSessionGuard, AdminSessionGuard } from '../../common/session.guard'
 import { RedeemService } from './redeem.service'
 
@@ -21,14 +21,14 @@ export class RedeemController {
 
   @UseGuards(AdminSessionGuard)
   @Post('admin/plans')
-  createPlan(@Body() body: { name?: string; tokenAmount?: string | number; validDays?: number; remark?: string }) {
-    return this.redeemService.createPlan(body)
+  createPlan(@CurrentAdmin() admin: { id: string }, @Body() body: { name?: string; tokenAmount?: string | number; validDays?: number; remark?: string }) {
+    return this.redeemService.createPlan(admin.id, body)
   }
 
   @UseGuards(AdminSessionGuard)
   @Post('admin/redeem-codes/batch')
-  createCodes(@Body() body: { planId?: string; count?: number; expiresAt?: string }) {
-    return this.redeemService.createCodes(String(body.planId || ''), Number(body.count || 1), body.expiresAt)
+  createCodes(@CurrentAdmin() admin: { id: string }, @Body() body: { planId?: string; count?: number; expiresAt?: string }) {
+    return this.redeemService.createCodes(admin.id, String(body.planId || ''), Number(body.count || 1), body.expiresAt)
   }
 
   @UseGuards(AdminSessionGuard)
@@ -39,7 +39,7 @@ export class RedeemController {
 
   @UseGuards(AdminSessionGuard)
   @Post('admin/redeem-codes/:id/revoke')
-  revoke(@Param('id') id: string) {
-    return this.redeemService.revokeCode(id)
+  revoke(@CurrentAdmin() admin: { id: string }, @Param('id') id: string) {
+    return this.redeemService.revokeCode(admin.id, id)
   }
 }

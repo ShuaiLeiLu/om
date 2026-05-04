@@ -61,44 +61,48 @@ export class Sub2apiService {
   }
 
   async syncUsage() {
-    const baseUrl = this.config.get<string>('SUB2API_BASE_URL')
-    const adminToken = this.config.get<string>('SUB2API_ADMIN_API_KEY') || this.config.get<string>('SUB2API_ADMIN_TOKEN')
-    const adminEmail = this.config.get<string>('SUB2API_ADMIN_EMAIL')
-    const adminPassword = this.config.get<string>('SUB2API_ADMIN_PASSWORD')
-    if (!baseUrl || (!adminToken && (!adminEmail || !adminPassword))) {
-      return { ok: false, skipped: true, reason: 'sub2api_admin_config_incomplete' }
-    }
-
-    const state = await this.prisma.syncState.upsert({
-      where: { name: 'sub2api_usage' },
-      create: { name: 'sub2api_usage' },
-      update: {}
-    })
-    const token = adminToken || await this.loginAdmin(baseUrl, String(adminEmail), String(adminPassword))
-    let cursor = state.cursor || undefined
-    let synced = 0
-    let duplicated = 0
-    let pages = 0
-    const maxPages = Math.max(1, Number(this.config.get<string>('SUB2API_USAGE_SYNC_MAX_PAGES') || 5))
-
-    while (pages < maxPages) {
-      const page = await this.fetchUsagePage(baseUrl, token, cursor)
-      pages += 1
-      for (const raw of page.usages) {
-        const result = await this.ingestUsage(raw)
-        if (result.ok && 'duplicated' in result && result.duplicated) duplicated += 1
-        else if (result.ok) synced += 1
+    try {
+      const baseUrl = this.config.get<string>('SUB2API_BASE_URL')
+      const adminToken = this.config.get<string>('SUB2API_ADMIN_API_KEY') || this.config.get<string>('SUB2API_ADMIN_TOKEN')
+      const adminEmail = this.config.get<string>('SUB2API_ADMIN_EMAIL')
+      const adminPassword = this.config.get<string>('SUB2API_ADMIN_PASSWORD')
+      if (!baseUrl || (!adminToken && (!adminEmail || !adminPassword))) {
+        return this.syncFailed('sub2api_admin_config_incomplete')
       }
-      cursor = page.nextCursor || undefined
-      if (!cursor || page.usages.length === 0) break
-    }
 
-    await this.prisma.syncState.upsert({
-      where: { name: 'sub2api_usage' },
-      create: { name: 'sub2api_usage', cursor: cursor || null, lastSuccessAt: new Date(), lastError: null },
-      update: { cursor: cursor || state.cursor, lastSuccessAt: new Date(), lastError: null }
-    })
-    return { ok: true, synced, duplicated, pages, cursor: cursor || null }
+      const state = await this.prisma.syncState.upsert({
+        where: { name: 'sub2api_usage' },
+        create: { name: 'sub2api_usage' },
+        update: {}
+      })
+      const token = adminToken || await this.loginAdmin(baseUrl, String(adminEmail), String(adminPassword))
+      let cursor = state.cursor || undefined
+      let synced = 0
+      let duplicated = 0
+      let pages = 0
+      const maxPages = Math.max(1, Number(this.config.get<string>('SUB2API_USAGE_SYNC_MAX_PAGES') || 5))
+
+      while (pages < maxPages) {
+        const page = await this.fetchUsagePage(baseUrl, token, cursor)
+        pages += 1
+        for (const raw of page.usages) {
+          const result = await this.ingestUsage(raw)
+          if (result.ok && 'duplicated' in result && result.duplicated) duplicated += 1
+          else if (result.ok) synced += 1
+        }
+        cursor = page.nextCursor || undefined
+        if (!cursor || page.usages.length === 0) break
+      }
+
+      await this.prisma.syncState.upsert({
+        where: { name: 'sub2api_usage' },
+        create: { name: 'sub2api_usage', cursor: cursor || null, lastSuccessAt: new Date(), lastError: null },
+        update: { cursor: cursor || state.cursor, lastSuccessAt: new Date(), lastError: null }
+      })
+      return { ok: true, synced, duplicated, pages, cursor: cursor || null }
+    } catch (error) {
+      return this.syncFailed(error instanceof Error ? error.message : String(error))
+    }
   }
 
   async ingestUsage(raw: RawUsage) {
@@ -296,11 +300,24 @@ export class Sub2apiService {
   private async readJson(res: Response) {
     const text = await res.text()
     if (!text) return null
-    return JSON.parse(text)
+    try {
+      return JSON.parse(text)
+    } catch {
+      return { raw: text }
+    }
   }
 
   private absoluteUrl(baseUrl: string, path: string) {
     if (/^https?:\/\//i.test(path)) return path
     return `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
+  }
+
+  private async syncFailed(reason: string) {
+    await this.prisma.syncState.upsert({
+      where: { name: 'sub2api_usage' },
+      create: { name: 'sub2api_usage', lastError: reason },
+      update: { lastError: reason }
+    })
+    return { ok: false, skipped: true, reason }
   }
 }

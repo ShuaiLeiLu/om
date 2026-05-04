@@ -4,12 +4,11 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#0f766e",
+    "navigationBarBackgroundColor": "#10151f",
     "navigationBarTitleText": "万模AI",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f6f6f6"
+    "backgroundColor": "#f5f6fa"
   },
   "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents",
   "usingComponents": {}
 }

@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { Plus, Send, ChevronRight, AlertCircle, Paperclip, X } from 'lucide-react'
-import { useChatStore, useModelStore } from '@/store/useStore'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Plus, Send, ChevronRight, AlertCircle, Paperclip, X, Image as ImageIcon } from 'lucide-react'
+import { useChatStore, useModelStore, useAuthStore } from '@/store/useStore'
 import Shell from '@/components/layout/Shell'
 import Markdown from '@/components/chat/Markdown'
 import { decorateProvider, fallbackProviders } from '@/lib/config'
-import { sendMessage, fileToBase64, fetchModels } from '@/lib/api'
+import { sendMessage, generateImage, fileToBase64, fetchModels, fetchMe, fetchQuotaSummary } from '@/lib/api'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -18,7 +20,33 @@ function isLocalConversationId(id) {
   return typeof id === 'string' && id.startsWith('conv_')
 }
 
+function isImageGenerationModel(model) {
+  const text = `${model.id || ''} ${model.name || ''} ${model.remark || ''}`.toLowerCase()
+  return [
+    'image',
+    'images',
+    'gpt-image',
+    'dall-e',
+    'dalle',
+    'imagen',
+    'flux',
+    'stable-diffusion',
+    'stable diffusion',
+    'midjourney',
+    'cogview',
+    'seedream',
+    'jimeng',
+    'qwen-image',
+    'wanx',
+    '文生图',
+    '生图',
+    '绘图',
+    '图片'
+  ].some((keyword) => text.includes(keyword))
+}
+
 export default function Page() {
+  const router = useRouter()
   const { 
     activeConversationId, 
     conversations, 
@@ -31,6 +59,7 @@ export default function Page() {
   } = useChatStore()
   
   const { selectedProvider, selectedModel, setSelectedProvider, setSelectedModel } = useModelStore()
+  const { isAuthenticated, setAuthLoading, setSession, clearSession } = useAuthStore()
   
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -39,6 +68,11 @@ export default function Page() {
   const [fetchedModels, setFetchedModels] = useState([])
   const [loadingModels, setLoadingModels] = useState(false)
   const [modelsError, setModelsError] = useState('')
+  const [imagePrompt, setImagePrompt] = useState('')
+  const [imageModel, setImageModel] = useState(null)
+  const [generatedImages, setGeneratedImages] = useState([])
+  const [imageError, setImageError] = useState('')
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -47,6 +81,24 @@ export default function Page() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [history, activeConversationId])
+
+  useEffect(() => {
+    let cancelled = false
+    setAuthLoading(true)
+    Promise.all([fetchMe(), fetchQuotaSummary()])
+      .then(([user, quota]) => {
+        if (!cancelled) setSession({ user, quota })
+      })
+      .catch(() => {
+        if (!cancelled) clearSession()
+      })
+      .finally(() => {
+        if (!cancelled) setAuthLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [clearSession, setAuthLoading, setSession])
 
   useEffect(() => {
     let cancelled = false
@@ -90,6 +142,10 @@ export default function Page() {
   }
 
   const handleStartChat = (model) => {
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
     setSelectedModel(model)
     const convId = `conv_${Date.now()}`
     const newConv = {
@@ -108,6 +164,11 @@ export default function Page() {
 
   const handleSend = async () => {
     if ((!input.trim() && pendingImages.length === 0) || isLoading) return
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    if (!selectedModel?.id || !activeConversationId) return
 
     const text = input.trim()
     const convId = activeConversationId
@@ -189,6 +250,50 @@ export default function Page() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  const imageModels = useMemo(() => (
+    providers
+      .flatMap((provider) => provider.models.map((model) => ({ ...model, provider })))
+      .filter((model) => isImageGenerationModel(model))
+  ), [providers])
+
+  useEffect(() => {
+    if (!imageModel && imageModels.length > 0) setImageModel(imageModels[0])
+  }, [imageModel, imageModels])
+
+  const handleGenerateImage = async () => {
+    if (!imagePrompt.trim() || isGeneratingImage) return
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    if (!imageModel?.id) return
+
+    setIsGeneratingImage(true)
+    setImageError('')
+    try {
+      const result = await generateImage({
+        modelId: imageModel.id,
+        prompt: imagePrompt.trim()
+      })
+      setGeneratedImages((prev) => [
+        {
+          id: result.requestId || `image_${Date.now()}`,
+          prompt: imagePrompt.trim(),
+          modelName: imageModel.name,
+          images: result.images || [],
+          content: result.content || '图片已生成',
+          createdAt: Date.now()
+        },
+        ...prev
+      ])
+      setImagePrompt('')
+    } catch (err) {
+      setImageError(err.message || '图片生成失败')
+    } finally {
+      setIsGeneratingImage(false)
+    }
+  }
+
   const activeMessages = history[activeConversationId] || []
 
   return (
@@ -200,7 +305,15 @@ export default function Page() {
             <div className="mx-auto max-w-5xl">
               <div className="mb-10 text-center md:text-left">
                 <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl">万模AI</h1>
-                <p className="mt-4 text-slate-400">选择一个模型开始商业级的智能对话体验</p>
+                <p className="mt-4 text-slate-400">选择对话模型，或者使用专门的文生图工作区。</p>
+                {!isAuthenticated && (
+                  <div className="mt-5 inline-flex flex-wrap items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-100">
+                    <span>登录后可使用模型并同步 Token 余额。</span>
+                    <Link href="/login" className="rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-400">
+                      微信扫码登录
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {!selectedProvider ? (
@@ -210,6 +323,103 @@ export default function Page() {
                       {modelsError}
                     </div>
                   )}
+
+                  <section className="mb-10 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 md:p-5">
+                    <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <ImageIcon size={18} className="text-indigo-300" />
+                          <h2 className="text-lg font-bold text-white">文生图</h2>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-500">仅展示名称或备注中标记为图片生成能力的模型。</p>
+                      </div>
+                      {imageModel && (
+                        <select
+                          value={imageModel.id}
+                          onChange={(e) => setImageModel(imageModels.find((model) => model.id === e.target.value) || null)}
+                          className="h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-200 outline-none transition focus:border-indigo-500"
+                        >
+                          {imageModels.map((model) => (
+                            <option key={model.id} value={model.id}>
+                              {model.provider.name} / {model.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
+                    {imageModels.length === 0 ? (
+                      <div className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-8 text-center">
+                        <p className="text-sm font-medium text-slate-300">暂无文生图模型</p>
+                        <p className="mt-2 text-xs text-slate-500">请在后台启用图片生成模型，并在模型名称或备注中标记 image、gpt-image、dall-e、flux、文生图等关键词。</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                        <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
+                          <textarea
+                            value={imagePrompt}
+                            onChange={(e) => setImagePrompt(e.target.value)}
+                            placeholder="描述你想生成的图片..."
+                            rows={5}
+                            className="min-h-32 w-full resize-none bg-transparent p-2 text-sm text-white placeholder-slate-500 outline-none"
+                          />
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <p className="truncate text-xs text-slate-500">
+                              当前模型：{imageModel?.name || '未选择'}
+                            </p>
+                            <button
+                              onClick={handleGenerateImage}
+                              disabled={isGeneratingImage || !imagePrompt.trim() || !imageModel}
+                              className={cn(
+                                "flex h-10 shrink-0 items-center gap-2 rounded-xl px-4 text-sm font-bold transition",
+                                isGeneratingImage || !imagePrompt.trim() || !imageModel
+                                  ? "bg-slate-800 text-slate-600"
+                                  : "bg-indigo-600 text-white hover:bg-indigo-500 active:scale-95"
+                              )}
+                            >
+                              <ImageIcon size={17} />
+                              {isGeneratingImage ? '生成中' : '生成图片'}
+                            </button>
+                          </div>
+                          {imageError && (
+                            <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                              <AlertCircle size={15} />
+                              <span>{imageError}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-h-52 rounded-xl border border-slate-800 bg-slate-950/50 p-3">
+                          {generatedImages.length === 0 ? (
+                            <div className="flex h-full min-h-48 items-center justify-center text-center text-sm text-slate-500">
+                              生成结果会显示在这里
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {generatedImages.slice(0, 3).map((item) => (
+                                <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {item.images.map((img, idx) => (
+                                      <a key={idx} href={img} target="_blank" rel="noreferrer" className="block">
+                                        <img src={img} className="aspect-square w-full rounded-md object-cover" alt="" />
+                                      </a>
+                                    ))}
+                                  </div>
+                                  <p className="mt-2 line-clamp-2 text-xs text-slate-400">{item.prompt}</p>
+                                  <p className="mt-1 truncate text-[10px] text-slate-600">{item.modelName}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </section>
+
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-white">对话模型</h2>
+                    <span className="text-xs text-slate-500">选择供应商后开始文字对答</span>
+                  </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {providers.map((p) => (
                     <button
@@ -356,7 +566,9 @@ export default function Page() {
                         {msg.images?.length > 0 && (
                           <div className="mb-3 flex flex-wrap gap-2">
                             {msg.images.map((img, idx) => (
-                              <img key={idx} src={img} className="max-h-60 rounded-lg object-cover" alt="" />
+                              <a key={idx} href={img} target="_blank" rel="noreferrer" className="block">
+                                <img src={img} className="max-h-80 rounded-lg border border-white/10 object-cover" alt="" />
+                              </a>
                             ))}
                           </div>
                         )}

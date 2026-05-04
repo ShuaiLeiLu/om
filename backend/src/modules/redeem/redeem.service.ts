@@ -35,8 +35,8 @@ export class RedeemService {
     })
   }
 
-  async createPlan(input: { name?: string; tokenAmount?: string | number; validDays?: number; remark?: string }) {
-    return this.prisma.plan.create({
+  async createPlan(adminId: string, input: { name?: string; tokenAmount?: string | number; validDays?: number; remark?: string }) {
+    const plan = await this.prisma.plan.create({
       data: {
         name: String(input.name || '').trim(),
         tokenAmount: BigInt(input.tokenAmount || 0),
@@ -44,13 +44,15 @@ export class RedeemService {
         remark: input.remark || ''
       }
     })
+    await this.audit(adminId, 'plan_create', 'plan', plan.id, null, plan)
+    return plan
   }
 
   listPlans() {
     return this.prisma.plan.findMany({ orderBy: { createdAt: 'desc' } })
   }
 
-  async createCodes(planId: string, count: number, expiresAt?: string) {
+  async createCodes(adminId: string, planId: string, count: number, expiresAt?: string) {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } })
     if (!plan) throw new BadRequestException('plan_not_found')
     const plaintextCodes: string[] = []
@@ -61,10 +63,12 @@ export class RedeemService {
         data: {
           planId,
           codeHash: sha256(code),
+          createdByAdminId: adminId,
           expiresAt: expiresAt ? new Date(expiresAt) : null
         }
       })
     }
+    await this.audit(adminId, 'redeem_code_batch_create', 'plan', planId, null, { count: plaintextCodes.length, expiresAt: expiresAt || null })
     return { codes: plaintextCodes }
   }
 
@@ -72,7 +76,28 @@ export class RedeemService {
     return this.prisma.redeemCode.findMany({ orderBy: { createdAt: 'desc' }, include: { plan: true } })
   }
 
-  revokeCode(id: string) {
-    return this.prisma.redeemCode.update({ where: { id }, data: { status: 'revoked', revokedAt: new Date() } })
+  async revokeCode(adminId: string, id: string) {
+    const before = await this.prisma.redeemCode.findUnique({ where: { id } })
+    const code = await this.prisma.redeemCode.update({ where: { id }, data: { status: 'revoked', revokedAt: new Date() } })
+    await this.audit(adminId, 'redeem_code_revoke', 'redeem_code', id, before, code)
+    return code
+  }
+
+  private async audit(adminUserId: string, action: string, targetType: string, targetId: string | null, before: unknown, after: unknown) {
+    await this.prisma.adminAuditLog.create({
+      data: {
+        adminUserId,
+        action,
+        targetType,
+        targetId,
+        beforeJson: this.auditJson(before),
+        afterJson: this.auditJson(after)
+      }
+    })
+  }
+
+  private auditJson(value: unknown) {
+    if (value === null) return undefined
+    return JSON.parse(JSON.stringify(value, (_key, item) => (typeof item === 'bigint' ? item.toString() : item)))
   }
 }

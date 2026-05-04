@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common'
+import { CurrentAdmin } from '../../common/current-user'
 import { AdminSessionGuard } from '../../common/session.guard'
 import { ModelsService } from './models.service'
 
@@ -19,7 +20,7 @@ export class ModelsController {
 
   @UseGuards(AdminSessionGuard)
   @Patch('admin/models/:id')
-  update(@Param('id') id: string, @Body() body: { enabled?: boolean; displayName?: string; sortOrder?: number; remark?: string }) {
-    return this.models.update(id, body)
+  update(@CurrentAdmin() admin: { id: string }, @Param('id') id: string, @Body() body: { enabled?: boolean; displayName?: string; sortOrder?: number; remark?: string }) {
+    return this.models.update(admin.id, id, body)
   }
 }

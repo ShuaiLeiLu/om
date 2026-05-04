@@ -13,8 +13,11 @@ export class WechatController {
   }
 
   @Get('auth/wechat-miniapp/sessions/:sessionId')
-  getWebLoginSession(@Param('sessionId') sessionId: string) {
-    return this.wechat.getWebLoginSession(sessionId)
+  getWebLoginSession(@Param('sessionId') sessionId: string, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    return this.wechat.getWebLoginSession(sessionId, res, {
+      ip: getClientIp(req),
+      userAgent: getUserAgent(req)
+    })
   }
 
   @Get('auth/wechat-miniapp/sessions/:sessionId/qrcode')
@@ -41,10 +44,7 @@ export class WechatController {
   }
 
   @Post('wechat/miniapp/sessions/confirm')
-  confirm(@Body() body: { scene?: string; miniappSessionToken?: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.wechat.confirm(String(body.scene || ''), String(body.miniappSessionToken || ''), res, {
-      ip: getClientIp(req),
-      userAgent: getUserAgent(req)
-    })
+  confirm(@Body() body: { scene?: string; miniappSessionToken?: string }) {
+    return this.wechat.confirm(String(body.scene || ''), String(body.miniappSessionToken || ''))
   }
 }

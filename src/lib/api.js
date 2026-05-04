@@ -18,7 +18,8 @@ export async function fetchModels() {
     }
     group.models.push({
       id: model.sub2apiModel,
-      name: model.displayName || model.sub2apiModel
+      name: model.displayName || model.sub2apiModel,
+      remark: model.remark || ''
     })
     groups.set(providerId, group)
   }
@@ -76,6 +77,22 @@ export async function sendMessage({ conversationId, modelId, messages, onDelta }
   return { content, meta, done }
 }
 
+export async function generateImage({ conversationId, modelId, prompt }) {
+  const res = await fetch('/api/images/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      conversationId,
+      model: modelId,
+      prompt
+    })
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
 export async function fetchQuotaSummary() {
   const res = await fetch('/api/quota/summary', {
     credentials: 'include',
@@ -84,6 +101,174 @@ export async function fetchQuotaSummary() {
   const data = await readJson(res)
   if (!res.ok) throw new Error(parseApiError(res.status, data))
   return data
+}
+
+export async function fetchMe() {
+  const res = await fetch('/api/me', {
+    credentials: 'include',
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function logout() {
+  const res = await fetch('/api/auth/logout', {
+    method: 'POST',
+    credentials: 'include',
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function createWechatLoginSession() {
+  const res = await fetch('/api/auth/wechat-miniapp/sessions', {
+    method: 'POST',
+    credentials: 'include',
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function fetchWechatLoginSession(sessionId) {
+  const res = await fetch(`/api/auth/wechat-miniapp/sessions/${encodeURIComponent(sessionId)}`, {
+    credentials: 'include',
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function fetchQuotaLedger({ page = 1, pageSize = 20 } = {}) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  const res = await fetch(`/api/quota/ledger?${params.toString()}`, {
+    credentials: 'include',
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return Array.isArray(data) ? data : []
+}
+
+export async function adminLogin({ username, password }) {
+  return adminRequest('/api/admin/auth/login', {
+    method: 'POST',
+    body: { username, password }
+  })
+}
+
+export async function adminLogout() {
+  return adminRequest('/api/admin/auth/logout', { method: 'POST' })
+}
+
+export async function fetchAdminMe() {
+  return adminRequest('/api/admin/me')
+}
+
+export async function fetchAdminDashboard() {
+  return adminRequest('/api/admin/dashboard')
+}
+
+export async function fetchAdminUsers(params = {}) {
+  return adminRequest(`/api/admin/users?${buildQuery(params)}`)
+}
+
+export async function updateAdminUserStatus(userId, status) {
+  const action = status === 'active' ? 'enable' : 'disable'
+  return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/${action}`, { method: 'POST' })
+}
+
+export async function adjustAdminQuota(userId, body) {
+  return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/quota-adjust`, {
+    method: 'POST',
+    body
+  })
+}
+
+export async function fetchAdminModels() {
+  return adminRequest('/api/admin/models')
+}
+
+export async function updateAdminModel(modelId, body) {
+  return adminRequest(`/api/admin/models/${encodeURIComponent(modelId)}`, {
+    method: 'PATCH',
+    body
+  })
+}
+
+export async function fetchAdminPlans() {
+  return adminRequest('/api/admin/plans')
+}
+
+export async function createAdminPlan(body) {
+  return adminRequest('/api/admin/plans', {
+    method: 'POST',
+    body
+  })
+}
+
+export async function fetchAdminRedeemCodes() {
+  return adminRequest('/api/admin/redeem-codes')
+}
+
+export async function createAdminRedeemCodes(body) {
+  return adminRequest('/api/admin/redeem-codes/batch', {
+    method: 'POST',
+    body
+  })
+}
+
+export async function revokeAdminRedeemCode(codeId) {
+  return adminRequest(`/api/admin/redeem-codes/${encodeURIComponent(codeId)}/revoke`, { method: 'POST' })
+}
+
+export async function fetchAdminLlmRequests(params = {}) {
+  return adminRequest(`/api/admin/llm-requests?${buildQuery(params)}`)
+}
+
+export async function fetchAdminQuotaLedger(params = {}) {
+  return adminRequest(`/api/admin/quota-ledger?${buildQuery(params)}`)
+}
+
+export async function fetchAdminUsageEvents() {
+  return adminRequest('/api/admin/usage-events')
+}
+
+export async function syncAdminSub2api() {
+  return adminRequest('/api/admin/sub2api/sync', { method: 'POST' })
+}
+
+export async function fetchAdminWechatAccounts(params = {}) {
+  return adminRequest(`/api/admin/wechat/accounts?${buildQuery(params)}`)
+}
+
+export async function unbindAdminWechatAccount(accountId) {
+  return adminRequest(`/api/admin/wechat/accounts/${encodeURIComponent(accountId)}/unbind`, { method: 'POST' })
+}
+
+export async function fetchAdminRewardConfig() {
+  return adminRequest('/api/admin/wechat/reward-config')
+}
+
+export async function updateAdminRewardConfig(body) {
+  return adminRequest('/api/admin/wechat/reward-config', {
+    method: 'PATCH',
+    body
+  })
+}
+
+export async function fetchAdminRewardEvents() {
+  return adminRequest('/api/admin/wechat/reward-events')
+}
+
+export async function fetchAdminAuditLogs(params = {}) {
+  return adminRequest(`/api/admin/audit-logs?${buildQuery(params)}`)
 }
 
 export function fileToBase64(file) {
@@ -115,12 +300,45 @@ async function readJson(res) {
   }
 }
 
+async function adminRequest(url, options = {}) {
+  const headers = { ...(options.headers || {}) }
+  const init = {
+    method: options.method || 'GET',
+    credentials: 'include',
+    signal: AbortSignal.timeout(options.timeout || 15000),
+    headers
+  }
+  if (options.body !== undefined) {
+    init.body = JSON.stringify(options.body)
+    init.headers = { 'Content-Type': 'application/json', ...headers }
+  }
+  const res = await fetch(url, init)
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  if (data && typeof data === 'object' && data.ok === false) {
+    throw new Error(parseApiError(res.status, data))
+  }
+  return data
+}
+
+function buildQuery(params = {}) {
+  const query = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return
+    query.set(key, String(value))
+  })
+  return query.toString()
+}
+
 function parseApiError(status, data) {
   const message = data?.message || data?.error || ''
-  if (status === 401 || message === 'unauthorized') return '请先登录后再使用模型'
+  if (status === 401 || message === 'unauthorized') return '请先登录'
+  if (message === 'invalid_credentials') return '账号或密码不正确'
+  if (message === 'username_password_required') return '请输入账号和密码'
   if (message === 'token_insufficient') return 'Token 余额不足，请先领取或兑换 Token'
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'sub2api_config_incomplete') return '模型网关未配置'
+  if (typeof data?.reason === 'string' && data.reason) return `同步失败：${data.reason}`
   if (typeof message === 'string' && message) return message
   return `请求失败 (HTTP ${status})`
 }

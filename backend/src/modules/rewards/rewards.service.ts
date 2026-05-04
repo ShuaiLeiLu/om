@@ -80,12 +80,28 @@ export class RewardsService {
     return { ok: true, rewardTokens: reward.rewardTokens.toString(), tokenBalance: result.tokenBalance }
   }
 
-  async updateConfig(data: { enabled?: boolean; adUnitId?: string; rewardTokens?: string | number; dailyLimitPerUser?: number; rewardTokenValidDays?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
-    return this.prisma.adRewardConfig.upsert({
+  adminConfig() {
+    return this.getConfig()
+  }
+
+  async updateConfig(adminId: string, data: { enabled?: boolean; adUnitId?: string; rewardTokens?: string | number; dailyLimitPerUser?: number; rewardTokenValidDays?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
+    const before = await this.getConfig()
+    const config = await this.prisma.adRewardConfig.upsert({
       where: { id: 'default' },
-      create: { id: 'default', ...this.configData(data) },
-      update: this.configData(data)
+      create: { id: 'default', ...this.configData(data), updatedByAdminId: adminId },
+      update: { ...this.configData(data), updatedByAdminId: adminId }
     })
+    await this.prisma.adminAuditLog.create({
+      data: {
+        adminUserId: adminId,
+        action: 'reward_config_update',
+        targetType: 'ad_reward_config',
+        targetId: config.id,
+        beforeJson: this.auditJson(before),
+        afterJson: this.auditJson(config)
+      }
+    })
+    return config
   }
 
   listEvents() {
@@ -119,5 +135,10 @@ export class RewardsService {
       minIntervalSeconds: data.minIntervalSeconds,
       sessionTtlSeconds: data.sessionTtlSeconds
     }
+  }
+
+  private auditJson(value: unknown) {
+    if (value === null) return undefined
+    return JSON.parse(JSON.stringify(value, (_key, item) => (typeof item === 'bigint' ? item.toString() : item)))
   }
 }
