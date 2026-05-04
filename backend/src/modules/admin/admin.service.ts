@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { Prisma } from '@prisma/client'
+import { LlmRequestStatus, Prisma, QuotaLedgerType } from '@prisma/client'
 import * as argon2 from 'argon2'
 import { Response } from 'express'
 import { randomToken, sha256, toPublicBigInt } from '../../common/http'
@@ -134,6 +134,82 @@ export class AdminService {
     return { ...result, balance: result.balance.toString() }
   }
 
+  listLlmRequests(query: { userId?: string; status?: string; page?: string; pageSize?: string }) {
+    const { page, pageSize } = this.pagination(query)
+    const where: Prisma.LlmRequestWhereInput = {}
+    if (query.userId) where.userId = query.userId
+    if (this.isLlmRequestStatus(query.status)) where.status = query.status
+    return this.prisma.llmRequest.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: { user: true, conversation: true, usageEvents: true }
+    })
+  }
+
+  listQuotaLedger(query: { userId?: string; type?: string; page?: string; pageSize?: string }) {
+    const { page, pageSize } = this.pagination(query)
+    const where: Prisma.QuotaLedgerWhereInput = {}
+    if (query.userId) where.userId = query.userId
+    if (this.isQuotaLedgerType(query.type)) where.type = query.type
+    return this.prisma.quotaLedger.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: { user: true, grant: true }
+    })
+  }
+
+  listAuditLogs(query: { adminUserId?: string; action?: string; page?: string; pageSize?: string }) {
+    const { page, pageSize } = this.pagination(query)
+    const where: Prisma.AdminAuditLogWhereInput = {}
+    if (query.adminUserId) where.adminUserId = query.adminUserId
+    if (query.action) where.action = query.action
+    return this.prisma.adminAuditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: { adminUser: true }
+    })
+  }
+
+  listWechatAccounts(query: { q?: string; page?: string; pageSize?: string }) {
+    const { page, pageSize } = this.pagination(query)
+    const where: Prisma.OauthAccountWhereInput = { provider: 'wechat_miniapp' }
+    if (query.q) {
+      where.OR = [
+        { openid: { contains: query.q } },
+        { unionid: { contains: query.q } },
+        { nickname: { contains: query.q, mode: 'insensitive' } },
+        { user: { displayName: { contains: query.q, mode: 'insensitive' } } }
+      ]
+    }
+    return this.prisma.oauthAccount.findMany({
+      where,
+      orderBy: { boundAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: { user: true }
+    })
+  }
+
+  async unbindWechatAccount(adminId: string, accountId: string) {
+    const before = await this.prisma.oauthAccount.findUnique({ where: { id: accountId } })
+    if (!before || before.provider !== 'wechat_miniapp') throw new BadRequestException('wechat_account_not_found')
+    await this.prisma.$transaction(async (tx) => {
+      await tx.oauthAccount.delete({ where: { id: accountId } })
+      await tx.wechatMiniappSession.updateMany({
+        where: { openid: before.openid },
+        data: { userId: null, revokedAt: new Date() }
+      })
+    })
+    await this.audit(adminId, 'wechat_unbind', 'oauth_account', accountId, before, null)
+    return { ok: true }
+  }
+
   async audit(adminUserId: string | null, action: string, targetType: string, targetId: string | null, before: unknown, after: unknown) {
     await this.prisma.adminAuditLog.create({
       data: {
@@ -153,6 +229,21 @@ export class AdminService {
       select: { remainingTokens: true }
     })
     return grants.reduce((sum, grant) => sum + grant.remainingTokens, BigInt(0))
+  }
+
+  private pagination(query: { page?: string; pageSize?: string }) {
+    return {
+      page: Math.max(1, Number(query.page || 1)),
+      pageSize: Math.min(100, Math.max(1, Number(query.pageSize || 20)))
+    }
+  }
+
+  private isLlmRequestStatus(status?: string): status is LlmRequestStatus {
+    return ['pending', 'streaming', 'completed', 'failed', 'cancelled'].includes(String(status || ''))
+  }
+
+  private isQuotaLedgerType(type?: string): type is QuotaLedgerType {
+    return ['redeem_code', 'ad_reward', 'manual_adjustment', 'model_usage', 'grant_expired', 'refund'].includes(String(type || ''))
   }
 
   private cookieOptions(expiresAt: Date) {

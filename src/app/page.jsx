@@ -1,17 +1,21 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Plus, Send, Check, ChevronRight, AlertCircle, RefreshCw, Paperclip, X, Image as ImageIcon } from 'lucide-react'
-import { useChatStore, useUIStore, useModelStore, useConfigStore } from '@/store/useStore'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Send, ChevronRight, AlertCircle, Paperclip, X } from 'lucide-react'
+import { useChatStore, useModelStore } from '@/store/useStore'
 import Shell from '@/components/layout/Shell'
 import Markdown from '@/components/chat/Markdown'
-import { providers, apiKeys as fallbackKeys } from '@/lib/config'
+import { decorateProvider, fallbackProviders } from '@/lib/config'
 import { sendMessage, fileToBase64, fetchModels } from '@/lib/api'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 function cn(...inputs) {
   return twMerge(clsx(inputs))
+}
+
+function isLocalConversationId(id) {
+  return typeof id === 'string' && id.startsWith('conv_')
 }
 
 export default function Page() {
@@ -22,17 +26,19 @@ export default function Page() {
     addConversation, 
     addMessage, 
     updateMessage,
+    replaceConversationId,
     setActiveConversationId 
   } = useChatStore()
   
   const { selectedProvider, selectedModel, setSelectedProvider, setSelectedModel } = useModelStore()
-  const { customApiKeys } = useConfigStore()
   
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [pendingImages, setPendingImages] = useState([])
+  const [providers, setProviders] = useState(fallbackProviders)
   const [fetchedModels, setFetchedModels] = useState([])
   const [loadingModels, setLoadingModels] = useState(false)
+  const [modelsError, setModelsError] = useState('')
   
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -41,6 +47,29 @@ export default function Page() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [history, activeConversationId])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingModels(true)
+    fetchModels()
+      .then((groups) => {
+        if (cancelled) return
+        const decorated = groups.map(decorateProvider).filter(provider => provider.models.length > 0)
+        setProviders(decorated.length > 0 ? decorated : fallbackProviders)
+        setModelsError('')
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setModelsError(err.message || '模型列表加载失败')
+        setProviders(fallbackProviders)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingModels(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // If a conversation is active, find its provider/model to keep state in sync
   useEffect(() => {
@@ -53,24 +82,11 @@ export default function Page() {
         setSelectedModel(model)
       }
     }
-  }, [activeConversationId, conversations, setSelectedProvider, setSelectedModel])
+  }, [activeConversationId, conversations, providers, setSelectedProvider, setSelectedModel])
 
   const handleSelectProvider = async (provider) => {
     setSelectedProvider(provider)
-    if (provider.models?.length > 0) {
-      setFetchedModels(provider.models)
-    } else {
-      setLoadingModels(true)
-      try {
-        const key = customApiKeys[provider.id] || fallbackKeys[provider.id]
-        const models = await fetchModels(provider.id, provider.modelsUrl, key)
-        setFetchedModels(models)
-      } catch (err) {
-        console.error('Failed to fetch models:', err)
-      } finally {
-        setLoadingModels(false)
-      }
-    }
+    setFetchedModels(provider.models || [])
   }
 
   const handleStartChat = (model) => {
@@ -95,9 +111,7 @@ export default function Page() {
 
     const text = input.trim()
     const convId = activeConversationId
-    const providerId = selectedProvider.id
     const modelId = selectedModel.id
-    const key = customApiKeys[providerId] || fallbackKeys[providerId]
 
     const userMsg = {
       id: `msg_${Date.now()}`,
@@ -132,8 +146,25 @@ export default function Page() {
         images: m.images
       }))
 
-      const content = await sendMessage(providerId, selectedProvider.baseUrl, modelId, key, reqMessages)
+      let streamedContent = ''
+      const result = await sendMessage({
+        conversationId: isLocalConversationId(convId) ? undefined : convId,
+        modelId,
+        messages: reqMessages,
+        onDelta: (delta) => {
+          streamedContent += delta
+          updateMessage(convId, assistantMsgId, { content: streamedContent, loading: false })
+        }
+      })
+      const content = result.content
       updateMessage(convId, assistantMsgId, { content, loading: false })
+      const serverConversationId = result.meta?.conversationId || result.done?.conversationId
+      if (serverConversationId && serverConversationId !== convId) {
+        replaceConversationId(convId, serverConversationId, {
+          title: text.slice(0, 24) || '新对话',
+          updatedAt: Date.now()
+        })
+      }
     } catch (err) {
       updateMessage(convId, assistantMsgId, { 
         error: err.message || '请求失败', 
@@ -173,11 +204,18 @@ export default function Page() {
               </div>
 
               {!selectedProvider ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {providers.map((p) => (
+                <>
+                  {modelsError && (
+                    <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                      {modelsError}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {providers.map((p) => (
                     <button
                       key={p.id}
                       onClick={() => handleSelectProvider(p)}
+                      disabled={loadingModels}
                       className="group relative flex flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-6 text-left transition-all hover:border-slate-700 hover:bg-slate-800 hover:-translate-y-1"
                     >
                       <div 
@@ -194,8 +232,9 @@ export default function Page() {
                       <p className="mt-2 text-sm text-slate-500 line-clamp-2">{p.description}</p>
                       <ChevronRight size={16} className="absolute bottom-6 right-6 text-slate-700 transition-transform group-hover:translate-x-1" />
                     </button>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
@@ -213,6 +252,11 @@ export default function Page() {
                       <div className="col-span-full py-20 text-center">
                         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-indigo-500" />
                         <p className="mt-4 text-sm text-slate-500">正在获取可用模型...</p>
+                      </div>
+                    ) : fetchedModels.length === 0 ? (
+                      <div className="col-span-full rounded-xl border border-slate-800 bg-slate-900/50 px-5 py-12 text-center">
+                        <p className="text-sm font-medium text-slate-300">暂无可用模型</p>
+                        <p className="mt-2 text-xs text-slate-500">请在后台启用模型后再开始对话。</p>
                       </div>
                     ) : (
                       fetchedModels.map((m) => (

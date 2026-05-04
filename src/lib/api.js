@@ -1,211 +1,89 @@
-/**
- * 多模型 API 适配层 (H5 版本)
- * 统一封装不同厂商的请求格式和响应解析
- */
-
-export function buildRequest(providerId, baseUrl, modelId, apiKey, messages) {
-  switch (providerId) {
-    case 'anthropic':
-      return buildAnthropicRequest(baseUrl, modelId, apiKey, messages)
-    default:
-      return buildOpenAIRequest(baseUrl, modelId, apiKey, messages)
-  }
-}
-
-function buildOpenAIRequest(baseUrl, modelId, apiKey, messages) {
-  const formattedMessages = messages.map(m => {
-    if (m.images && m.images.length > 0) {
-      const content = []
-      m.images.forEach(img => {
-        content.push({ type: 'image_url', image_url: { url: img } })
-      })
-      if (m.content) {
-        content.push({ type: 'text', text: m.content })
-      }
-      return { role: m.role, content }
-    }
-    return { role: m.role, content: m.content }
+export async function fetchModels() {
+  const res = await fetch('/api/models', {
+    credentials: 'include',
+    signal: AbortSignal.timeout(15000)
   })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  const models = Array.isArray(data) ? data : []
+  const groups = new Map()
 
-  return {
-    url: baseUrl,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: {
-      model: modelId,
-      messages: formattedMessages,
-      max_tokens: 4096,
-      temperature: 0.7,
-      stream: false
+  for (const model of models) {
+    const providerId = model.provider || 'model'
+    const group = groups.get(providerId) || {
+      id: providerId,
+      provider: providerId,
+      displayName: providerId,
+      models: []
     }
-  }
-}
-
-function buildAnthropicRequest(baseUrl, modelId, apiKey, messages) {
-  let systemPrompt = ''
-  const filteredMessages = []
-
-  messages.forEach(m => {
-    if (m.role === 'system') {
-      systemPrompt = m.content
-    } else if (m.images && m.images.length > 0) {
-      const content = []
-      m.images.forEach(img => {
-        const match = img.match(/^data:(image\/\w+);base64,(.+)$/)
-        if (match) {
-          content.push({
-            type: 'image',
-            source: { type: 'base64', media_type: match[1], data: match[2] }
-          })
-        }
-      })
-      if (m.content) {
-        content.push({ type: 'text', text: m.content })
-      }
-      filteredMessages.push({ role: m.role, content })
-    } else {
-      filteredMessages.push({ role: m.role, content: m.content })
-    }
-  })
-
-  const body = {
-    model: modelId,
-    max_tokens: 4096,
-    messages: filteredMessages
-  }
-  if (systemPrompt) body.system = systemPrompt
-
-  return {
-    url: baseUrl,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
-    },
-    body
-  }
-}
-
-export function parseResponse(providerId, data) {
-  try {
-    switch (providerId) {
-      case 'anthropic':
-        if (data?.content?.length > 0) {
-          return data.content.filter(b => b.type === 'text').map(b => b.text).join('')
-        }
-        return null
-      default:
-        if (data?.choices?.length > 0) {
-          const c = data.choices[0]
-          return c.message ? c.message.content : (c.text || '')
-        }
-        return null
-    }
-  } catch (e) {
-    console.error('Parse response error:', e)
-    return null
-  }
-}
-
-export function parseError(status, data) {
-  if (data?.error?.message) return data.error.message
-  if (data?.message) return data.message
-  
-  if (status === 401) return 'API Key 无效或已过期'
-  if (status === 403) return '无权访问该模型'
-  if (status === 429) return '请求过于频繁，请稍后再试'
-  if (status === 500) return '服务器内部错误'
-  if (status === 502 || status === 503) return '服务暂时不可用'
-
-  if (data) {
-    if (typeof data === 'string') return `错误 (${status}): ${data.substring(0, 100)}`
-    if (data.error) {
-      if (typeof data.error === 'string') return data.error
-      if (data.error.message) return data.error.message
-    }
-    if (data.message) return data.message
-  }
-  return `请求失败 (HTTP ${status})`
-}
-
-export async function sendMessage(providerId, baseUrl, modelId, apiKey, messages) {
-  const config = buildRequest(providerId, baseUrl, modelId, apiKey, messages)
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 45000)
-  let res
-  try {
-    res = await fetch(config.url, {
-      method: 'POST',
-      headers: config.headers,
-      body: JSON.stringify(config.body),
-      signal: controller.signal
+    group.models.push({
+      id: model.sub2apiModel,
+      name: model.displayName || model.sub2apiModel
     })
-  } catch (err) {
-    if (err?.name === 'AbortError') {
-      throw new Error('模型响应超时，请切换模型后重试')
-    }
-    throw err
-  } finally {
-    clearTimeout(timeout)
+    groups.set(providerId, group)
   }
 
-  const contentType = res.headers.get('content-type') || ''
-  const isJson = contentType.includes('application/json')
-  const data = isJson ? await res.json() : await res.text()
-
-  if (!res.ok) {
-    throw new Error(parseError(res.status, data))
-  }
-
-  if (!isJson) {
-    throw new Error('接口返回了非 JSON 内容，请检查网关反向代理配置')
-  }
-
-  const content = parseResponse(providerId, data)
-  if (!content) throw new Error('未获取到有效回复')
-  return content
+  return Array.from(groups.values())
 }
 
-export async function fetchModels(providerId, modelsUrl, apiKey) {
-  const headers = {}
-  if (providerId === 'anthropic') {
-    headers['x-api-key'] = apiKey
-    headers['anthropic-version'] = '2023-06-01'
-  } else {
-    headers['Authorization'] = `Bearer ${apiKey}`
+export async function sendMessage({ conversationId, modelId, messages, onDelta }) {
+  const res = await fetch('/api/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      conversationId,
+      model: modelId,
+      messages
+    })
+  })
+
+  if (!res.ok || !res.body) {
+    const data = await readJson(res)
+    throw new Error(parseApiError(res.status, data))
   }
 
-  const res = await fetch(modelsUrl, { headers, signal: AbortSignal.timeout(15000) })
-  if (!res.ok) {
-    const contentType = res.headers.get('content-type') || ''
-    const data = contentType.includes('application/json')
-      ? await res.json().catch(() => null)
-      : await res.text().catch(() => null)
-    throw new Error(parseError(res.status, data))
-  }
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let content = ''
+  let meta = null
+  let done = null
 
-  const contentType = res.headers.get('content-type') || ''
-  if (!contentType.includes('application/json')) {
-    throw new Error('模型列表接口返回了非 JSON 内容，请检查网关反向代理配置')
-  }
-
-  const data = await res.json()
-  let models = []
-
-  if (providerId === 'anthropic') {
-    if (data?.data) {
-      models = data.data.map(m => ({ id: m.id, name: m.display_name || m.id }))
+  while (true) {
+    const { value, done: streamDone } = await reader.read()
+    if (streamDone) break
+    buffer += decoder.decode(value, { stream: true })
+    const events = buffer.split('\n\n')
+    buffer = events.pop() || ''
+    for (const eventText of events) {
+      const event = parseSseEvent(eventText)
+      if (!event) continue
+      if (event.event === 'message.meta') {
+        meta = event.data
+      } else if (event.event === 'message.delta') {
+        const delta = event.data?.content || ''
+        content += delta
+        onDelta?.(delta)
+      } else if (event.event === 'message.done') {
+        done = event.data
+      } else if (event.event === 'message.error') {
+        throw new Error(event.data?.error || '请求失败')
+      }
     }
-  } else {
-    if (data?.data) {
-      models = data.data.map(m => ({ id: m.id, name: m.id }))
-    }
   }
 
-  if (models.length === 0) throw new Error('未获取到可用模型')
-  return models.sort((a, b) => a.id.localeCompare(b.id))
+  return { content, meta, done }
+}
+
+export async function fetchQuotaSummary() {
+  const res = await fetch('/api/quota/summary', {
+    credentials: 'include',
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
 }
 
 export function fileToBase64(file) {
@@ -215,4 +93,34 @@ export function fileToBase64(file) {
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
+}
+
+function parseSseEvent(text) {
+  const lines = text.split('\n')
+  const event = lines.find(line => line.startsWith('event:'))?.slice(6).trim() || 'message'
+  const dataLines = lines
+    .filter(line => line.startsWith('data:'))
+    .map(line => line.slice(5).trim())
+  if (dataLines.length === 0) return null
+  return { event, data: JSON.parse(dataLines.join('\n')) }
+}
+
+async function readJson(res) {
+  const text = await res.text().catch(() => '')
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+function parseApiError(status, data) {
+  const message = data?.message || data?.error || ''
+  if (status === 401 || message === 'unauthorized') return '请先登录后再使用模型'
+  if (message === 'token_insufficient') return 'Token 余额不足，请先领取或兑换 Token'
+  if (message === 'model_disabled') return '当前模型暂不可用'
+  if (message === 'sub2api_config_incomplete') return '模型网关未配置'
+  if (typeof message === 'string' && message) return message
+  return `请求失败 (HTTP ${status})`
 }

@@ -17,6 +17,14 @@ export class WechatController {
     return this.wechat.getWebLoginSession(sessionId)
   }
 
+  @Get('auth/wechat-miniapp/sessions/:sessionId/qrcode')
+  async getWebLoginQrCode(@Param('sessionId') sessionId: string, @Res() res: Response) {
+    const qrcode = await this.wechat.getWebLoginQrCode(sessionId)
+    res.setHeader('Content-Type', qrcode.contentType)
+    res.setHeader('Cache-Control', 'no-store')
+    res.send(qrcode.bytes)
+  }
+
   @Post('wechat/miniapp/auth/login')
   miniappLogin(@Body() body: { code?: string }) {
     return this.wechat.miniappLogin(String(body.code || ''))

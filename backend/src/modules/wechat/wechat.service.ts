@@ -13,8 +13,17 @@ type Code2SessionResponse = {
   errmsg?: string
 }
 
+type WechatAccessTokenResponse = {
+  access_token?: string
+  expires_in?: number
+  errcode?: number
+  errmsg?: string
+}
+
 @Injectable()
 export class WechatService {
+  private accessTokenCache: { token: string; expiresAt: number } | null = null
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
@@ -42,6 +51,36 @@ export class WechatService {
       return { status: 'expired', message: '二维码已过期' }
     }
     return { status: session.status, message: session.status }
+  }
+
+  async getWebLoginQrCode(sessionId: string) {
+    const session = await this.prisma.wechatQrSession.findUnique({ where: { sessionId } })
+    if (!session) throw new BadRequestException('qr_session_not_found')
+    if (session.expiresAt <= new Date()) {
+      await this.prisma.wechatQrSession.update({ where: { sessionId }, data: { status: 'expired' } })
+      throw new BadRequestException('qr_session_expired')
+    }
+    const accessToken = await this.getAccessToken()
+    const page = this.config.get<string>('WECHAT_MINIAPP_PAGE_PATH') || 'pages/index/index'
+    const envVersion = this.config.get<string>('WECHAT_MINIAPP_ENV_VERSION') || 'release'
+    const res = await fetch(`https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${encodeURIComponent(accessToken)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scene: session.scene,
+        page,
+        check_path: false,
+        env_version: envVersion
+      }),
+      signal: AbortSignal.timeout(10000)
+    })
+    const contentType = res.headers.get('content-type') || ''
+    const bytes = Buffer.from(await res.arrayBuffer())
+    if (!res.ok || contentType.includes('application/json')) {
+      const data = this.parseJsonBuffer(bytes)
+      throw new BadRequestException(data?.errmsg || data?.errcode || 'wechat_qrcode_failed')
+    }
+    return { bytes, contentType: contentType || 'image/png' }
   }
 
   async miniappLogin(code: string) {
@@ -154,6 +193,35 @@ export class WechatService {
     const data = (await res.json()) as Code2SessionResponse
     if (!res.ok || data.errcode) throw new UnauthorizedException('wechat_code_invalid')
     return data
+  }
+
+  private async getAccessToken() {
+    if (this.accessTokenCache && this.accessTokenCache.expiresAt > Date.now() + 60_000) {
+      return this.accessTokenCache.token
+    }
+    const appid = this.requireAppId()
+    const secret = this.config.get<string>('WECHAT_MINIAPP_APP_SECRET')
+    if (!secret) throw new BadRequestException('wechat_config_incomplete')
+    const url = new URL('https://api.weixin.qq.com/cgi-bin/token')
+    url.searchParams.set('grant_type', 'client_credential')
+    url.searchParams.set('appid', appid)
+    url.searchParams.set('secret', secret)
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+    const data = (await res.json()) as WechatAccessTokenResponse
+    if (!res.ok || data.errcode || !data.access_token) throw new BadRequestException('wechat_access_token_failed')
+    this.accessTokenCache = {
+      token: data.access_token,
+      expiresAt: Date.now() + Math.max(300, Number(data.expires_in || 7200) - 300) * 1000
+    }
+    return data.access_token
+  }
+
+  private parseJsonBuffer(bytes: Buffer) {
+    try {
+      return JSON.parse(bytes.toString('utf8')) as { errcode?: number; errmsg?: string }
+    } catch {
+      return null
+    }
   }
 
   private requireAppId() {

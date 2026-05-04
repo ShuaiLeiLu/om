@@ -37,8 +37,15 @@ WECHAT_MINIAPP_APP_SECRET
 WECHAT_REWARDED_VIDEO_AD_UNIT_ID
 SUB2API_BASE_URL
 SUB2API_GATEWAY_API_KEY
+SUB2API_ADMIN_API_KEY
+SUB2API_ADMIN_TOKEN
 SUB2API_ADMIN_EMAIL
 SUB2API_ADMIN_PASSWORD
+SUB2API_ADMIN_LOGIN_PATH
+SUB2API_USAGE_PATH
+SUB2API_USAGE_PAGE_SIZE
+SUB2API_USAGE_SYNC_MAX_PAGES
+SUB2API_USAGE_SYNC_DISABLED
 ```
 
 不要把真实密钥提交到代码仓库。
@@ -58,15 +65,16 @@ SUB2API_ADMIN_PASSWORD
 - SSE 聊天代理到 Sub2API
 - 会话与消息服务端保存
 - 广告奖励配置、reward session、claim
-- Sub2API usage 手动 ingest 和同步状态骨架
+- Sub2API usage 手动 ingest、流式响应 usage 入库扣费、定时 usage 同步
+- 微信小程序码图片生成接口
+- 前端接入 `/api/chat/completions` SSE
+- Nginx `/api/*` 反代到 `chatty-backend:3001`
+- 后台 llm requests、quota ledger、audit logs、微信绑定查询和解绑接口
 
 ## 仍需接入生产细节
 
-- Sub2API admin usage 真实接口的分页和游标同步。
-- 微信小程序码图片真实生成接口。
-- 前端接入 `/api/chat/completions` SSE。
+- 按生产 Sub2API 版本确认 `SUB2API_USAGE_PATH` 与响应字段。
 - 后台管理 UI。
-- 腾讯云 Caddy `/api/*` 反代到 `chatty-backend:3001`。
 
 ## 验证命令
 
