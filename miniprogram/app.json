@@ -1,11 +1,10 @@
 {
   "pages": [
-    "pages/index/index",
-    "pages/error/error"
+    "pages/index/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#0052d9",
+    "navigationBarBackgroundColor": "#0f766e",
     "navigationBarTitleText": "万模AI",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f6f6f6"

@@ -22,19 +22,21 @@
         <view class="info-row">
           <text>今日还可领取 {{rewardConfig.remainingToday || 0}} 次</text>
         </view>
+        <view wx:if="{{userInfo.bound}}" class="bind-row">已绑定万模AI账号</view>
       </view>
 
       <view class="card reward-card">
         <view class="reward-title">今日奖励</view>
         <view class="reward-amount">+{{rewardConfig.rewardTokens || 0}} tokens / 次</view>
         <view class="reward-desc">完整观看激励视频后发放，可用于网页版 AI 对话。</view>
+        <view wx:if="{{statusText}}" class="status-note">{{statusText}}</view>
         <button
           class="btn-primary"
           loading="{{claiming}}"
-          disabled="{{claiming || !rewardConfig.enabled || rewardConfig.remainingToday <= 0}}"
+          disabled="{{claiming || actionDisabled}}"
           bindtap="watchAdAndClaim"
         >
-          {{rewardConfig.remainingToday <= 0 ? '今日已领完' : '看广告领取 Token'}}
+          {{claiming ? '领取中...' : actionText}}
         </button>
       </view>
 

@@ -1,6 +1,5 @@
-/**app.wxss**/
 page {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   background-color: #f6f6f6;
   color: #333;
   font-size: 28rpx;
@@ -14,9 +13,8 @@ page {
   min-height: 100vh;
 }
 
-/* Primary Button */
 .btn-primary {
-  background-color: #0052d9;
+  background-color: #0f766e;
   color: #fff;
   border-radius: 8rpx;
   padding: 20rpx 0;
@@ -28,7 +26,7 @@ page {
 }
 
 .btn-primary:active {
-  background-color: #003cab;
+  background-color: #115e59;
 }
 
 .btn-primary[disabled] {
@@ -36,53 +34,10 @@ page {
   color: #fff;
 }
 
-/* Secondary Button */
-.btn-secondary {
-  background-color: #fff;
-  color: #0052d9;
-  border: 1rpx solid #0052d9;
-  border-radius: 8rpx;
-  padding: 20rpx 0;
-  text-align: center;
-  font-weight: 500;
-  font-size: 32rpx;
-  margin: 20rpx 0;
-}
-
-/* Cards */
 .card {
   background-color: #fff;
   border-radius: 16rpx;
   padding: 30rpx;
   margin: 20rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-/* Text styles */
-.text-bold {
-  font-weight: bold;
-}
-
-.text-gray {
-  color: #8a8a8a;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.text-large {
-  font-size: 36rpx;
-}
-
-.text-huge {
-  font-size: 48rpx;
-}
-
-.margin-top {
-  margin-top: 20rpx;
-}
-
-.margin-bottom {
-  margin-bottom: 20rpx;
 }

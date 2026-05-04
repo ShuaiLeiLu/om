@@ -1,7 +1,4 @@
 {
-  "desc": "关于本助手的搜索收录设置",
-  "rules": [{
-    "action": "allow",
-    "page": "*"
-  }]
+  "desc": "Sitemap",
+  "rules": [{"action": "allow", "page": "*"}]
 }

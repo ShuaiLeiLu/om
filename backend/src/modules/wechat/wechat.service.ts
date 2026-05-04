@@ -49,10 +49,7 @@ export class WechatService {
     const openid = String(wx.openid || '').trim()
     if (!openid) throw new UnauthorizedException('wechat_code_invalid')
     const appid = this.requireAppId()
-    const account = await this.prisma.oauthAccount.findUnique({
-      where: { provider_appid_openid: { provider: 'wechat_miniapp', appid, openid } },
-      include: { user: true }
-    })
+    const user = await this.resolveMiniappUser(appid, openid, wx.unionid || null)
     const token = randomToken()
     const expiresAt = nowPlusSeconds(24 * 60 * 60)
     await this.prisma.wechatMiniappSession.create({
@@ -60,15 +57,13 @@ export class WechatService {
         sessionTokenHash: sha256(token),
         openid,
         unionid: wx.unionid || null,
-        userId: account?.userId || null,
+        userId: user.id,
         expiresAt
       }
     })
     return {
       miniappSessionToken: token,
-      user: account?.user
-        ? { id: account.user.id, displayName: account.user.displayName, bound: true }
-        : { bound: false },
+      user: { id: user.id, displayName: user.displayName, avatarUrl: user.avatarUrl, bound: true },
       expiresAt
     }
   }
@@ -165,6 +160,44 @@ export class WechatService {
     const appid = this.config.get<string>('WECHAT_MINIAPP_APP_ID')
     if (!appid) throw new BadRequestException('wechat_config_incomplete')
     return appid
+  }
+
+  private async resolveMiniappUser(appid: string, openid: string, unionid: string | null) {
+    return this.prisma.$transaction(async (tx) => {
+      const miniappAccount = await tx.oauthAccount.findUnique({
+        where: { provider_appid_openid: { provider: 'wechat_miniapp', appid, openid } },
+        include: { user: true }
+      })
+      if (miniappAccount) {
+        if (unionid && miniappAccount.unionid !== unionid) {
+          await tx.oauthAccount.update({ where: { id: miniappAccount.id }, data: { unionid, lastLoginAt: new Date() } })
+        } else {
+          await tx.oauthAccount.update({ where: { id: miniappAccount.id }, data: { lastLoginAt: new Date() } })
+        }
+        return miniappAccount.user
+      }
+
+      const unionAccount = unionid
+        ? await tx.oauthAccount.findFirst({
+            where: { unionid },
+            include: { user: true },
+            orderBy: { boundAt: 'asc' }
+          })
+        : null
+
+      const user = unionAccount?.user || await tx.user.create({ data: { displayName: '微信用户' } })
+      await tx.oauthAccount.create({
+        data: {
+          provider: 'wechat_miniapp',
+          appid,
+          openid,
+          unionid,
+          userId: user.id,
+          lastLoginAt: new Date()
+        }
+      })
+      return user
+    })
   }
 
   private async userBalance(userId: string) {
