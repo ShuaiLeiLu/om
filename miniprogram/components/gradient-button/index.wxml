@@ -1,0 +1,15 @@
+<button
+  class="gb gb--{{type}} gb--{{size}} {{block ? 'gb--block' : ''}} {{disabled ? 'gb--disabled' : ''}} button-class"
+  loading="{{loading}}"
+  disabled="{{disabled}}"
+  open-type="{{openType}}"
+  bindtap="onTap"
+  bindgetuserinfo="onGetUserInfo"
+  bindgetphonenumber="onGetPhoneNumber"
+  bindcontact="onContact"
+>
+  <view class="gb-inner">
+    <text wx:if="{{icon && !loading}}" class="gb-icon">{{icon}}</text>
+    <slot></slot>
+  </view>
+</button>

@@ -47,4 +47,21 @@ export class WechatController {
   confirm(@Body() body: { scene?: string; miniappSessionToken?: string }) {
     return this.wechat.confirm(String(body.scene || ''), String(body.miniappSessionToken || ''))
   }
+
+  @Post('wechat/miniapp/auth/link-email')
+  linkEmail(
+    @Body()
+    body: { miniappSessionToken?: string; email?: string; password?: string }
+  ) {
+    return this.wechat.linkEmail(
+      String(body.miniappSessionToken || ''),
+      String(body.email || ''),
+      String(body.password || '')
+    )
+  }
+
+  @Post('wechat/miniapp/auth/unlink-email')
+  unlinkEmail(@Body() body: { miniappSessionToken?: string }) {
+    return this.wechat.unlinkEmail(String(body.miniappSessionToken || ''))
+  }
 }

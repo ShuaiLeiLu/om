@@ -79,11 +79,26 @@ export const useChatStore = create(
   )
 )
 
-export const useUIStore = create((set) => ({
-  isSidebarOpen: true,
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
-}))
+export const useUIStore = create(
+  persist(
+    (set) => ({
+      // mobile overlay open/close
+      isSidebarOpen: true,
+      toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+      setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+
+      // desktop rail collapse
+      isSidebarCollapsed: false,
+      toggleSidebarCollapsed: () =>
+        set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+      setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed })
+    }),
+    {
+      name: 'chatty-ui',
+      partialize: (state) => ({ isSidebarCollapsed: state.isSidebarCollapsed })
+    }
+  )
+)
 
 export const useModelStore = create((set) => ({
   selectedProvider: null,

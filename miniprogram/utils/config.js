@@ -6,9 +6,9 @@ try {
   localConfig = {};
 }
 
-const BASE_URL = localConfig.BASE_URL || 'http://127.0.0.1:3001/api';
+const BASE_URL = localConfig.BASE_URL || 'https://aihelp-backend.shuai.help/api';
 const WECHAT_APP_ID = localConfig.WECHAT_APP_ID || '';
-const REWARDED_VIDEO_AD_UNIT_ID = localConfig.REWARDED_VIDEO_AD_UNIT_ID || '';
+const REWARDED_VIDEO_AD_UNIT_ID = localConfig.REWARDED_VIDEO_AD_UNIT_ID || 'adunit-3258e3a8e5773f65';
 
 module.exports = {
   BASE_URL,

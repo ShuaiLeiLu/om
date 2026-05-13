@@ -1,0 +1,71 @@
+.gb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, filter 0.18s ease;
+  line-height: 1;
+}
+
+.gb:active {
+  transform: scale(0.97);
+  filter: brightness(1.1);
+}
+
+.gb.gb--disabled {
+  opacity: 0.45;
+  transform: none;
+  filter: none;
+}
+
+.gb--block {
+  display: flex;
+  width: 100%;
+}
+
+/* sizes */
+.gb--sm { font-size: 24rpx; padding: 14rpx 28rpx; min-height: 56rpx; }
+.gb--md { font-size: 28rpx; padding: 22rpx 36rpx; min-height: 80rpx; }
+.gb--lg { font-size: 32rpx; padding: 28rpx 44rpx; min-height: 96rpx; }
+
+/* primary */
+.gb--primary {
+  background-image: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+  box-shadow: 0 12rpx 36rpx rgba(168, 85, 247, 0.36);
+}
+
+/* emerald */
+.gb--emerald {
+  background-image: linear-gradient(135deg, #10b981, #14b8a6);
+  box-shadow: 0 12rpx 36rpx rgba(16, 185, 129, 0.34);
+}
+
+/* danger */
+.gb--danger {
+  background-image: linear-gradient(135deg, #f43f5e, #dc2626);
+  box-shadow: 0 12rpx 36rpx rgba(244, 63, 94, 0.3);
+}
+
+/* ghost */
+.gb--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2rpx solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.gb-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  line-height: 1;
+}
+
+.gb-icon {
+  font-size: 32rpx;
+  line-height: 1;
+}

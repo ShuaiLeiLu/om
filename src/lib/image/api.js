@@ -1,0 +1,103 @@
+// Wrapper around backend image endpoints.
+// /api/images/generations  – text-to-image
+// /api/images/edits        – reference-image edit (multi-image input)
+//
+// The backend is expected to accept the OpenAI-style parameter names and return:
+//   {
+//     images: [<dataUrlOrHttpUrl>, ...],
+//     content?: string,
+//     requestId?: string,
+//     usage?: { ... }
+//   }
+//
+// See docs/backend-image-api.md for full spec.
+
+async function readJson(res) {
+  const text = await res.text().catch(() => '')
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+function parseError(status, data) {
+  const message = data?.message || data?.error || ''
+  if (status === 401 || message === 'unauthorized') return '请先登录'
+  if (message === 'token_insufficient') return 'Token 余额不足'
+  if (message === 'model_disabled') return '当前模型暂不可用'
+  if (message === 'invalid_size') return '尺寸格式无效（需为 16 的倍数）'
+  if (message === 'too_many_reference_images') return '参考图数量超过限制（最多 16 张）'
+  if (typeof message === 'string' && message) return message
+  return `请求失败 (HTTP ${status})`
+}
+
+export async function generateImageRequest(payload, { signal } = {}) {
+  const res = await fetch('/api/images/generations', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseError(res.status, data))
+  return data
+}
+
+export async function editImageRequest(payload, { signal } = {}) {
+  const res = await fetch('/api/images/edits', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseError(res.status, data))
+  return data
+}
+
+// Convert an arbitrary image URL/dataURL into a Blob (handles both data: and http(s):).
+export async function urlToBlob(url) {
+  if (!url) throw new Error('empty url')
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`fetch failed: ${res.status}`)
+  return res.blob()
+}
+
+export function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+export async function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+export async function getImageDimensions(blobOrUrl) {
+  return new Promise((resolve, reject) => {
+    const url = typeof blobOrUrl === 'string' ? blobOrUrl : URL.createObjectURL(blobOrUrl)
+    const img = new Image()
+    img.onload = () => {
+      const dim = { width: img.naturalWidth, height: img.naturalHeight }
+      if (typeof blobOrUrl !== 'string') URL.revokeObjectURL(url)
+      resolve(dim)
+    }
+    img.onerror = (e) => {
+      if (typeof blobOrUrl !== 'string') URL.revokeObjectURL(url)
+      reject(e)
+    }
+    img.src = url
+  })
+}

@@ -1,11 +1,98 @@
+/* 全局主题 — 与 web 端深色玻璃态保持一致 */
 page {
-  background: #f5f6fa;
-  color: #141821;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background:
+    radial-gradient(600rpx 600rpx at 0 0, rgba(99, 102, 241, 0.18), transparent 60%),
+    radial-gradient(500rpx 500rpx at 100% 100%, rgba(217, 70, 239, 0.12), transparent 60%),
+    #050614;
+  background-attachment: fixed;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   font-size: 28rpx;
-  line-height: 1.5;
+  line-height: 1.55;
+  min-height: 100vh;
 }
 
 button::after {
   border: none;
+}
+
+/* 微信小程序 button 默认有边框和背景，去掉 */
+button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+/* —— 公共原子样式（在页面 wxml 里直接引用） —— */
+.text-gradient {
+  background: linear-gradient(135deg, #818cf8, #c084fc, #f0abfc);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  border: 2rpx solid rgba(255, 255, 255, 0.08);
+  border-radius: 32rpx;
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2rpx solid rgba(255, 255, 255, 0.1);
+  border-radius: 32rpx;
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+}
+
+.muted {
+  color: #94a3b8;
+}
+
+.muted-light {
+  color: #cbd5e1;
+}
+
+/* 文本工具类 */
+.text-xs { font-size: 20rpx; }
+.text-sm { font-size: 24rpx; }
+.text-base { font-size: 28rpx; }
+.text-lg { font-size: 32rpx; }
+.text-xl { font-size: 40rpx; }
+.text-2xl { font-size: 56rpx; }
+.text-3xl { font-size: 72rpx; }
+.text-display { font-size: 96rpx; }
+
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* 间距工具类 */
+.gap-1 { margin-top: 8rpx; }
+.gap-2 { margin-top: 16rpx; }
+.gap-3 { margin-top: 24rpx; }
+.gap-4 { margin-top: 32rpx; }
+.gap-5 { margin-top: 40rpx; }
+.gap-6 { margin-top: 48rpx; }
+
+/* 页面布局 */
+.page {
+  padding: 32rpx 32rpx 200rpx;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+.page-header {
+  padding: 16rpx 0 32rpx;
+}
+
+.uppercase-label {
+  font-size: 20rpx;
+  letter-spacing: 4rpx;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
 }

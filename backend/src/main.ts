@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
+import { json, urlencoded } from 'express'
 import cookieParser from 'cookie-parser'
 import { BigIntInterceptor } from './common/bigint.interceptor'
 import { AppModule } from './modules/app.module'
@@ -7,6 +8,10 @@ import { AppModule } from './modules/app.module'
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: false })
   app.setGlobalPrefix('api')
+  // Image-edit payloads can contain up to 16 reference images as base64 data URLs.
+  // 200 MB upper bound covers the worst case (16 × ~12 MB).
+  app.use(json({ limit: '200mb' }))
+  app.use(urlencoded({ limit: '200mb', extended: true }))
   app.use(cookieParser())
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
   app.useGlobalInterceptors(new BigIntInterceptor())

@@ -145,6 +145,81 @@ export async function fetchWechatLoginSession(sessionId) {
   return data
 }
 
+export async function localLogin({ email, password }) {
+  const res = await fetch('/api/auth/local/login', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function localRegister({ email, password, displayName }) {
+  const res = await fetch('/api/auth/local/register', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, displayName }),
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function localChangePassword({ oldPassword, newPassword }) {
+  const res = await fetch('/api/auth/local/change-password', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ oldPassword, newPassword }),
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function fetchAuthCapabilities() {
+  const res = await fetch('/api/auth/capabilities', {
+    credentials: 'include',
+    signal: AbortSignal.timeout(8000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) {
+    // 后端未启用 capabilities 时给一个保守默认（只允许扫码）
+    return { qrcode: true, wechatOauthWeb: false, wechatOauthH5: false }
+  }
+  return data
+}
+
+// 一键登录：拼接前端发起的授权 URL。
+// 实际跳转 / popup 打开由调用方决定。
+export function buildWechatOauthStartUrl({ mode = 'web', next = '/', popup = false, format = 'redirect' } = {}) {
+  const params = new URLSearchParams({
+    mode,
+    next,
+    popup: popup ? '1' : '0',
+    format
+  })
+  return `/api/auth/wechat/oauth/start?${params.toString()}`
+}
+
+export async function fetchWechatOauthStartUrl({ mode = 'web', next = '/', popup = false } = {}) {
+  const url = buildWechatOauthStartUrl({ mode, next, popup, format: 'json' })
+  const res = await fetch(url, {
+    credentials: 'include',
+    signal: AbortSignal.timeout(8000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
 export async function fetchQuotaLedger({ page = 1, pageSize = 20 } = {}) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   const res = await fetch(`/api/quota/ledger?${params.toString()}`, {

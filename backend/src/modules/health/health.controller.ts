@@ -1,12 +1,14 @@
 import { Controller, Get } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../prisma/prisma.service'
+import { MinioService } from '../storage/minio.service'
 
 @Controller()
 export class HealthController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    private readonly minio: MinioService
   ) {}
 
   @Get('health')
@@ -29,11 +31,22 @@ export class HealthController {
       }
     }
 
+    let storage = 'not_configured'
+    if (
+      this.config.get<string>('MINIO_ENDPOINT') &&
+      this.config.get<string>('MINIO_ACCESS_KEY') &&
+      this.config.get<string>('MINIO_SECRET_KEY') &&
+      this.config.get<string>('MINIO_BUCKET')
+    ) {
+      const result = await this.minio.checkBucket()
+      storage = result.ok ? 'ok' : 'error'
+    }
+
     return {
       ok: database === 'ok',
       version: '0.1.0',
       time: new Date().toISOString(),
-      services: { database, sub2api }
+      services: { database, sub2api, storage }
     }
   }
 }

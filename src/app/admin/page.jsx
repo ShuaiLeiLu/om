@@ -74,6 +74,8 @@ const tabs = [
   { id: 'audit', label: '审计', icon: ShieldCheck }
 ]
 
+const ADMIN_LOGIN_URL = '/login?next=/admin'
+
 export default function AdminPage() {
   const router = useRouter()
   const [admin, setAdmin] = useState(null)
@@ -117,7 +119,7 @@ export default function AdminPage() {
         setAdmin(me)
       })
       .catch(() => {
-        if (!cancelled) router.replace('/admin/login')
+        if (!cancelled) router.replace(ADMIN_LOGIN_URL)
       })
     return () => {
       cancelled = true
@@ -186,7 +188,7 @@ export default function AdminPage() {
       }
     } catch (err) {
       if (String(err.message || '').includes('请先登录')) {
-        router.replace('/admin/login')
+        router.replace(ADMIN_LOGIN_URL)
         return
       }
       setError(err.message || '后台数据加载失败')
@@ -197,7 +199,7 @@ export default function AdminPage() {
 
   async function handleLogout() {
     await adminLogout().catch(() => null)
-    router.replace('/admin/login')
+    router.replace(ADMIN_LOGIN_URL)
   }
 
   async function runAction(key, action, successText) {
@@ -465,10 +467,14 @@ function Overview({ dashboard, requests, ledger, rewardEvents, onSync, saving })
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat icon={UsersRound} label="用户总数" value={formatToken(dashboard?.users)} />
-        <Stat icon={MessageSquareText} label="模型请求" value={formatToken(dashboard?.llmRequests)} />
-        <Stat icon={Coins} label="Token 净变动" value={formatToken(dashboard?.totalTokenDelta)} />
-        <Stat icon={Gift} label="广告奖励 Token" value={formatToken(dashboard?.adRewardTokens)} />
+        <Stat icon={UsersRound} label="用户总数" value={formatToken(dashboard?.users)} hint={`活跃 ${formatToken(dashboard?.activeUsers)} / 7日新增 ${formatToken(dashboard?.newUsers7d)}`} />
+        <Stat icon={MessageSquareText} label="模型请求" value={formatToken(dashboard?.llmRequests)} hint={`7日 ${formatToken(dashboard?.requests7d)} / 失败 ${formatToken(dashboard?.failedRequests)}`} />
+        <Stat icon={Boxes} label="图片任务" value={formatToken(dashboard?.imageTasks)} hint={`7日新增 ${formatToken(dashboard?.imageTasks7d)}`} />
+        <Stat icon={Coins} label="Token 净变动" value={formatToken(dashboard?.totalTokenDelta)} hint={`模型消耗 ${formatToken(dashboard?.modelUsageTokens)}`} />
+        <Stat icon={Gift} label="广告奖励 Token" value={formatToken(dashboard?.adRewardTokens)} hint={`今日奖励 ${todayRewardTokens} 次`} />
+        <Stat icon={Activity} label="活跃会话" value={formatToken(dashboard?.conversations)} hint="未删除对话数" />
+        <Stat icon={DatabaseZap} label="存储图片" value={formatToken(dashboard?.storedImages)} hint={formatBytes(dashboard?.storageBytes)} />
+        <Stat icon={BadgeCheck} label="完成请求" value={formatToken(dashboard?.completedRequests)} hint="模型网关完成量" />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3">
@@ -931,7 +937,7 @@ function LedgerRows({ ledger, compact = false }) {
   ))
 }
 
-function Stat({ icon: Icon, label, value }) {
+function Stat({ icon: Icon, label, value, hint }) {
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
@@ -939,6 +945,7 @@ function Stat({ icon: Icon, label, value }) {
         {label}
       </div>
       <p className="mt-3 text-2xl font-bold tracking-tight text-white">{value || '0'}</p>
+      {hint && <p className="mt-2 truncate text-[11px] text-slate-500">{hint}</p>}
     </div>
   )
 }
@@ -1001,6 +1008,14 @@ function formatDate(value) {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+function formatBytes(value) {
+  const bytes = Number(value || 0)
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)))
+  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`
 }
 
 function isToday(value) {

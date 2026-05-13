@@ -39,6 +39,7 @@ ADMIN_SESSION_SECRET
 USER_SESSION_SECRET
 WECHAT_MINIAPP_APP_ID
 WECHAT_MINIAPP_APP_SECRET
+WECHAT_MINIAPP_ENV_VERSION
 WECHAT_REWARDED_VIDEO_AD_UNIT_ID
 SUB2API_BASE_URL
 SUB2API_GATEWAY_API_KEY
@@ -55,6 +56,14 @@ Sub2API usage 同步未确认前可以先关闭：
 ```text
 SUB2API_USAGE_SYNC_DISABLED=true
 ```
+
+网页登录二维码默认跳转小程序正式版：
+
+```text
+WECHAT_MINIAPP_ENV_VERSION=release
+```
+
+可选值只有 `release`、`trial`、`develop`。需要测试体验版时才临时改成 `trial`。
 
 确认管理接口和返回字段后再开启，并补齐：
 

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Response } from 'express'
+import * as argon2 from 'argon2'
 import { AuthService } from '../auth/auth.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { nowPlusSeconds, randomToken, sha256 } from '../../common/http'
@@ -66,7 +67,7 @@ export class WechatService {
     }
     const accessToken = await this.getAccessToken()
     const page = this.config.get<string>('WECHAT_MINIAPP_PAGE_PATH') || 'pages/index/index'
-    const envVersion = this.config.get<string>('WECHAT_MINIAPP_ENV_VERSION') || 'release'
+    const envVersion = this.getMiniappEnvVersion()
     const res = await fetch(`https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${encodeURIComponent(accessToken)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -113,13 +114,97 @@ export class WechatService {
 
   async miniappMe(sessionToken: string) {
     const session = await this.verifyMiniappSession(sessionToken)
+    const user = session.userId
+      ? await this.prisma.user.findUnique({
+          where: { id: session.userId },
+          select: {
+            id: true,
+            displayName: true,
+            avatarUrl: true,
+            email: true,
+            emailVerifiedAt: true
+          }
+        })
+      : null
     const balance = session.userId ? await this.userBalance(session.userId) : BigInt(0)
     return {
       openid: session.openid.slice(0, 6) + '***',
       bound: Boolean(session.userId),
       userId: session.userId,
-      tokenBalance: balance.toString()
+      tokenBalance: balance.toString(),
+      displayName: user?.displayName || '',
+      avatarUrl: user?.avatarUrl || '',
+      email: user?.email || null,
+      emailVerified: !!user?.emailVerifiedAt
     }
+  }
+
+  /**
+   * 把当前小程序登录的微信账号与一个邮箱+密码账号绑定。
+   *
+   * 情况 1：邮箱在系统里不存在 → 直接给当前 User 设 email + passwordHash
+   * 情况 2：邮箱已经被其他 User 占用 →
+   *   - 如果当前 User 没有 oauthAccounts 之外的数据（新创建）→ 合并到那个 User，
+   *     将 wechat oauth + miniapp session 都迁过去，删掉旧的"空"账号
+   *   - 如果当前 User 已经有数据（消息/任务等）→ 拒绝，返回 email_already_bound_to_other
+   *
+   * 简化版：只支持「邮箱未占用」的情况，「已占用」直接报错让用户处理冲突。
+   * 后续可以加复杂合并流程。
+   */
+  async linkEmail(sessionToken: string, email: string, password: string) {
+    const session = await this.verifyMiniappSession(sessionToken)
+    if (!session.userId) throw new UnauthorizedException('wechat_not_bound')
+
+    const normalizedEmail = String(email || '').trim().toLowerCase()
+    if (!normalizedEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(normalizedEmail)) {
+      throw new BadRequestException('invalid_email')
+    }
+    if (!password || password.length < 8 || password.length > 128) {
+      throw new BadRequestException('password_too_short')
+    }
+    if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      throw new BadRequestException('password_too_weak')
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: session.userId } })
+    if (!user) throw new UnauthorizedException('unauthorized')
+
+    if (user.email && user.email !== normalizedEmail) {
+      throw new BadRequestException('email_already_set')
+    }
+
+    const taken = await this.prisma.user.findUnique({ where: { email: normalizedEmail } })
+    if (taken && taken.id !== user.id) {
+      throw new BadRequestException('email_already_bound_to_other')
+    }
+
+    const passwordHash = await argon2.hash(password, { type: argon2.argon2id })
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { email: normalizedEmail, passwordHash }
+    })
+
+    return {
+      ok: true as const,
+      email: updated.email,
+      emailVerified: !!updated.emailVerifiedAt
+    }
+  }
+
+  /** 解绑邮箱（清空 email + passwordHash）。保留微信 oauth 不动。 */
+  async unlinkEmail(sessionToken: string) {
+    const session = await this.verifyMiniappSession(sessionToken)
+    if (!session.userId) throw new UnauthorizedException('wechat_not_bound')
+
+    const user = await this.prisma.user.findUnique({ where: { id: session.userId } })
+    if (!user) throw new UnauthorizedException('unauthorized')
+    if (!user.email) return { ok: true as const }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { email: null, passwordHash: null, emailVerifiedAt: null }
+    })
+    return { ok: true as const }
   }
 
   async scan(scene: string, sessionToken: string) {
@@ -238,6 +323,12 @@ export class WechatService {
     const appid = this.config.get<string>('WECHAT_MINIAPP_APP_ID')
     if (!appid) throw new BadRequestException('wechat_config_incomplete')
     return appid
+  }
+
+  private getMiniappEnvVersion() {
+    const envVersion = String(this.config.get<string>('WECHAT_MINIAPP_ENV_VERSION') || 'release').trim()
+    if (['release', 'trial', 'develop'].includes(envVersion)) return envVersion
+    throw new BadRequestException('wechat_env_version_invalid')
   }
 
   private async resolveMiniappUser(appid: string, openid: string, unionid: string | null) {

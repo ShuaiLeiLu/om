@@ -1,13 +1,36 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/home/index",
+    "pages/rewards/index",
+    "pages/profile/index",
+    "pages/scan-login/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#10151f",
+    "navigationBarBackgroundColor": "#0a0b14",
     "navigationBarTitleText": "万模AI",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f6fa"
+    "backgroundColor": "#050614"
+  },
+  "tabBar": {
+    "color": "#64748b",
+    "selectedColor": "#c4b5fd",
+    "backgroundColor": "#0a0b14",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/rewards/index",
+        "text": "奖励"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
   },
   "sitemapLocation": "sitemap.json",
   "usingComponents": {}

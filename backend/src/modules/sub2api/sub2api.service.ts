@@ -208,8 +208,8 @@ export class Sub2apiService {
       signal: AbortSignal.timeout(10000)
     })
     const data = await this.readJson(res)
-    if (!res.ok) throw new Error(`sub2api_admin_login_failed_${res.status}`)
-    const token = this.pickString(data, ['token', 'access_token', 'accessToken', 'jwt'])
+    if (!res.ok) throw new Error(`sub2api_admin_login_failed_${res.status}${this.errorSuffix(data)}`)
+    const token = this.pickToken(data)
     if (!token) throw new Error('sub2api_admin_token_missing')
     return token
   }
@@ -224,7 +224,7 @@ export class Sub2apiService {
       signal: AbortSignal.timeout(20000)
     })
     const data = await this.readJson(res)
-    if (!res.ok) throw new Error(`sub2api_usage_http_${res.status}`)
+    if (!res.ok) throw new Error(`sub2api_usage_http_${res.status}${this.errorSuffix(data)}`)
     return {
       usages: this.extractUsageArray(data),
       nextCursor: this.pickString(data, ['nextCursor', 'next_cursor', 'cursor']) || null
@@ -275,6 +275,14 @@ export class Sub2apiService {
     return ''
   }
 
+  private pickToken(data: unknown) {
+    const keys = ['token', 'access_token', 'accessToken', 'jwt', 'admin_api_key', 'adminApiKey']
+    const direct = this.pickString(data, keys)
+    if (direct) return direct
+    if (!data || typeof data !== 'object') return ''
+    return this.pickString((data as Record<string, unknown>).data, keys)
+  }
+
   private firstString(...values: unknown[]) {
     for (const value of values) {
       if (typeof value === 'string' && value.trim()) return value.trim()
@@ -319,5 +327,10 @@ export class Sub2apiService {
       update: { lastError: reason }
     })
     return { ok: false, skipped: true, reason }
+  }
+
+  private errorSuffix(data: unknown) {
+    const reason = this.pickString(data, ['reason', 'code', 'message', 'error'])
+    return reason ? `_${reason}` : ''
   }
 }

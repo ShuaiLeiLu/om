@@ -109,16 +109,38 @@ enum RewardSessionStatus {
   rejected
 }
 
+enum ImageSource {
+  upload
+  generated
+  system
+}
+
+enum ImageTaskMode {
+  generate
+  edit
+}
+
+enum ImageTaskStatus {
+  pending
+  running
+  done
+  failed
+  canceled
+}
+
 model User {
-  id             String          @id @default(uuid())
-  displayName    String          @default("")
-  avatarUrl      String          @default("")
-  status         UserStatus      @default(active)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  lastLoginAt    DateTime?
-  oauthAccounts  OauthAccount[]
-  sessions       UserSession[]
+  id              String                 @id @default(uuid())
+  displayName     String                 @default("")
+  avatarUrl       String                 @default("")
+  email           String?                @unique
+  passwordHash    String?
+  emailVerifiedAt DateTime?
+  status          UserStatus             @default(active)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  lastLoginAt     DateTime?
+  oauthAccounts   OauthAccount[]
+  sessions        UserSession[]
   qrSessions     WechatQrSession[]
   miniSessions   WechatMiniappSession[]
   tokenGrants    TokenGrant[]
@@ -129,6 +151,10 @@ model User {
   usageEvents    UsageEvent[]
   rewardSessions AdRewardSession[]
   rewardEvents   AdRewardEvent[]
+  ownedImages    Image[]
+  imageTasks     ImageTask[]
+  storageUsage   StorageUsage?
+  imageRefs      UserImageRef[]
 }
 
 model AdminUser {
@@ -142,7 +168,7 @@ model AdminUser {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   auditLogs    AdminAuditLog[]
-  sessions      AdminSession[]
+  sessions     AdminSession[]
 }
 
 model AdminSession {
@@ -231,30 +257,30 @@ model WechatMiniappSession {
 }
 
 model Plan {
-  id          String         @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   tokenAmount BigInt
   validDays   Int
   modelScope  Json?
-  status      PlanStatus     @default(active)
-  remark      String         @default("")
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  status      PlanStatus   @default(active)
+  remark      String       @default("")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   redeemCodes RedeemCode[]
 }
 
 model RedeemCode {
   id               String           @id @default(uuid())
-  codeHash          String           @unique
-  planId            String
-  status            RedeemCodeStatus @default(unused)
-  expiresAt         DateTime?
-  usedByUserId      String?
-  usedAt            DateTime?
-  createdByAdminId  String?
-  createdAt         DateTime         @default(now())
-  revokedAt         DateTime?
-  plan              Plan             @relation(fields: [planId], references: [id], onDelete: Restrict)
+  codeHash         String           @unique
+  planId           String
+  status           RedeemCodeStatus @default(unused)
+  expiresAt        DateTime?
+  usedByUserId     String?
+  usedAt           DateTime?
+  createdByAdminId String?
+  createdAt        DateTime         @default(now())
+  revokedAt        DateTime?
+  plan             Plan             @relation(fields: [planId], references: [id], onDelete: Restrict)
 
   @@index([planId])
   @@index([status])
@@ -306,6 +332,7 @@ model Conversation {
   user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages       Message[]
   llmRequests    LlmRequest[]
+  imageTasks     ImageTask[]
 
   @@index([userId, updatedAt])
 }
@@ -328,20 +355,21 @@ model Message {
 }
 
 model LlmRequest {
-  id                String           @id @default(uuid())
-  requestId          String           @unique
-  userId             String
-  conversationId     String?
-  modelId            String
-  sub2apiRequestId   String?
-  status             LlmRequestStatus @default(pending)
-  errorMessage       String?
-  startedAt          DateTime?
-  completedAt        DateTime?
-  createdAt          DateTime         @default(now())
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversation       Conversation?     @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  usageEvents        UsageEvent[]
+  id               String           @id @default(uuid())
+  requestId        String           @unique
+  userId           String
+  conversationId   String?
+  modelId          String
+  sub2apiRequestId String?
+  status           LlmRequestStatus @default(pending)
+  errorMessage     String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime         @default(now())
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation     Conversation?    @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  usageEvents      UsageEvent[]
+  imageTask        ImageTask?       @relation("ImageTaskLlmRequest")
 
   @@index([userId, createdAt])
   @@index([sub2apiRequestId])
@@ -349,49 +377,144 @@ model LlmRequest {
 
 model UsageEvent {
   id               String           @id @default(uuid())
-  sub2apiUsageId    String           @unique
-  llmRequestId      String?
-  userId            String?
-  modelId           String?
-  promptTokens      BigInt           @default(0)
-  completionTokens  BigInt           @default(0)
-  totalTokens       BigInt           @default(0)
-  cost              Decimal          @default(0) @db.Decimal(18, 8)
-  rawJson           Json
-  status            UsageEventStatus @default(unmatched)
-  syncedAt          DateTime         @default(now())
-  createdAt         DateTime         @default(now())
-  request           LlmRequest?      @relation(fields: [llmRequestId], references: [id], onDelete: SetNull)
-  user              User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sub2apiUsageId   String           @unique
+  llmRequestId     String?
+  userId           String?
+  modelId          String?
+  promptTokens     BigInt           @default(0)
+  completionTokens BigInt           @default(0)
+  totalTokens      BigInt           @default(0)
+  cost             Decimal          @default(0) @db.Decimal(18, 8)
+  rawJson          Json
+  status           UsageEventStatus @default(unmatched)
+  syncedAt         DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  request          LlmRequest?      @relation(fields: [llmRequestId], references: [id], onDelete: SetNull)
+  user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([llmRequestId])
 }
 
 model ModelConfig {
-  id            String   @id @default(uuid())
-  provider      String
-  displayName   String
-  sub2apiModel  String   @unique
-  enabled       Boolean  @default(true)
-  sortOrder     Int      @default(0)
-  remark        String   @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid())
+  provider     String
+  displayName  String
+  sub2apiModel String   @unique
+  enabled      Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  remark       String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Image {
+  id          String            @id @default(uuid())
+  hash        String            @unique
+  bucket      String
+  objectKey   String
+  contentType String
+  bytes       Int
+  width       Int?
+  height      Int?
+  source      ImageSource       @default(generated)
+  ownerUserId String?
+  refCount    Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  owner       User?             @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  taskInputs  ImageTaskInput[]
+  taskOutputs ImageTaskOutput[]
+  userRefs    UserImageRef[]
+
+  @@index([ownerUserId, createdAt])
+}
+
+model ImageTask {
+  id               String            @id @default(uuid())
+  userId           String
+  conversationId   String?
+  mode             ImageTaskMode
+  modelId          String
+  prompt           String
+  paramsJson       Json
+  status           ImageTaskStatus   @default(pending)
+  error            String?
+  requestId        String            @unique
+  sub2apiRequestId String?
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  durationMs       Int?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation     Conversation?     @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  inputs           ImageTaskInput[]
+  outputs          ImageTaskOutput[]
+  llmRequest       LlmRequest?       @relation("ImageTaskLlmRequest", fields: [requestId], references: [requestId], onDelete: NoAction)
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+}
+
+model ImageTaskInput {
+  id      String    @id @default(uuid())
+  taskId  String
+  imageId String
+  ordinal Int
+  task    ImageTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  image   Image     @relation(fields: [imageId], references: [id], onDelete: Restrict)
+
+  @@unique([taskId, ordinal])
+  @@index([imageId])
+}
+
+model ImageTaskOutput {
+  id            String    @id @default(uuid())
+  taskId        String
+  imageId       String
+  ordinal       Int
+  revisedPrompt String?
+  task          ImageTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  image         Image     @relation(fields: [imageId], references: [id], onDelete: Restrict)
+
+  @@unique([taskId, ordinal])
+  @@index([imageId])
+}
+
+model StorageUsage {
+  userId      String   @id
+  bytesTotal  BigInt   @default(0)
+  imagesCount Int      @default(0)
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserImageRef {
+  userId  String
+  imageId String
+  count   Int    @default(0)
+  bytes   Int
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  image   Image  @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@id([userId, imageId])
+  @@index([userId])
+  @@index([imageId])
 }
 
 model AdRewardConfig {
-  id                    String     @id @default(uuid())
-  enabled               Boolean    @default(false)
-  adUnitId              String     @default("")
-  rewardTokens          BigInt     @default(1000)
-  dailyLimitPerUser     Int        @default(5)
-  rewardTokenValidDays  Int        @default(7)
-  minIntervalSeconds    Int        @default(30)
-  sessionTtlSeconds     Int        @default(300)
-  updatedByAdminId      String?
-  updatedAt             DateTime   @updatedAt
-  createdAt             DateTime   @default(now())
+  id                   String   @id @default(uuid())
+  enabled              Boolean  @default(false)
+  adUnitId             String   @default("")
+  rewardTokens         BigInt   @default(1000)
+  dailyLimitPerUser    Int      @default(5)
+  rewardTokenValidDays Int      @default(7)
+  minIntervalSeconds   Int      @default(30)
+  sessionTtlSeconds    Int      @default(300)
+  updatedByAdminId     String?
+  updatedAt            DateTime @updatedAt
+  createdAt            DateTime @default(now())
 }
 
 model AdRewardSession {
@@ -440,17 +563,17 @@ model SyncState {
 }
 
 model AdminAuditLog {
-  id           String     @id @default(uuid())
-  adminUserId  String?
-  action       String
-  targetType   String
-  targetId     String?
-  beforeJson   Json?
-  afterJson    Json?
-  ip           String     @default("")
-  userAgent    String     @default("")
-  createdAt    DateTime   @default(now())
-  adminUser    AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+  id          String     @id @default(uuid())
+  adminUserId String?
+  action      String
+  targetType  String
+  targetId    String?
+  beforeJson  Json?
+  afterJson   Json?
+  ip          String     @default("")
+  userAgent   String     @default("")
+  createdAt   DateTime   @default(now())
+  adminUser   AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
 
   @@index([adminUserId, createdAt])
   @@index([targetType, targetId])

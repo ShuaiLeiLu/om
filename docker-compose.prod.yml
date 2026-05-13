@@ -1,0 +1,40 @@
+services:
+  chatty-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: chatty-backend:latest
+    container_name: chatty-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      APP_ORIGIN: https://aihelp.shuai.help
+    expose:
+      - "3001"
+    ports:
+      - "3001:3001"
+    networks:
+      - deploy_default
+
+  chatty-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://chatty-backend:3001
+    image: chatty-frontend:latest
+    container_name: chatty-frontend
+    restart: unless-stopped
+    depends_on:
+      - chatty-backend
+    ports:
+      - "18080:3000"
+    networks:
+      - deploy_default
+
+networks:
+  deploy_default:
+    external: true

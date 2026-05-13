@@ -7,6 +7,7 @@ import { randomToken, sha256, toPublicBigInt } from '../../common/http'
 import { PrismaService } from '../prisma/prisma.service'
 
 const ADMIN_COOKIE = 'chatty_admin_session'
+const DAY_MS = 24 * 60 * 60 * 1000
 
 @Injectable()
 export class AdminService {
@@ -19,15 +20,39 @@ export class AdminService {
     const login = String(input.username || input.email || '').trim()
     const password = String(input.password || '')
     if (!login || !password) throw new BadRequestException('username_password_required')
+    return this.loginWithIdentifier(login, password, res, meta)
+  }
+
+  async tryLoginWithIdentifier(login: string, password: string, res: Response, meta: { ip: string; userAgent: string }) {
+    if (!login || !password) return null
     const admin = await this.prisma.adminUser.findFirst({
-      where: { OR: [{ username: login }, { email: login }] }
+      where: { OR: [{ username: login }, { email: login.toLowerCase() }] }
+    })
+    if (!admin || admin.status !== 'active') return null
+    const ok = await argon2.verify(admin.passwordHash, password)
+    if (!ok) return null
+
+    return this.createAdminSession(admin, res, meta)
+  }
+
+  private async loginWithIdentifier(login: string, password: string, res: Response, meta: { ip: string; userAgent: string }) {
+    const admin = await this.prisma.adminUser.findFirst({
+      where: { OR: [{ username: login }, { email: login.toLowerCase() }] }
     })
     if (!admin || admin.status !== 'active') throw new UnauthorizedException('invalid_credentials')
     const ok = await argon2.verify(admin.passwordHash, password)
     if (!ok) throw new UnauthorizedException('invalid_credentials')
 
+    return this.createAdminSession(admin, res, meta)
+  }
+
+  private async createAdminSession(
+    admin: { id: string; username: string; role: string },
+    res: Response,
+    meta: { ip: string; userAgent: string }
+  ) {
     const token = randomToken()
-    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    const expiresAt = new Date(Date.now() + 14 * DAY_MS)
     await this.prisma.adminSession.create({
       data: { adminUserId: admin.id, refreshTokenHash: sha256(token), expiresAt, ip: meta.ip, userAgent: meta.userAgent }
     })
@@ -56,17 +81,55 @@ export class AdminService {
   }
 
   async dashboard() {
-    const [users, requests, tokenLedger, adLedger] = await Promise.all([
+    const since = new Date(Date.now() - 7 * DAY_MS)
+    const [
+      users,
+      activeUsers,
+      newUsers7d,
+      requests,
+      completedRequests,
+      failedRequests,
+      requests7d,
+      imageTasks,
+      imageTasks7d,
+      conversations,
+      tokenLedger,
+      usageLedger,
+      adLedger,
+      storageUsage
+    ] = await Promise.all([
       this.prisma.user.count(),
+      this.prisma.user.count({ where: { status: 'active' } }),
+      this.prisma.user.count({ where: { createdAt: { gte: since } } }),
       this.prisma.llmRequest.count(),
+      this.prisma.llmRequest.count({ where: { status: 'completed' } }),
+      this.prisma.llmRequest.count({ where: { status: 'failed' } }),
+      this.prisma.llmRequest.count({ where: { createdAt: { gte: since } } }),
+      this.prisma.imageTask.count(),
+      this.prisma.imageTask.count({ where: { createdAt: { gte: since } } }),
+      this.prisma.conversation.count({ where: { status: 'active' } }),
       this.prisma.quotaLedger.aggregate({ _sum: { deltaTokens: true } }),
+      this.prisma.quotaLedger.aggregate({ where: { type: 'model_usage' }, _sum: { deltaTokens: true } }),
       this.prisma.quotaLedger.aggregate({ where: { type: 'ad_reward' }, _sum: { deltaTokens: true } })
+      ,
+      this.prisma.storageUsage.aggregate({ _sum: { bytesTotal: true, imagesCount: true } })
     ])
     return {
       users,
+      activeUsers,
+      newUsers7d,
       llmRequests: requests,
+      completedRequests,
+      failedRequests,
+      requests7d,
+      imageTasks,
+      imageTasks7d,
+      conversations,
       totalTokenDelta: toPublicBigInt(tokenLedger._sum.deltaTokens || 0),
-      adRewardTokens: toPublicBigInt(adLedger._sum.deltaTokens || 0)
+      modelUsageTokens: toPublicBigInt(usageLedger._sum.deltaTokens || 0),
+      adRewardTokens: toPublicBigInt(adLedger._sum.deltaTokens || 0),
+      storageBytes: toPublicBigInt(storageUsage._sum.bytesTotal || 0),
+      storedImages: storageUsage._sum.imagesCount || 0
     }
   }
 
