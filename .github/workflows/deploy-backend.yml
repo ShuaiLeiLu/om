@@ -1,0 +1,35 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "docker-compose.prod.yml"
+      - "scripts/deploy-backend.sh"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy backend on Tencent CVM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.TENCENT_HOST }}
+          username: ${{ secrets.TENCENT_USER }}
+          key: ${{ secrets.TENCENT_SSH_KEY }}
+          port: 22
+          script: |
+            set -eu
+            APP_DIR="/opt/chatty"
+            BRANCH="main"
+
+            cd "$APP_DIR"
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+
+            sh scripts/deploy-backend.sh
