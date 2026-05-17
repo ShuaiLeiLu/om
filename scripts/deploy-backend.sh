@@ -15,5 +15,5 @@ git reset --hard "origin/$BRANCH"
 
 $COMPOSE build "$BACKEND_SERVICE"
 $COMPOSE run --rm "$BACKEND_SERVICE" npm run prisma:deploy
-$COMPOSE up -d "$BACKEND_SERVICE"
+$COMPOSE up -d --force-recreate --no-deps "$BACKEND_SERVICE"
 docker image prune -f
