@@ -1,4 +1,4 @@
-name: Deploy Backend
+name: Deploy App
 
 on:
   push:
@@ -6,6 +6,14 @@ on:
       - main
     paths:
       - "backend/**"
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.mjs"
+      - "tailwind.config.js"
+      - "postcss.config.mjs"
+      - "Dockerfile"
       - "docker-compose.prod.yml"
       - "scripts/deploy-backend.sh"
       - ".github/workflows/deploy-backend.yml"
@@ -16,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy backend on Tencent CVM
+      - name: Deploy app on Tencent CVM
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.TENCENT_HOST }}
