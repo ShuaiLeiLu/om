@@ -78,14 +78,14 @@ export class QuotaService {
     })
   }
 
-  async consumeTokens(userId: string, tokens: bigint, relatedId: string) {
+  async consumeTokens(userId: string, tokens: bigint, relatedId: string, remark?: string) {
     if (tokens <= BigInt(0)) return
     await this.prisma.$transaction(async (tx) => {
-      await this.consumeTokensInTransaction(tx, userId, tokens, relatedId)
+      await this.consumeTokensInTransaction(tx, userId, tokens, relatedId, remark)
     })
   }
 
-  async consumeTokensInTransaction(tx: Prisma.TransactionClient, userId: string, tokens: bigint, relatedId: string) {
+  async consumeTokensInTransaction(tx: Prisma.TransactionClient, userId: string, tokens: bigint, relatedId: string, remark?: string) {
     if (tokens <= BigInt(0)) return
       let remaining = tokens
       const grants = await tx.tokenGrant.findMany({
@@ -113,7 +113,7 @@ export class QuotaService {
           deltaTokens: -tokens,
           balanceAfter: balance,
           relatedId,
-          remark: 'Sub2API usage token consumption'
+          remark: remark || 'Model usage quota consumption'
         }
       })
   }

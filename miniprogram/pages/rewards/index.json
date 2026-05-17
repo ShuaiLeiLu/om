@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "Token 奖励",
+  "navigationBarTitleText": "算力点 奖励",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "glass-card": "/components/glass-card/index",

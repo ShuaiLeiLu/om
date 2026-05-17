@@ -62,7 +62,7 @@ export function ChatLanding({
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-100">登录解锁完整功能</p>
               <p className="mt-0.5 text-[10px] text-slate-400">
-                微信扫码登录，同步 Token 余额
+                微信扫码登录，同步 算力点余额
               </p>
             </div>
             <ArrowRight

@@ -15,7 +15,7 @@ export default function PlansTab({ data, saving, runAction }) {
   const plans = data.plans || []
   const [form, setForm] = useState({
     name: '',
-    tokenAmount: '100000',
+    tokenAmount: '100',
     validDays: '30',
     remark: ''
   })
@@ -25,7 +25,7 @@ export default function PlansTab({ data, saving, runAction }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">创建套餐</CardTitle>
-          <CardDescription>套餐用于生成兑换码，按 Token 数 + 有效期发放</CardDescription>
+          <CardDescription>套餐用于生成兑换码，按算力点数量 + 有效期发放</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -42,7 +42,7 @@ export default function PlansTab({ data, saving, runAction }) {
                   }),
                 '套餐已创建'
               )
-              setForm({ name: '', tokenAmount: '100000', validDays: '30', remark: '' })
+              setForm({ name: '', tokenAmount: '100', validDays: '30', remark: '' })
             }}
             className="grid gap-3 lg:grid-cols-[1.4fr_1fr_0.8fr_1.6fr_auto] lg:items-end"
           >
@@ -54,7 +54,7 @@ export default function PlansTab({ data, saving, runAction }) {
                 required
               />
             </Field>
-            <Field label="Token 数">
+            <Field label="算力点数量">
               <Input
                 value={form.tokenAmount}
                 onChange={(e) => setForm({ ...form, tokenAmount: e.target.value })}
@@ -113,7 +113,7 @@ export default function PlansTab({ data, saving, runAction }) {
             },
             {
               key: 'tokens',
-              label: 'Token',
+              label: '算力点',
               align: 'right',
               width: 120,
               render: (p) => (

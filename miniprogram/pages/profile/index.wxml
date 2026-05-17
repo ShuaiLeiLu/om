@@ -17,7 +17,7 @@
         <view class="user-name">{{userInfo.displayName || '微信用户'}}</view>
         <view class="user-balance muted">
           <text class="user-balance-num">{{balanceText}}</text>
-          <text> Token 余额</text>
+          <text> 算力点余额</text>
         </view>
       </view>
       <status-pill

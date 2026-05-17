@@ -151,12 +151,17 @@ export class ChatService {
         body: JSON.stringify({
           model: model.sub2apiModel,
           messages: input.messages.map((message) => ({ role: message.role, content: message.content })),
+          user: userId,
           stream: true,
           stream_options: { include_usage: true }
         }),
         signal: AbortSignal.timeout(120000)
       })
-      if (!upstream.ok || !upstream.body) throw new Error(`sub2api_http_${upstream.status}`)
+      if (!upstream.ok) {
+        const data = await this.readJson(upstream)
+        throw new Error(this.chatUpstreamErrorMessage(data, upstream.status))
+      }
+      if (!upstream.body) throw new Error('上游模型服务没有返回流式内容，请稍后重试')
       const sub2apiRequestId = this.extractUpstreamRequestId(upstream) || requestId
       await this.prisma.llmRequest.update({
         where: { id: llmRequest.id },
@@ -543,6 +548,7 @@ export class ChatService {
           body: JSON.stringify({
             model,
             prompt,
+            user: userId,
             n: input.n || 1,
             size: input.size || '1024x1024',
             quality: input.quality || 'medium',
@@ -563,6 +569,7 @@ export class ChatService {
     const outputFormat = input.output_format || 'png'
     form.set('model', model)
     form.set('prompt', prompt)
+    form.set('user', userId)
     form.set('n', String(input.n || 1))
     form.set('size', input.size || '1024x1024')
     form.set('quality', input.quality || 'medium')
@@ -682,6 +689,16 @@ export class ChatService {
       if (typeof message === 'string' && message) return message
     }
     return `sub2api_http_${status}`
+  }
+
+  private chatUpstreamErrorMessage(data: unknown, status: number) {
+    const detail = this.upstreamErrorMessage(data, status)
+    if (status === 503) return '上游模型服务暂时不可用或繁忙，请稍后重试'
+    if (status === 502) return '上游模型网关返回错误，请稍后重试'
+    if (status === 504) return '上游模型响应超时，请稍后重试'
+    if (status === 429) return '上游模型请求过多，请稍后重试'
+    if (detail && !detail.startsWith('sub2api_http_')) return detail
+    return `上游模型请求失败（HTTP ${status}）`
   }
 
   private imageUpstreamException(data: unknown, status: number) {

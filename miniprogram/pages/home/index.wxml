@@ -9,10 +9,10 @@
     </view>
   </view>
 
-  <!-- Token 余额卡 -->
+  <!-- 算力点余额卡 -->
   <token-balance
     balance="{{balanceText}}"
-    label="Token 余额"
+    label="算力点余额"
     caption="网页 / 小程序共享额度"
   />
 
@@ -33,7 +33,7 @@
   <block wx:elif="{{loading}}">
     <glass-card customClass="gap-4" intensity="subtle">
       <view class="state-title muted">正在同步</view>
-      <view class="state-desc muted">读取微信身份与 Token 余额</view>
+      <view class="state-desc muted">读取微信身份与 算力点余额</view>
     </glass-card>
   </block>
 
@@ -45,7 +45,7 @@
         <view class="quick-icon quick-icon--cyan">图</view>
         <view class="quick-title">图片创作</view>
         <view class="quick-sub">输入描述生成图片</view>
-        <view class="quick-meta muted">消耗 Token</view>
+        <view class="quick-meta muted">消耗 算力点</view>
       </glass-card>
 
       <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goRewards">

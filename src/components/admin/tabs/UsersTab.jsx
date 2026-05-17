@@ -36,7 +36,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
   const f = filters.users || {}
   const [quotaForm, setQuotaForm] = useState({
     userId: '',
-    tokens: '1000',
+    tokens: '10',
     validDays: '30',
     remark: '后台手动调整'
   })
@@ -63,7 +63,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">手动调整 Token</CardTitle>
+          <CardTitle className="text-base">手动调整算力点</CardTitle>
           <CardDescription>为单个用户增减额度，负数表示扣减</CardDescription>
         </CardHeader>
         <CardContent>
@@ -106,11 +106,11 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
                 </SelectContent>
               </Select>
             </FieldGroup>
-            <FieldGroup label="Token 增减">
+            <FieldGroup label="算力点增减">
               <Input
                 value={quotaForm.tokens}
                 onChange={(e) => setQuotaForm((p) => ({ ...p, tokens: e.target.value }))}
-                placeholder="-1000 或 1000"
+                placeholder="-10 或 10"
                 className="font-mono"
               />
             </FieldGroup>
@@ -320,7 +320,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
           <AlertDialogHeader>
             <AlertDialogTitle>删除该用户？</AlertDialogTitle>
             <AlertDialogDescription>
-              {`将永久删除用户 ${pendingDelete?.name || pendingDelete?.id} 及其会话、Token 账本、对话、请求记录、图片任务等关联数据。这个操作不可恢复。`}
+              {`将永久删除用户 ${pendingDelete?.name || pendingDelete?.id} 及其会话、算力点账本、对话、请求记录、图片任务等关联数据。这个操作不可恢复。`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

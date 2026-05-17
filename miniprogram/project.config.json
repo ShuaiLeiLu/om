@@ -1,7 +1,7 @@
 {
   "appid": "",
   "projectname": "chatty-token-wallet",
-  "description": "万模AI Token 广告奖励小程序",
+  "description": "万模AI 算力点 广告奖励小程序",
   "compileType": "miniprogram",
   "miniprogramRoot": "./",
   "setting": {

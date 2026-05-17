@@ -17,9 +17,9 @@ Page({
     remainingText: '0',
     progressPercent: 0,
     limitText: '0',
-    actionText: '看广告领取 Token',
+    actionText: '看广告领取算力点',
     actionDisabled: true,
-    noticeText: '完整观看广告后，Token 会自动进入账户'
+    noticeText: '完整观看广告后，算力点 会自动进入账户'
   },
 
   onLoad() {
@@ -75,9 +75,9 @@ Page({
       (rewardConfig && rewardConfig.adUnitId) || config.REWARDED_VIDEO_AD_UNIT_ID
     );
 
-    let actionText = '看广告领取 Token';
+    let actionText = '看广告领取算力点';
     let actionDisabled = false;
-    let noticeText = '完整观看广告后，Token 会自动进入你的账户';
+    let noticeText = '完整观看广告后，算力点 会自动进入你的账户';
 
     if (!bound) {
       actionText = '账号绑定中';
@@ -86,7 +86,7 @@ Page({
     } else if (!enabled) {
       actionText = '活动暂未开放';
       actionDisabled = true;
-      noticeText = '广告领 Token 活动暂未开放';
+      noticeText = '广告领算力点 活动暂未开放';
     } else if (!hasAdUnit) {
       actionText = '广告位未配置';
       actionDisabled = true;
@@ -138,7 +138,7 @@ Page({
 
       const reward = result.rewardTokens || (this.data.rewardConfig && this.data.rewardConfig.rewardTokens) || 0;
       wx.showModal({
-        title: 'Token 已到账',
+        title: '算力点 已到账',
         content: '本次获得 ' + formatNumber(reward) + ' tokens',
         showCancel: false,
         confirmText: '好的',

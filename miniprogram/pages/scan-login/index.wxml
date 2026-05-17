@@ -43,7 +43,7 @@
     </view>
 
     <view class="action-tip muted">
-      确认后网页端会自动进入你的账户，使用同一份 Token 余额。
+      确认后网页端会自动进入你的账户，使用同一份 算力点余额。
     </view>
   </glass-card>
 

@@ -10,6 +10,9 @@ type RawUsage = Record<string, unknown> & {
   usage_id?: string
   request_id?: string
   requestId?: string
+  user?: string
+  user_id?: string
+  userId?: string
   model?: string
   prompt_tokens?: number
   promptTokens?: number
@@ -25,6 +28,7 @@ type RawUsage = Record<string, unknown> & {
 type NormalizedUsage = {
   sub2apiUsageId: string
   requestId: string
+  userId: string
   model?: string
   promptTokens: bigint
   completionTokens: bigint
@@ -123,6 +127,7 @@ export class Sub2apiService {
             }
           })
         : null
+      const fallbackUserId = request?.userId || usage.userId || undefined
       if (request) {
         const chargedForRequest = await tx.usageEvent.findFirst({
           where: { llmRequestId: request.id, status: 'charged' }
@@ -132,7 +137,7 @@ export class Sub2apiService {
             data: {
               sub2apiUsageId: usage.sub2apiUsageId,
               llmRequestId: request.id,
-              userId: request.userId,
+              userId: fallbackUserId,
               modelId: usage.model || request.modelId,
               promptTokens: usage.promptTokens,
               completionTokens: usage.completionTokens,
@@ -150,7 +155,7 @@ export class Sub2apiService {
         data: {
           sub2apiUsageId: usage.sub2apiUsageId,
           llmRequestId: request?.id,
-          userId: request?.userId,
+          userId: fallbackUserId,
           modelId: usage.model || request?.modelId,
           promptTokens: usage.promptTokens,
           completionTokens: usage.completionTokens,
@@ -163,7 +168,14 @@ export class Sub2apiService {
       })
 
       if (request?.userId && usage.totalTokens > BigInt(0)) {
-        await this.quota.consumeTokensInTransaction(tx, request.userId, usage.totalTokens, event.id)
+        const quotaUnits = this.quotaUnitsFromRawTokens(usage.totalTokens)
+        await this.quota.consumeTokensInTransaction(
+          tx,
+          request.userId,
+          quotaUnits,
+          event.id,
+          `Sub2API usage: ${usage.totalTokens.toString()} raw tokens`
+        )
         await tx.usageEvent.update({ where: { id: event.id }, data: { status: 'charged' } })
       }
       return { ok: true, usageId: event.id, charged: Boolean(request?.userId && usage.totalTokens > BigInt(0)) }
@@ -233,6 +245,7 @@ export class Sub2apiService {
 
   private normalizeUsage(raw: RawUsage): NormalizedUsage | null {
     const requestId = this.firstString(raw.request_id, raw.requestId, raw.local_request_id)
+    const userId = this.firstString(raw.user, raw.user_id, raw.userId)
     const sub2apiUsageId = this.firstString(raw.id, raw.usage_id, raw.usageId, requestId)
     if (!sub2apiUsageId) return null
     const promptTokens = this.bigintFrom(raw.prompt_tokens ?? raw.promptTokens)
@@ -243,6 +256,7 @@ export class Sub2apiService {
     return {
       sub2apiUsageId,
       requestId,
+      userId,
       model: this.firstString(raw.model),
       promptTokens,
       completionTokens,
@@ -251,6 +265,11 @@ export class Sub2apiService {
       createdAt: createdAtValue ? new Date(createdAtValue) : undefined,
       raw
     }
+  }
+
+  private quotaUnitsFromRawTokens(tokens: bigint) {
+    const unit = BigInt(Math.max(1, Number(this.config.get<string>('QUOTA_RAW_TOKENS_PER_UNIT') || 1_000_000)))
+    return (tokens + unit - BigInt(1)) / unit
   }
 
   private extractUsageArray(data: unknown): RawUsage[] {

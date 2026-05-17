@@ -256,7 +256,7 @@ export default function Shell({ children, workspace = 'chat' }) {
                     : isAuthenticated
                       ? `${user?.displayName || '微信用户'}\n${formatNumber(
                           quota?.tokenBalance || 0
-                        )} Token`
+                        )} 算力点`
                       : '未登录'
                 }
                 placement="right"
@@ -299,7 +299,7 @@ export default function Shell({ children, workspace = 'chat' }) {
                     ) : isAuthenticated ? (
                       <>
                         <Coins size={9} />
-                        {formatNumber(quota?.tokenBalance || 0)} Token
+                        {formatNumber(quota?.tokenBalance || 0)} 算力点
                       </>
                     ) : (
                       '点击进入登录'
@@ -379,7 +379,7 @@ function MobileHeader({
             {isAuthenticated && quota?.tokenBalance != null && (
               <p className="flex items-center gap-1 text-[9px] text-slate-500 leading-tight">
                 <Coins size={8} className="text-amber-300" />
-                {formatNumber(quota.tokenBalance)} Token
+                {formatNumber(quota.tokenBalance)} 算力点
               </p>
             )}
           </div>

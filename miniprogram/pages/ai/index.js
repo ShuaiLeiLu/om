@@ -123,7 +123,7 @@ Page({
 
   translateAiError(error) {
     const code = extractCode(error);
-    if (code === 'token_insufficient') return 'Token 余额不足，请先看广告领取';
+    if (code === 'token_insufficient') return '算力点余额不足，请先看广告领取';
     if (code === 'model_disabled') return '当前模型暂不可用';
     if (code === 'wechat_not_bound') return '微信账号绑定中，请稍后刷新';
     if (code === 'sub2api_config_incomplete') return '模型网关未配置';

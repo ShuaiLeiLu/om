@@ -85,7 +85,7 @@ export function ChatHeader({
             <span className="text-xs font-mono text-slate-200">
               {tokenBalance.toLocaleString('en-US')}
             </span>
-            <span className="text-[10px] text-slate-500">Token</span>
+            <span className="text-[10px] text-slate-500">算力点</span>
           </div>
         )}
 

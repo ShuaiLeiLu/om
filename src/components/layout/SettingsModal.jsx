@@ -33,7 +33,7 @@ export default function SettingsModal({ isOpen, onClose }) {
               <span>模型网关由服务端托管</span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-indigo-300">
-              浏览器不会保存或发送模型供应商 API Key。所有模型请求统一经过 Chatty 后端，再由后端记录 usage 并扣减 Token。
+              浏览器不会保存或发送模型供应商 API Key。所有模型请求统一经过 Chatty 后端，再由后端记录 usage 并扣减算力点。
             </p>
           </div>
 
@@ -43,7 +43,7 @@ export default function SettingsModal({ isOpen, onClose }) {
               <span>账单依据</span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-400">
-              Token 余额、模型用量和扣费流水以服务端数据库记录为准，本地聊天记录只用于当前设备的界面展示。
+              算力点余额、模型用量和扣费流水以服务端数据库记录为准，本地聊天记录只用于当前设备的界面展示。
             </p>
           </div>
         </div>

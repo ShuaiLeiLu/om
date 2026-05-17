@@ -34,7 +34,7 @@ export function ImageHero({ isAuthenticated, isAuthLoading, taskCount }) {
 
       {!isAuthLoading && !isAuthenticated && (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-indigo-400/25 bg-indigo-500/10 px-3 py-2.5 text-xs text-indigo-100 backdrop-blur-xl sm:px-4 sm:py-3 sm:text-sm">
-          <span className="flex-1 min-w-0">登录后才能调用图片生成模型并扣减 Token 余额</span>
+          <span className="flex-1 min-w-0">登录后才能调用图片生成模型并扣减算力点余额</span>
           <Link
             href="/login"
             className="shrink-0 rounded-xl bg-indigo-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-400 tap-transparent"

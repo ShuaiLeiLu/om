@@ -87,7 +87,7 @@ export default function ProfilePage() {
                 <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
                     <Coins size={15} className="text-indigo-300" />
-                    当前 Token
+                    当前 算力点
                   </div>
                   <p className="mt-3 text-3xl font-bold tracking-tight text-white">{balance}</p>
                 </div>
@@ -108,13 +108,13 @@ export default function ProfilePage() {
                   <ShieldCheck size={18} className="mt-0.5 shrink-0" />
                   <div>
                     <p className="font-semibold">微信身份已绑定</p>
-                    <p className="mt-1 text-xs leading-5 text-emerald-100/70">网页扫码登录、小程序看广告领取 Token，会归集到同一个后端用户。</p>
+                    <p className="mt-1 text-xs leading-5 text-emerald-100/70">网页扫码登录、小程序看广告领取算力点，会归集到同一个后端用户。</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
                   <Sparkles size={18} className="mt-0.5 shrink-0 text-indigo-300" />
                   <div>
-                    <p className="font-semibold">Token 以后端账本为准</p>
+                    <p className="font-semibold">算力点 以后端账本为准</p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">模型消耗、广告奖励、管理员调整都会写入服务端流水。</p>
                   </div>
                 </div>
@@ -127,7 +127,7 @@ export default function ProfilePage() {
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History size={18} className="text-slate-400" />
-              <h2 className="text-sm font-bold text-white">Token 流水</h2>
+              <h2 className="text-sm font-bold text-white">算力点流水</h2>
             </div>
             <span className="text-xs text-slate-500">最近 30 条</span>
           </div>
@@ -137,7 +137,7 @@ export default function ProfilePage() {
           ) : loading ? (
             <div className="py-12 text-center text-sm text-slate-500">正在同步个人中心...</div>
           ) : ledger.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500">暂无 Token 流水</div>
+            <div className="py-12 text-center text-sm text-slate-500">暂无 算力点流水</div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-800">
               {ledger.map((item) => (
@@ -183,5 +183,5 @@ function ledgerTitle(type) {
     redeem: '兑换到账',
     admin_adjust: '后台调整'
   }
-  return map[type] || type || 'Token 变动'
+  return map[type] || type || '算力点变动'
 }

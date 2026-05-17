@@ -537,7 +537,7 @@ model AdRewardConfig {
   id                   String   @id @default(uuid())
   enabled              Boolean  @default(false)
   adUnitId             String   @default("")
-  rewardTokens         BigInt   @default(1000)
+  rewardTokens         BigInt   @default(10)
   dailyLimitPerUser    Int      @default(5)
   rewardTokenValidDays Int      @default(7)
   minIntervalSeconds   Int      @default(30)

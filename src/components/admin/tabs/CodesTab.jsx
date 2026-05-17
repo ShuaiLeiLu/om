@@ -90,7 +90,7 @@ export default function CodesTab({ data, saving, setError, refresh }) {
                       <div className="flex min-w-0 flex-col text-left">
                         <span className="truncate">{p.name}</span>
                         <span className="truncate text-[10px] text-muted-foreground">
-                          {formatTokens(p.tokenAmount)} Token / {p.validDays} 天
+                          {formatTokens(p.tokenAmount)} 算力点 / {p.validDays} 天
                         </span>
                       </div>
                     </SelectItem>

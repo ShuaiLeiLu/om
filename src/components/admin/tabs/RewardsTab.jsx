@@ -21,7 +21,7 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
       <Card>
         <CardHeader>
           <CardTitle className="text-base">广告奖励配置</CardTitle>
-          <CardDescription>控制小程序看广告领 Token 的活动</CardDescription>
+          <CardDescription>控制小程序看广告领算力点 的活动</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -66,7 +66,7 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
                   className="font-mono"
                 />
               </Field>
-              <Field label="单次奖励 Token">
+              <Field label="单次奖励 算力点">
                 <Input
                   value={rewardConfig?.rewardTokens || ''}
                   onChange={(e) =>
@@ -232,7 +232,7 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
               },
               {
                 key: 'tokens',
-                label: 'Token',
+                label: '算力点',
                 align: 'right',
                 width: 100,
                 render: (e) => (

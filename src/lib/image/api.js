@@ -31,7 +31,7 @@ function apiUrl(path) {
 function parseError(status, data) {
   const message = data?.message || data?.error || ''
   if (status === 401 || message === 'unauthorized') return '请先登录'
-  if (message === 'token_insufficient') return 'Token 余额不足'
+  if (message === 'token_insufficient') return '算力点不足'
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'image_generation_not_enabled') return '当前网关分组未开启图片生成'
   if (message === 'upstream_error') return data?.detail || '上游图片服务返回错误'

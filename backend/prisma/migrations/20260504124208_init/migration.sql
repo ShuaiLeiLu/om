@@ -302,7 +302,7 @@ CREATE TABLE "AdRewardConfig" (
     "id" TEXT NOT NULL,
     "enabled" BOOLEAN NOT NULL DEFAULT false,
     "adUnitId" TEXT NOT NULL DEFAULT '',
-    "rewardTokens" BIGINT NOT NULL DEFAULT 1000,
+    "rewardTokens" BIGINT NOT NULL DEFAULT 10,
     "dailyLimitPerUser" INTEGER NOT NULL DEFAULT 5,
     "rewardTokenValidDays" INTEGER NOT NULL DEFAULT 7,
     "minIntervalSeconds" INTEGER NOT NULL DEFAULT 30,

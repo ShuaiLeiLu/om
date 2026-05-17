@@ -8,7 +8,7 @@
 
   <token-balance
     balance="{{balanceText}}"
-    label="当前 Token"
+    label="当前 算力点"
     caption="图片生成会记录到后台额度流水"
   />
 

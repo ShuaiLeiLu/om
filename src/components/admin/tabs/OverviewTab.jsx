@@ -63,7 +63,7 @@ export default function OverviewTab({ data, runAction, saving }) {
         <AdminStatCard
           icon={Coins}
           tone="amber"
-          label="Token 净变动"
+          label="算力点 净变动"
           value={formatTokens(dashboard?.totalTokenDelta)}
           hint={`模型消耗 ${formatTokens(dashboard?.modelUsageTokens)}`}
           loading={loading}
@@ -71,7 +71,7 @@ export default function OverviewTab({ data, runAction, saving }) {
         <AdminStatCard
           icon={Gift}
           tone="emerald"
-          label="广告奖励 Token"
+          label="广告奖励 算力点"
           value={formatTokens(dashboard?.adRewardTokens)}
           hint={`今日发放 ${todayGranted} 次`}
           loading={loading}
@@ -106,7 +106,7 @@ export default function OverviewTab({ data, runAction, saving }) {
         <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
           <div>
             <p className="text-sm font-semibold text-foreground">Sub2API 用量同步</p>
-            <p className="mt-1 text-xs text-muted-foreground">手动拉取上游 usage 并据此扣减 Token</p>
+            <p className="mt-1 text-xs text-muted-foreground">手动拉取上游 usage 并据此扣减算力点</p>
           </div>
           <Button
             variant="gradient"
@@ -191,7 +191,7 @@ export default function OverviewTab({ data, runAction, saving }) {
               },
               {
                 key: 'delta',
-                label: 'Token',
+                label: '算力点',
                 align: 'right',
                 width: 110,
                 render: (r) => {

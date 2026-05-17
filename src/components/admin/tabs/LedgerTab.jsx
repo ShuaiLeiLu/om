@@ -66,7 +66,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
             },
             {
               key: 'delta',
-              label: 'Token',
+              label: '算力点',
               align: 'right',
               width: 120,
               render: (r) => {

@@ -3,13 +3,13 @@
     <view class="uppercase-label">Reward Center</view>
     <view class="text-2xl font-bold">
       <text>看广告领 </text>
-      <text class="text-gradient">Token</text>
+      <text class="text-gradient">算力点</text>
     </view>
   </view>
 
   <token-balance
     balance="{{balanceText}}"
-    label="当前 Token"
+    label="当前 算力点"
     caption="完整观看广告后自动到账"
   />
 
@@ -38,7 +38,7 @@
         <view class="flex-1">
           <view class="uppercase-label">今日可领</view>
           <view class="reward-amount">+{{rewardText}}</view>
-          <view class="reward-amount-sub muted">Token / 次</view>
+          <view class="reward-amount-sub muted">算力点 / 次</view>
         </view>
         <view class="reward-emoji">🎁</view>
       </view>
@@ -74,7 +74,7 @@
       <view class="rules gap-2">
         <view class="rule">
           <view class="rule-dot"></view>
-          <text>完整观看广告才会发放 Token</text>
+          <text>完整观看广告才会发放 算力点</text>
         </view>
         <view class="rule">
           <view class="rule-dot"></view>

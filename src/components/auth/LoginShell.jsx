@@ -49,14 +49,14 @@ export function LoginMarketing({ inAuthFlow = false }) {
       </h1>
 
       <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-400">
-        统一管理你的 Token 与对话历史，跨设备同步。网页与小程序使用同一个微信身份。
+        统一管理你的 算力点 与对话历史，跨设备同步。网页与小程序使用同一个微信身份。
       </p>
 
       <div className="mt-7 grid gap-3 sm:grid-cols-2">
         <FeaturePill icon="⚡" title="一键登录" description="微信扫码 / 一键授权" />
         <FeaturePill icon="🔒" title="安全可信" description="OAuth 标准 + Cookie 会话" />
         <FeaturePill icon="🖼️" title="图片工作台" description="文本生图 + 参考图编辑" />
-        <FeaturePill icon="💎" title="Token 同步" description="网页与小程序共享额度" />
+        <FeaturePill icon="💎" title="算力点 同步" description="网页与小程序共享额度" />
       </div>
     </div>
   )

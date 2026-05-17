@@ -69,7 +69,7 @@ export async function sendMessage({ conversationId, modelId, messages, onDelta }
       } else if (event.event === 'message.done') {
         done = event.data
       } else if (event.event === 'message.error') {
-        throw new Error(event.data?.error || '请求失败')
+        throw new Error(parseApiError(200, { message: event.data?.error || '请求失败' }))
       }
     }
   }
@@ -440,9 +440,16 @@ function parseApiError(status, data) {
   if (status === 401 || message === 'unauthorized') return '请先登录'
   if (message === 'invalid_credentials') return '账号或密码不正确'
   if (message === 'username_password_required') return '请输入账号和密码'
-  if (message === 'token_insufficient') return 'Token 余额不足，请先领取或兑换 Token'
+  if (message === 'token_insufficient') return '算力点不足，请先领取或兑换'
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'sub2api_config_incomplete') return '模型网关未配置'
+  if (message === 'sub2api_http_503') return '上游模型服务暂时不可用或繁忙，请稍后重试'
+  if (message === 'sub2api_http_502') return '上游模型网关返回错误，请稍后重试'
+  if (message === 'sub2api_http_504') return '上游模型响应超时，请稍后重试'
+  if (message === 'sub2api_http_429') return '上游模型请求过多，请稍后重试'
+  if (typeof message === 'string' && message.startsWith('sub2api_http_')) {
+    return `上游模型请求失败（HTTP ${message.replace('sub2api_http_', '')}）`
+  }
   if (typeof data?.reason === 'string' && data.reason) return `同步失败：${data.reason}`
   if (typeof message === 'string' && message) return message
   return `请求失败 (HTTP ${status})`
