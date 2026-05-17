@@ -20,7 +20,7 @@
   "conversationId": "string | null",   // 可选；若需要把生成记录归入某个会话
   "model":         "string",            // 必填，sub2apiModel
   "prompt":        "string",            // 必填，长度 1–4000
-  "size":          "string",            // "auto" | "WxH"（16 的倍数，256–4096）
+  "size":          "string",            // "auto" | "WxH"（image2: 16 的倍数，比例 1:3 到 3:1，最高 3840x2160）
   "quality":       "low|medium|high",   // 默认 medium
   "output_format": "png|jpeg|webp",     // 默认 png
   "output_compression": 0-100,          // 仅当 output_format=jpeg|webp 时生效
@@ -34,7 +34,7 @@
 | 字段 | 规则 | 错误码 |
 |------|------|--------|
 | `prompt` | 非空字符串、≤4000 字符 | `invalid_prompt` |
-| `size`   | `auto` 或 `^\d+x\d+$` 且 w/h ∈ [256, 4096] 且为 16 的倍数 | `invalid_size` |
+| `size`   | `auto` 或 `^\d+x\d+$`；image2 要求 w/h 为 16 的倍数，比例 1:3 到 3:1，最高 3840x2160 | `invalid_size` |
 | `quality` | 枚举 | `invalid_quality` |
 | `output_format` | 枚举 | `invalid_format` |
 | `output_compression` | 整数 0–100 | `invalid_compression` |
@@ -118,7 +118,7 @@
 |---------|---------------|
 | `model` | `model`（如 `gpt-image-2`） |
 | `prompt` | `prompt` |
-| `size` | `size`（`auto` 直接透传） |
+| `size` | `size`（`auto` 直接透传；image2 可传合法自定义尺寸，如 `3840x2160` / `2160x3840`） |
 | `quality` | `quality` |
 | `output_format` | `output_format` |
 | `output_compression` | `output_compression` |

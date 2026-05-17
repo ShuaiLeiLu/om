@@ -34,15 +34,25 @@ Page({
     try {
       this.setData({ loading: true, error: '' });
       await auth.ensureLogin();
-      const [userInfo, rewardConfig] = await Promise.all([
+      const results = await Promise.all([
         auth.fetchUserInfo(),
         request({ url: config.API.REWARD_CONFIG })
       ]);
+      const userInfo = results[0];
+      const rewardConfig = results[1];
+      const viewModel = this.buildViewModel(userInfo, rewardConfig);
       this.setData({
         loading: false,
         userInfo,
         rewardConfig,
-        ...this.buildViewModel(userInfo, rewardConfig)
+        balanceText: viewModel.balanceText,
+        rewardText: viewModel.rewardText,
+        remainingText: viewModel.remainingText,
+        limitText: viewModel.limitText,
+        progressPercent: viewModel.progressPercent,
+        actionText: viewModel.actionText,
+        actionDisabled: viewModel.actionDisabled,
+        noticeText: viewModel.noticeText
       });
     } catch (error) {
       console.error('rewards refresh failed:', error);

@@ -41,6 +41,12 @@ const MAX_IMAGE_PROMPT_LENGTH = 4000
 const MAX_REFERENCE_IMAGES = 16
 const MAX_REFERENCE_IMAGE_BYTES = 25 * 1024 * 1024
 const MAX_REFERENCE_IMAGES_TOTAL_BYTES = 100 * 1024 * 1024
+const MIN_IMAGE_SIDE = 16
+const MAX_IMAGE_SIDE = 3840
+const MIN_IMAGE_PIXELS = 655_360
+const MAX_IMAGE_PIXELS = 3840 * 2160
+const MAX_IMAGE_ASPECT_RATIO = 3
+const IMAGE_SIZE_STEP = 16
 const IMAGE_MODEL_MARKERS = [
   'image',
   'image2',
@@ -284,7 +290,7 @@ export class ChatService {
 
     try {
       const sub2apiBaseUrl = this.config.get<string>('SUB2API_BASE_URL') || ''
-      const gatewayKey = this.gatewayKeyForRequest(requestId)
+      const gatewayKey = this.gatewayKeyForRequest(requestId, { image: true })
       if (!sub2apiBaseUrl || !gatewayKey) throw new BadRequestException('sub2api_config_incomplete')
 
       const endpoint = options.mode === 'edits' ? '/v1/images/edits' : '/v1/images/generations'
@@ -404,12 +410,24 @@ export class ChatService {
   }
 
   private validateImageParams(input: ImageGenerateInput | ImageEditInput) {
-    if (input.size && input.size !== 'auto' && !/^\d{2,4}x\d{2,4}$/i.test(input.size))
-      throw new BadRequestException('invalid_size')
     if (input.size && input.size !== 'auto') {
+      if (!/^\d+x\d+$/i.test(input.size)) throw new BadRequestException('invalid_size')
       const [w, h] = input.size.split('x').map((n) => Number(n))
-      if (!w || !h || w < 256 || h < 256 || w > 4096 || h > 4096 || w % 16 !== 0 || h % 16 !== 0)
+      const pixels = w * h
+      const aspectRatio = Math.max(w / h, h / w)
+      if (
+        w < MIN_IMAGE_SIDE ||
+        h < MIN_IMAGE_SIDE ||
+        w > MAX_IMAGE_SIDE ||
+        h > MAX_IMAGE_SIDE ||
+        w % IMAGE_SIZE_STEP !== 0 ||
+        h % IMAGE_SIZE_STEP !== 0 ||
+        aspectRatio > MAX_IMAGE_ASPECT_RATIO ||
+        pixels < MIN_IMAGE_PIXELS ||
+        pixels > MAX_IMAGE_PIXELS
+      ) {
         throw new BadRequestException('invalid_size')
+      }
     }
     if (input.quality && !['low', 'medium', 'high'].includes(input.quality))
       throw new BadRequestException('invalid_quality')
@@ -623,12 +641,17 @@ export class ChatService {
     return ''
   }
 
-  private gatewayKeyForRequest(requestId: string) {
-    const keys = (this.config.get<string>('SUB2API_GATEWAY_API_KEYS') || '')
+  private gatewayKeyForRequest(requestId: string, options: { image?: boolean } = {}) {
+    const configuredKeys = options.image
+      ? this.config.get<string>('SUB2API_IMAGE_GATEWAY_API_KEYS') || this.config.get<string>('SUB2API_IMAGE_GATEWAY_API_KEY') || this.config.get<string>('SUB2API_GATEWAY_API_KEY') || this.config.get<string>('SUB2API_GATEWAY_API_KEYS') || ''
+      : this.config.get<string>('SUB2API_GATEWAY_API_KEYS') || ''
+    const keys = configuredKeys
       .split(',')
       .map((key) => key.trim())
       .filter(Boolean)
-    const fallback = this.config.get<string>('SUB2API_GATEWAY_API_KEY')
+    const fallback = options.image
+      ? this.config.get<string>('SUB2API_IMAGE_GATEWAY_API_KEY') || this.config.get<string>('SUB2API_GATEWAY_API_KEY')
+      : this.config.get<string>('SUB2API_GATEWAY_API_KEY')
     if (fallback) keys.push(fallback)
     if (keys.length === 0) return ''
 

@@ -37,10 +37,12 @@ Page({
     try {
       this.setData({ loading: true, error: '' });
       await auth.ensureLogin();
-      const [userInfo, rewardConfig] = await Promise.all([
+      const results = await Promise.all([
         auth.fetchUserInfo(),
         request({ url: config.API.REWARD_CONFIG }).catch(() => null)
       ]);
+      const userInfo = results[0];
+      const rewardConfig = results[1];
       this.setData({
         loading: false,
         userInfo,

@@ -285,6 +285,10 @@ export async function updateAdminUserStatus(userId, status) {
   return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/${action}`, { method: 'POST' })
 }
 
+export async function deleteAdminUser(userId) {
+  return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' })
+}
+
 export async function adjustAdminQuota(userId, body) {
   return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/quota-adjust`, {
     method: 'POST',

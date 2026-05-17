@@ -39,7 +39,7 @@ export default function Shell({ children, workspace = 'chat' }) {
     deleteConversation
   } = useChatStore()
   const { selectedProvider, selectedModel, setSelectedModel, setSelectedProvider } = useModelStore()
-  const { user, quota, isAuthenticated } = useAuthStore()
+  const { user, quota, isAuthenticated, isLoading: isAuthLoading } = useAuthStore()
   const imageTaskIndex = useImageStore((s) => s.taskIndex)
   const setActiveTaskId = useImageStore((s) => s.setActiveTaskId)
   const removeTaskFromIndex = useImageStore((s) => s.removeTaskFromIndex)
@@ -63,7 +63,7 @@ export default function Shell({ children, workspace = 'chat' }) {
   const inActiveChat = workspace === 'chat' && activeConversationId
 
   const switchWorkspace = (target) => {
-    if (target === 'chat' && pathname !== '/') router.push('/')
+    if (target === 'chat' && pathname !== '/chat') router.push('/chat')
     if (target === 'image' && pathname !== '/image') router.push('/image')
     if (isMobile) setSidebarOpen(false)
   }
@@ -127,7 +127,7 @@ export default function Shell({ children, workspace = 'chat' }) {
             )}
           >
             <Link
-              href="/"
+              href="/image"
               className={cn(
                 'flex items-center gap-2 rounded-xl py-1.5 tap-transparent',
                 collapsed ? 'justify-center w-full' : 'flex-1 min-w-0'
@@ -251,11 +251,13 @@ export default function Shell({ children, workspace = 'chat' }) {
               </Tip>
               <Tip
                 label={
-                  isAuthenticated
-                    ? `${user?.displayName || '微信用户'}\n${formatNumber(
-                        quota?.tokenBalance || 0
-                      )} Token`
-                    : '未登录'
+                  isAuthLoading
+                    ? '同步登录状态中'
+                    : isAuthenticated
+                      ? `${user?.displayName || '微信用户'}\n${formatNumber(
+                          quota?.tokenBalance || 0
+                        )} Token`
+                      : '未登录'
                 }
                 placement="right"
               >
@@ -285,10 +287,16 @@ export default function Shell({ children, workspace = 'chat' }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold text-slate-100">
-                    {isAuthenticated ? user?.displayName || '微信用户' : '未登录'}
+                    {isAuthLoading && !isAuthenticated
+                      ? '同步登录中'
+                      : isAuthenticated
+                        ? user?.displayName || '微信用户'
+                        : '未登录'}
                   </p>
                   <p className="flex items-center gap-1 truncate text-[10px] text-slate-400">
-                    {isAuthenticated ? (
+                    {isAuthLoading && !isAuthenticated ? (
+                      '正在读取本地会话'
+                    ) : isAuthenticated ? (
                       <>
                         <Coins size={9} />
                         {formatNumber(quota?.tokenBalance || 0)} Token
@@ -378,7 +386,7 @@ function MobileHeader({
         </div>
       ) : (
         <Link
-          href={workspace === 'chat' ? '/' : '/image'}
+          href={workspace === 'chat' ? '/chat' : '/image'}
           className="flex flex-1 items-center justify-center gap-2 tap-transparent"
         >
           <Sparkles size={15} className="text-fuchsia-300" />

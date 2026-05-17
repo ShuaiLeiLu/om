@@ -21,7 +21,6 @@ module.exports = {
     LOGIN: `${BASE_URL}/wechat/miniapp/auth/login`,
     ME: `${BASE_URL}/wechat/miniapp/me`,
     MODELS: `${BASE_URL}/models`,
-    CHAT_COMPLETIONS: `${BASE_URL}/wechat/miniapp/ai/chat/completions`,
     IMAGE_GENERATIONS: `${BASE_URL}/wechat/miniapp/ai/images/generations`,
 
     // 奖励

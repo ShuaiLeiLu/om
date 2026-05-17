@@ -7,16 +7,21 @@ import { getImageObjectUrl } from '@/lib/image/db'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { describeSize } from '@/lib/image/size'
 
-export function TaskCard({ taskId, onClick }) {
+export function TaskCard({ taskId, taskStatus, onClick }) {
   const [task, setTask] = useState(null)
   const [thumbs, setThumbs] = useState([])
+  const [isLoadingThumbs, setIsLoadingThumbs] = useState(false)
 
   useEffect(() => {
     let revoke = []
     let cancelled = false
     ;(async () => {
+      setIsLoadingThumbs(true)
       const t = await getTask(taskId)
-      if (!t || cancelled) return
+      if (!t || cancelled) {
+        if (!cancelled) setIsLoadingThumbs(false)
+        return
+      }
       setTask(t)
       const outs = (t.outputs || []).slice(0, 4)
       const urls = []
@@ -30,12 +35,13 @@ export function TaskCard({ taskId, onClick }) {
       }
       revoke = urls
       setThumbs(urls)
+      setIsLoadingThumbs(false)
     })()
     return () => {
       cancelled = true
       revoke.forEach((u) => URL.revokeObjectURL(u))
     }
-  }, [taskId])
+  }, [taskId, taskStatus])
 
   if (!task) {
     return (
@@ -68,6 +74,11 @@ export function TaskCard({ taskId, onClick }) {
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-rose-500/10 p-4 text-center">
             <AlertCircle className="text-rose-300" size={22} />
             <p className="text-[10px] text-rose-200">生成失败</p>
+          </div>
+        ) : isLoadingThumbs && task.outputs?.length > 0 ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 text-slate-300">
+            <Loader2 className="animate-spin" size={22} />
+            <p className="text-[10px]">载入图片</p>
           </div>
         ) : thumbs.length > 0 ? (
           <div

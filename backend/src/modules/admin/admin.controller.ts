@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { CurrentAdmin } from '../../common/current-user'
 import { getClientIp, getUserAgent } from '../../common/http'
@@ -47,6 +47,12 @@ export class AdminController {
   @Post('users/:id/enable')
   enable(@CurrentAdmin() admin: { id: string }, @Param('id') id: string) {
     return this.admin.updateUserStatus(admin.id, id, 'active')
+  }
+
+  @UseGuards(AdminSessionGuard)
+  @Delete('users/:id')
+  deleteUser(@CurrentAdmin() admin: { id: string }, @Param('id') id: string) {
+    return this.admin.deleteUser(admin.id, id)
   }
 
   @UseGuards(AdminSessionGuard)

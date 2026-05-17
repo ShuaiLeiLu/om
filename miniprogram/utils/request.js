@@ -2,10 +2,13 @@ const config = require('./config');
 
 function request(options) {
   const token = wx.getStorageSync(config.STORAGE.TOKEN);
+  const extraHeader = options.header || {};
   const header = {
-    'content-type': 'application/json',
-    ...(options.header || {})
+    'content-type': 'application/json'
   };
+  Object.keys(extraHeader).forEach((key) => {
+    header[key] = extraHeader[key];
+  });
 
   if (token) {
     header.Authorization = `Bearer ${token}`;

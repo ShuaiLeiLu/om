@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Ban, BadgeCheck, Coins, Loader2 } from 'lucide-react'
+import { Ban, BadgeCheck, Coins, Loader2, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,7 @@ import Badge from '../Badge'
 import FilterBar, { FilterSelect } from '../FilterBar'
 import Pagination from '../Pagination'
 import { formatRelativeTime, maskOpenid, userStatusBadge } from '@/lib/admin-format'
-import { adjustAdminQuota, updateAdminUserStatus } from '@/lib/api'
+import { adjustAdminQuota, deleteAdminUser, updateAdminUserStatus } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export default function UsersTab({ data, filters, setFilter, saving, runAction }) {
@@ -41,6 +41,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
     remark: '后台手动调整'
   })
   const [pendingToggle, setPendingToggle] = useState(null)
+  const [pendingDelete, setPendingDelete] = useState(null)
 
   return (
     <div className="space-y-4">
@@ -238,6 +239,20 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
                     )}
                     {u.status === 'active' ? '禁用' : '启用'}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 border-destructive/30 text-destructive hover:bg-destructive/10"
+                    title="删除用户"
+                    onClick={() => setPendingDelete({ id: u.id, name: u.displayName || u.email || u.id })}
+                    disabled={saving === `delete-user-${u.id}`}
+                  >
+                    {saving === `delete-user-${u.id}` ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <Trash2 />
+                    )}
+                  </Button>
                 </div>
               )
             }
@@ -292,6 +307,37 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
               }}
             >
               {pendingToggle?.status === 'active' ? '确认禁用' : '确认启用'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!pendingDelete}
+        onOpenChange={(v) => !v && setPendingDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除该用户？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`将永久删除用户 ${pendingDelete?.name || pendingDelete?.id} 及其会话、Token 账本、对话、请求记录、图片任务等关联数据。这个操作不可恢复。`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                const target = pendingDelete
+                setPendingDelete(null)
+                await runAction(
+                  `delete-user-${target.id}`,
+                  () => deleteAdminUser(target.id),
+                  '用户已删除'
+                )
+              }}
+            >
+              确认删除
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

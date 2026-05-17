@@ -22,6 +22,12 @@ async function readJson(res) {
   }
 }
 
+function apiUrl(path) {
+  const base = process.env.NEXT_PUBLIC_IMAGE_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || ''
+  if (!base) return path
+  return `${base.replace(/\/$/, '')}${path}`
+}
+
 function parseError(status, data) {
   const message = data?.message || data?.error || ''
   if (status === 401 || message === 'unauthorized') return '请先登录'
@@ -29,14 +35,14 @@ function parseError(status, data) {
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'image_generation_not_enabled') return '当前网关分组未开启图片生成'
   if (message === 'upstream_error') return data?.detail || '上游图片服务返回错误'
-  if (message === 'invalid_size') return '尺寸格式无效（需为 16 的倍数）'
+  if (message === 'invalid_size') return '尺寸不支持：image2 要求宽高为 16 的倍数、比例 1:3 到 3:1、最高 3840×2160'
   if (message === 'too_many_reference_images') return '参考图数量超过限制（最多 16 张）'
   if (typeof message === 'string' && message) return message
   return `请求失败 (HTTP ${status})`
 }
 
 export async function generateImageRequest(payload, { signal } = {}) {
-  const res = await fetch('/api/images/generations', {
+  const res = await fetch(apiUrl('/api/images/generations'), {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -49,7 +55,7 @@ export async function generateImageRequest(payload, { signal } = {}) {
 }
 
 export async function editImageRequest(payload, { signal } = {}) {
-  const res = await fetch('/api/images/edits', {
+  const res = await fetch(apiUrl('/api/images/edits'), {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

@@ -92,7 +92,12 @@ export function TaskGallery({ onSelect }) {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filtered.map((t) => (
-            <TaskCard key={t.id} taskId={t.id} onClick={() => onSelect?.(t.id)} />
+            <TaskCard
+              key={t.id}
+              taskId={t.id}
+              taskStatus={t.status}
+              onClick={() => onSelect?.(t.id)}
+            />
           ))}
         </div>
       )}

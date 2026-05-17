@@ -1,16 +1,15 @@
 <view class="page">
   <view class="page-header">
-    <view class="uppercase-label">AI Studio</view>
+    <view class="uppercase-label">Image Studio</view>
     <view class="text-2xl font-bold">
-      <text>文字对话与 </text>
-      <text class="text-gradient">文生图</text>
+      <text class="text-gradient">图片创作</text>
     </view>
   </view>
 
   <token-balance
     balance="{{balanceText}}"
     label="当前 Token"
-    caption="对话和生图都会记录到后台额度流水"
+    caption="图片生成会记录到后台额度流水"
   />
 
   <block wx:if="{{error && !loading}}">
@@ -30,47 +29,6 @@
   </block>
 
   <block wx:else>
-    <glass-card customClass="gap-4" intensity="normal" padding="32rpx">
-      <view class="section-head">
-        <view>
-          <view class="uppercase-label">Chat</view>
-          <view class="section-title">AI 文字对话</view>
-        </view>
-        <view class="model-chip">{{chatModel ? chatModel.displayName : '无可用模型'}}</view>
-      </view>
-
-      <scroll-view scroll-y class="messages">
-        <block wx:if="{{messages.length === 0}}">
-          <view class="empty muted">发一句话，确认登录、额度、请求记录、扣费链路。</view>
-        </block>
-        <block wx:for="{{messages}}" wx:key="index">
-          <view class="message message--{{item.role}}">
-            <view class="message-role">{{item.role === 'user' ? '我' : 'AI'}}</view>
-            <view class="message-content">{{item.content}}</view>
-          </view>
-        </block>
-      </scroll-view>
-
-      <textarea
-        class="prompt-input"
-        value="{{chatInput}}"
-        maxlength="1000"
-        auto-height="{{true}}"
-        placeholder="输入要问 AI 的内容"
-        bindinput="onChatInput"
-      />
-      <gradient-button
-        type="primary"
-        size="lg"
-        block="{{true}}"
-        loading="{{sending}}"
-        disabled="{{!chatModel || sending}}"
-        bindtap="sendChat"
-      >
-        <text>{{sending ? '发送中...' : '发送文字对话'}}</text>
-      </gradient-button>
-    </glass-card>
-
     <glass-card customClass="gap-4" intensity="normal" padding="32rpx">
       <view class="section-head">
         <view>

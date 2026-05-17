@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "AI 创作",
+  "navigationBarTitleText": "图片创作",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "glass-card": "/components/glass-card/index",

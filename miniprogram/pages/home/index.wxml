@@ -42,10 +42,10 @@
     <!-- 快捷入口 -->
     <view class="gap-4 quick-grid">
       <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goAi">
-        <view class="quick-icon quick-icon--cyan">AI</view>
-        <view class="quick-title">AI 创作</view>
-        <view class="quick-sub">文字对话 / 文生图</view>
-        <view class="quick-meta muted">小程序端直连</view>
+        <view class="quick-icon quick-icon--cyan">图</view>
+        <view class="quick-title">图片创作</view>
+        <view class="quick-sub">输入描述生成图片</view>
+        <view class="quick-meta muted">消耗 Token</view>
       </glass-card>
 
       <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goRewards">
@@ -67,7 +67,7 @@
     <glass-card intensity="subtle" padding="28rpx 32rpx" customClass="gap-4 web-card">
       <view class="row-between">
         <view class="flex-1">
-          <view class="text-sm muted">网页对话与图片工作台</view>
+          <view class="text-sm muted">网页图片工作台</view>
           <view class="gap-1 web-url">{{webUrl}}</view>
         </view>
         <gradient-button type="ghost" size="sm" bindtap="copyWebUrl">

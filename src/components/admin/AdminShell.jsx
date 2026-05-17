@@ -89,7 +89,7 @@ export default function AdminShell({
             )}
           >
             <Link
-              href="/"
+              href="/image"
               className={cn(
                 'flex items-center gap-2 rounded-xl py-1.5 tap-transparent',
                 collapsed && !isMobile ? 'justify-center w-full' : 'flex-1 min-w-0'

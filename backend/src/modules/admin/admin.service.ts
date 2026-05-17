@@ -163,6 +163,25 @@ export class AdminService {
     return user
   }
 
+  async deleteUser(adminId: string, userId: string) {
+    const before = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { oauthAccounts: true }
+    })
+    if (!before) throw new BadRequestException('user_not_found')
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userSession.updateMany({
+        where: { userId },
+        data: { status: 'revoked', revokedAt: new Date() }
+      })
+      await tx.imageTask.deleteMany({ where: { userId } })
+      await tx.user.delete({ where: { id: userId } })
+    })
+    await this.audit(adminId, 'user_delete', 'user', userId, before, null)
+    return { ok: true, id: userId }
+  }
+
   async adjustQuota(adminId: string, userId: string, input: { tokens?: string | number; validDays?: number; remark?: string }) {
     const tokens = BigInt(input.tokens || 0)
     const validDays = Math.max(1, Number(input.validDays || 30))

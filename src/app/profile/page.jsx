@@ -54,9 +54,9 @@ export default function ProfilePage() {
     <main className="min-h-screen bg-slate-950 px-4 py-6 text-slate-50 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <Link href="/" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-400 transition hover:bg-slate-900 hover:text-white">
+          <Link href="/image" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-400 transition hover:bg-slate-900 hover:text-white">
             <ArrowLeft size={16} />
-            返回对话
+            返回生图
           </Link>
           <div className="flex items-center gap-2">
             <button onClick={refresh} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-800 px-3 text-sm text-slate-300 transition hover:bg-slate-900 hover:text-white">

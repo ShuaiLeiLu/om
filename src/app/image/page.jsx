@@ -36,7 +36,7 @@ import TaskDetailDialog from '@/components/image/TaskDetailDialog'
 
 function ImagePageInner() {
   const router = useRouter()
-  const { isAuthenticated, setAuthLoading, setSession, clearSession } = useAuthStore()
+  const { isAuthenticated, isLoading: isAuthLoading, setAuthLoading, setSession, clearSession } = useAuthStore()
   const { toast } = useToast()
 
   const taskIndex = useImageStore((s) => s.taskIndex)
@@ -61,8 +61,17 @@ function ImagePageInner() {
   useEffect(() => {
     let cancelled = false
     setAuthLoading(true)
-    Promise.all([fetchMe(), fetchQuotaSummary()])
-      .then(([user, quota]) => !cancelled && setSession({ user, quota }))
+    fetchMe()
+      .then(async (user) => {
+        if (cancelled) return
+        setSession({ user, quota: null })
+        try {
+          const quota = await fetchQuotaSummary()
+          if (!cancelled) setSession({ user, quota })
+        } catch (err) {
+          console.warn('[image] quota refresh failed', err)
+        }
+      })
       .catch(() => !cancelled && clearSession())
       .finally(() => !cancelled && setAuthLoading(false))
     return () => {
@@ -123,6 +132,10 @@ function ImagePageInner() {
 
   const handleGenerate = async () => {
     setError('')
+    if (isAuthLoading) {
+      setError('正在同步登录状态，请稍候')
+      return
+    }
     if (!isAuthenticated) {
       router.push('/login')
       return
@@ -212,7 +225,12 @@ function ImagePageInner() {
         requestId: result?.requestId
       }
       await upsertTask(finalTask)
-      updateTaskInIndex(taskId, { status: finalTask.status, prompt: finalTask.prompt })
+      updateTaskInIndex(taskId, {
+        status: finalTask.status,
+        prompt: finalTask.prompt,
+        outputs: finalTask.outputs,
+        finishedAt: finalTask.finishedAt
+      })
 
       if (outputHashes.length > 0) {
         toast({
@@ -245,7 +263,7 @@ function ImagePageInner() {
     <Shell workspace="image">
       <div className="flex flex-1 flex-col overflow-y-auto pl-safe pr-safe scrollbar-thin">
         <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 md:px-8 md:py-10">
-          <ImageHero isAuthenticated={isAuthenticated} taskCount={taskIndex.length} />
+          <ImageHero isAuthenticated={isAuthenticated} isAuthLoading={isAuthLoading} taskCount={taskIndex.length} />
 
           {/* Default image model + mobile params row */}
           <div className="mb-3 flex items-center justify-between gap-2">
