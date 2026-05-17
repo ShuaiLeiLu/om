@@ -1,0 +1,183 @@
+<view class="page">
+  <view class="page-header">
+    <view class="uppercase-label">My Account</view>
+    <view class="text-2xl font-bold">
+      <text class="text-gradient">个人中心</text>
+    </view>
+  </view>
+
+  <!-- 用户卡 -->
+  <glass-card intensity="normal" padding="36rpx" customClass="user-card">
+    <view class="user-row">
+      <view class="avatar">
+        <image wx:if="{{userInfo.avatarUrl}}" class="avatar-img" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+        <view wx:else class="avatar-fallback">{{avatarInitial}}</view>
+      </view>
+      <view class="user-meta">
+        <view class="user-name">{{userInfo.displayName || '微信用户'}}</view>
+        <view class="user-balance muted">
+          <text class="user-balance-num">{{balanceText}}</text>
+          <text> Token 余额</text>
+        </view>
+      </view>
+      <status-pill
+        tone="{{userInfo.bound ? 'success' : 'warning'}}"
+        text="{{userInfo.bound ? '已绑定' : '绑定中'}}"
+      />
+    </view>
+  </glass-card>
+
+  <!-- 邮箱绑定卡 -->
+  <glass-card intensity="normal" padding="36rpx" customClass="gap-4 email-card">
+    <view class="row-between">
+      <view class="flex-1">
+        <view class="uppercase-label">网页账号</view>
+        <view class="email-title">
+          {{userInfo.email ? '已绑定邮箱' : '尚未绑定邮箱'}}
+        </view>
+        <view class="email-sub muted">
+          {{userInfo.email ? emailMasked : '绑定后可在网页用邮箱+密码登录'}}
+        </view>
+      </view>
+      <view class="email-icon">{{userInfo.email ? '✉️' : '＋'}}</view>
+    </view>
+
+    <view class="gap-4">
+      <block wx:if="{{userInfo.email}}">
+        <gradient-button type="danger" size="md" block="{{true}}" bindtap="openUnbindSheet">
+          <text>解除绑定</text>
+        </gradient-button>
+      </block>
+      <block wx:else>
+        <gradient-button type="primary" size="md" block="{{true}}" bindtap="openBindSheet">
+          <text>立即绑定邮箱</text>
+        </gradient-button>
+      </block>
+    </view>
+  </glass-card>
+
+  <!-- 其他 -->
+  <glass-card intensity="subtle" padding="0" customClass="gap-4 list-card">
+    <view class="list-item" bindtap="copyWebUrl">
+      <view class="list-icon">🔗</view>
+      <view class="list-text">
+        <view class="list-title">复制网页链接</view>
+        <view class="list-sub muted">{{config.WEB_URL || 'aihelp.shuai.help'}}</view>
+      </view>
+      <view class="list-arrow">›</view>
+    </view>
+    <view class="divider"></view>
+    <view class="list-item" bindtap="logout">
+      <view class="list-icon list-icon--danger">⏻</view>
+      <view class="list-text">
+        <view class="list-title list-title--danger">退出登录</view>
+        <view class="list-sub muted">清除本机缓存的微信会话</view>
+      </view>
+      <view class="list-arrow">›</view>
+    </view>
+  </glass-card>
+
+  <view class="legal muted">
+    继续使用即表示同意万模 AI 服务条款与隐私协议
+  </view>
+</view>
+
+<!-- 邮箱绑定 / 解绑 Sheet -->
+<view wx:if="{{sheetVisible}}" class="sheet-mask" bindtap="closeSheet" catchtouchmove="noop">
+  <view class="sheet" catchtap="noop">
+    <view class="sheet-handle"></view>
+
+    <block wx:if="{{sheetMode === 'bind'}}">
+      <view class="sheet-title">绑定邮箱</view>
+      <view class="sheet-sub muted">绑定后可在网页用邮箱+密码登录同一账户</view>
+
+      <view class="form-field">
+        <view class="form-label">邮箱</view>
+        <input
+          class="form-input"
+          type="text"
+          confirm-type="next"
+          placeholder="you@example.com"
+          placeholder-class="form-placeholder"
+          value="{{bindEmail}}"
+          bindinput="onEmailInput"
+        />
+      </view>
+
+      <view class="form-field">
+        <view class="form-label">登录密码</view>
+        <input
+          class="form-input"
+          type="text"
+          password="{{true}}"
+          confirm-type="next"
+          placeholder="至少 8 位，含字母与数字"
+          placeholder-class="form-placeholder"
+          value="{{bindPassword}}"
+          bindinput="onPasswordInput"
+        />
+      </view>
+
+      <view class="form-field">
+        <view class="form-label">邮箱验证码</view>
+        <view class="form-code-row">
+          <input
+            class="form-input form-input--code"
+            type="number"
+            confirm-type="done"
+            placeholder="6 位数字"
+            placeholder-class="form-placeholder"
+            value="{{bindCode}}"
+            maxlength="6"
+            bindinput="onCodeInput"
+          />
+          <button
+            class="form-code-btn {{codeCooldown > 0 || sendingCode || !bindEmail ? 'form-code-btn--disabled' : ''}}"
+            disabled="{{codeCooldown > 0 || sendingCode || !bindEmail}}"
+            bindtap="sendBindCode"
+          >
+            {{sendingCode ? '发送中...' : codeCooldown > 0 ? codeCooldown + 's 后重发' : '获取验证码'}}
+          </button>
+        </view>
+      </view>
+
+      <view wx:if="{{bindError}}" class="form-error">⚠ {{bindError}}</view>
+
+      <view class="sheet-actions">
+        <gradient-button type="ghost" size="md" block="{{true}}" bindtap="closeSheet">
+          <text>取消</text>
+        </gradient-button>
+        <gradient-button
+          type="primary"
+          size="md"
+          block="{{true}}"
+          loading="{{sheetSubmitting}}"
+          bindtap="submitBind"
+        >
+          <text>{{sheetSubmitting ? '提交中...' : '确认绑定'}}</text>
+        </gradient-button>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="sheet-title">解除邮箱绑定？</view>
+      <view class="sheet-sub muted">
+        解绑后网页将无法用 {{emailMasked}} 登录此账号；微信账号不受影响。
+      </view>
+      <view class="sheet-actions">
+        <gradient-button type="ghost" size="md" block="{{true}}" bindtap="closeSheet">
+          <text>取消</text>
+        </gradient-button>
+        <gradient-button
+          type="danger"
+          size="md"
+          block="{{true}}"
+          loading="{{sheetSubmitting}}"
+          bindtap="submitUnbind"
+        >
+          <text>{{sheetSubmitting ? '处理中...' : '确认解绑'}}</text>
+        </gradient-button>
+      </view>
+    </block>
+  </view>
+</view>

@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "网页登录确认",
+  "usingComponents": {
+    "glass-card": "/components/glass-card/index",
+    "gradient-button": "/components/gradient-button/index"
+  }
+}

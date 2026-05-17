@@ -1,0 +1,110 @@
+.state-title {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.state-desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.section-title {
+  margin-top: 6rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.model-chip {
+  max-width: 280rpx;
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2rpx solid rgba(255, 255, 255, 0.1);
+  color: #c7d2fe;
+  font-size: 22rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.messages {
+  height: 420rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  background: rgba(15, 23, 42, 0.48);
+  border: 2rpx solid rgba(255, 255, 255, 0.06);
+}
+
+.empty {
+  padding: 96rpx 24rpx;
+  text-align: center;
+  font-size: 24rpx;
+}
+
+.message {
+  margin-bottom: 20rpx;
+  max-width: 92%;
+}
+
+.message--user {
+  margin-left: auto;
+  text-align: right;
+}
+
+.message-role {
+  margin-bottom: 6rpx;
+  color: #94a3b8;
+  font-size: 20rpx;
+}
+
+.message-content {
+  display: inline-block;
+  padding: 18rpx 22rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  font-size: 26rpx;
+  text-align: left;
+  word-break: break-word;
+}
+
+.message--user .message-content {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.78));
+  color: #ffffff;
+}
+
+.prompt-input {
+  width: 100%;
+  min-height: 150rpx;
+  padding: 22rpx 24rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  background: rgba(15, 23, 42, 0.62);
+  border: 2rpx solid rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18rpx;
+}
+
+.generated-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 22rpx;
+  background: rgba(15, 23, 42, 0.8);
+}

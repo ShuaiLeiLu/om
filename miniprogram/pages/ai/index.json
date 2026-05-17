@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "AI 创作",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "glass-card": "/components/glass-card/index",
+    "gradient-button": "/components/gradient-button/index",
+    "token-balance": "/components/token-balance/index"
+  }
+}

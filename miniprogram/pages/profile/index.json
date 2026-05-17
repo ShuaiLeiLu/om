@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "个人中心",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "glass-card": "/components/glass-card/index",
+    "gradient-button": "/components/gradient-button/index",
+    "status-pill": "/components/status-pill/index"
+  }
+}

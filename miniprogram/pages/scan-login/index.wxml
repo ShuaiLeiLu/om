@@ -1,0 +1,60 @@
+<view class="page">
+  <view class="page-header">
+    <view class="uppercase-label">Web Login Confirm</view>
+    <view class="text-2xl font-bold">
+      <text class="text-gradient">确认网页登录</text>
+    </view>
+  </view>
+
+  <!-- 状态图标 -->
+  <view class="status-hero status-hero--{{status}}">
+    <view class="status-circle">
+      <text wx:if="{{status === 'confirmed'}}" class="status-emoji">✓</text>
+      <text wx:elif="{{status === 'failed'}}" class="status-emoji">✕</text>
+      <view wx:elif="{{status === 'scanning'}}" class="spinner"></view>
+      <text wx:else class="status-emoji">📲</text>
+    </view>
+    <view class="status-text">{{statusText}}</view>
+    <view wx:if="{{errorText}}" class="status-error">{{errorText}}</view>
+  </view>
+
+  <!-- 主要操作 -->
+  <glass-card intensity="normal" padding="36rpx" customClass="action-card">
+    <view class="action-row">
+      <gradient-button
+        type="ghost"
+        size="md"
+        block="{{true}}"
+        disabled="{{confirming}}"
+        bindtap="cancel"
+      >
+        <text>取消</text>
+      </gradient-button>
+      <gradient-button
+        type="primary"
+        size="md"
+        block="{{true}}"
+        loading="{{confirming}}"
+        disabled="{{status === 'failed' || status === 'confirmed'}}"
+        bindtap="confirmLogin"
+      >
+        <text>{{confirming ? '确认中...' : status === 'confirmed' ? '已确认' : '确认登录'}}</text>
+      </gradient-button>
+    </view>
+
+    <view class="action-tip muted">
+      确认后网页端会自动进入你的账户，使用同一份 Token 余额。
+    </view>
+  </glass-card>
+
+  <!-- 安全提示 -->
+  <glass-card intensity="subtle" padding="28rpx 32rpx" customClass="safety-card">
+    <view class="safety-row">
+      <view class="safety-dot"></view>
+      <view class="safety-text">
+        <view class="safety-title">仅在你本人发起登录时确认</view>
+        <view class="safety-sub muted">如果不是你扫的码，请点击取消并向 Anthropic 反馈</view>
+      </view>
+    </view>
+  </glass-card>
+</view>
