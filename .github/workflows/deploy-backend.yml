@@ -32,4 +32,10 @@ jobs:
             git fetch origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
 
+            mkdir -p "$APP_DIR/backend"
+            cat > "$APP_DIR/backend/.env" <<'EOF'
+            ${{ secrets.BACKEND_ENV }}
+            EOF
+            chmod 600 "$APP_DIR/backend/.env"
+
             sh scripts/deploy-backend.sh
