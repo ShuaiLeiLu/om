@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import { getClientIp, getUserAgent } from '../../common/http'
 import { AdminService } from '../admin/admin.service'
 import { AuthService } from './auth.service'
+import { EmailVerificationService } from './email-verification.service'
 
 /**
  * 邮箱 + 密码本地账号服务。
@@ -36,18 +37,23 @@ export class LocalAuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auth: AuthService,
-    private readonly admin: AdminService
+    private readonly admin: AdminService,
+    private readonly verification: EmailVerificationService
   ) {}
 
   async register(args: {
     email: string
     password: string
+    code: string
     displayName?: string
     req: Request
     res: Response
   }) {
     const email = this.normalizeEmail(args.email)
     this.validatePassword(args.password)
+
+    // 校验邮箱验证码（验证通过即消费，无法重用）
+    await this.verification.verifyCode({ email, purpose: 'register', code: args.code })
 
     const existing = await this.prisma.user.findUnique({ where: { email } })
     if (existing) throw new BadRequestException('email_taken')
@@ -58,8 +64,10 @@ export class LocalAuthService {
       data: {
         email,
         passwordHash,
-        displayName: this.sanitizeDisplayName(args.displayName) || this.displayNameFromEmail(email),
-        emailVerifiedAt: null
+        displayName:
+          this.sanitizeDisplayName(args.displayName) || this.displayNameFromEmail(email),
+        // 既然刚刚验证了邮箱，就直接标记为 verified
+        emailVerifiedAt: new Date()
       }
     })
 
@@ -69,6 +77,27 @@ export class LocalAuthService {
     })
 
     return this.publicUser(user)
+  }
+
+  /**
+   * 重置密码：邮箱 + 验证码 + 新密码
+   * 不强制要求用户当前已登录；验证码作为唯一身份证明
+   */
+  async resetPassword(args: { email: string; code: string; newPassword: string }) {
+    const email = this.normalizeEmail(args.email)
+    this.validatePassword(args.newPassword)
+    await this.verification.verifyCode({ email, purpose: 'reset_password', code: args.code })
+
+    const user = await this.prisma.user.findUnique({ where: { email } })
+    // 出于防枚举考虑：即使用户不存在也返回 ok（不暴露邮箱是否注册）
+    if (!user) return { ok: true as const }
+
+    const passwordHash = await argon2.hash(args.newPassword, { type: argon2.argon2id })
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash, emailVerifiedAt: user.emailVerifiedAt || new Date() }
+    })
+    return { ok: true as const }
   }
 
   async login(args: { email: string; password: string; req: Request; res: Response }) {

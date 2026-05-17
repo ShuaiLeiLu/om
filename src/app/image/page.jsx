@@ -25,7 +25,7 @@ import {
   getImageDimensions,
   blobToDataUrl
 } from '@/lib/image/api'
-import { ToastProvider, useToast } from '@/components/ui/Toast'
+import { ToastProvider, useToast } from '@/components/ui/toast'
 import ImageHero from '@/components/image/ImageHero'
 import PromptComposer from '@/components/image/PromptComposer'
 import ParamsPanel from '@/components/image/ParamsPanel'

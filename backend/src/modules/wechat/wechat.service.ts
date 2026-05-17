@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { Response } from 'express'
 import * as argon2 from 'argon2'
 import { AuthService } from '../auth/auth.service'
+import { EmailVerificationService } from '../auth/email-verification.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { nowPlusSeconds, randomToken, sha256 } from '../../common/http'
 
@@ -28,7 +29,8 @@ export class WechatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly auth: AuthService
+    private readonly auth: AuthService,
+    private readonly verification: EmailVerificationService
   ) {}
 
   async createWebLoginSession() {
@@ -151,7 +153,7 @@ export class WechatService {
    * 简化版：只支持「邮箱未占用」的情况，「已占用」直接报错让用户处理冲突。
    * 后续可以加复杂合并流程。
    */
-  async linkEmail(sessionToken: string, email: string, password: string) {
+  async linkEmail(sessionToken: string, email: string, password: string, code: string) {
     const session = await this.verifyMiniappSession(sessionToken)
     if (!session.userId) throw new UnauthorizedException('wechat_not_bound')
 
@@ -165,6 +167,13 @@ export class WechatService {
     if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
       throw new BadRequestException('password_too_weak')
     }
+
+    // 校验邮箱验证码（防止有人乱填别人邮箱来占用）
+    await this.verification.verifyCode({
+      email: normalizedEmail,
+      purpose: 'bind_email',
+      code
+    })
 
     const user = await this.prisma.user.findUnique({ where: { id: session.userId } })
     if (!user) throw new UnauthorizedException('unauthorized')
@@ -181,7 +190,11 @@ export class WechatService {
     const passwordHash = await argon2.hash(password, { type: argon2.argon2id })
     const updated = await this.prisma.user.update({
       where: { id: user.id },
-      data: { email: normalizedEmail, passwordHash }
+      data: {
+        email: normalizedEmail,
+        passwordHash,
+        emailVerifiedAt: user.emailVerifiedAt || new Date()
+      }
     })
 
     return {

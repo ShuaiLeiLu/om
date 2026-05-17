@@ -14,6 +14,7 @@ import { CurrentUser } from '../../common/current-user'
 import { getClientIp, getUserAgent } from '../../common/http'
 import { UserSessionGuard } from '../../common/session.guard'
 import { AuthService } from './auth.service'
+import { EmailVerificationService } from './email-verification.service'
 import { LocalAuthService } from './local-auth.service'
 import { WechatOauthService } from './wechat-oauth.service'
 
@@ -22,7 +23,8 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly local: LocalAuthService,
-    private readonly wechatOauth: WechatOauthService
+    private readonly wechatOauth: WechatOauthService,
+    private readonly verification: EmailVerificationService
   ) {}
 
   // ---------- 基础 ----------
@@ -67,20 +69,55 @@ export class AuthController {
 
   // ---------- 邮箱 + 密码 ----------
 
+  /** 发送邮箱验证码。purpose: register | reset_password | bind_email */
+  @Post('auth/local/send-code')
+  sendCode(
+    @Body() body: { email?: string; purpose?: 'register' | 'reset_password' | 'bind_email' },
+    @Req() req: Request
+  ) {
+    const purpose = body.purpose === 'reset_password'
+      ? 'reset_password'
+      : body.purpose === 'bind_email'
+        ? 'bind_email'
+        : 'register'
+    return this.verification.sendCode({
+      email: String(body.email || ''),
+      purpose,
+      ip: getClientIp(req),
+      userAgent: getUserAgent(req)
+    })
+  }
+
   @Post('auth/local/register')
   async register(
-    @Body() body: { email?: string; password?: string; displayName?: string },
+    @Body()
+    body: {
+      email?: string
+      password?: string
+      code?: string
+      displayName?: string
+    },
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response
   ) {
     const user = await this.local.register({
       email: String(body.email || ''),
       password: String(body.password || ''),
+      code: String(body.code || ''),
       displayName: body.displayName ? String(body.displayName) : undefined,
       req,
       res
     })
     return { user }
+  }
+
+  @Post('auth/local/reset-password')
+  resetPassword(@Body() body: { email?: string; code?: string; newPassword?: string }) {
+    return this.local.resetPassword({
+      email: String(body.email || ''),
+      code: String(body.code || ''),
+      newPassword: String(body.newPassword || '')
+    })
   }
 
   @Post('auth/local/login')

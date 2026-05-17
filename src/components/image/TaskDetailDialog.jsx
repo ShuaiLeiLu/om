@@ -11,11 +11,11 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react'
-import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog'
-import { Button } from '@/components/ui/Button'
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { useImageStore } from '@/store/useImageStore'
 import { getTask, getImageObjectUrl, deleteTask, getImage } from '@/lib/image/db'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast'
 import { downloadBlob, formatRelativeTime, formatBytes } from '@/lib/utils'
 import { describeSize } from '@/lib/image/size'
 

@@ -6,7 +6,7 @@ import { useImageStore } from '@/store/useImageStore'
 import { sha256Hex } from '@/lib/image/hash'
 import { putImage, getImageObjectUrl } from '@/lib/image/db'
 import { getImageDimensions } from '@/lib/image/api'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
 const MAX_REFS = 16

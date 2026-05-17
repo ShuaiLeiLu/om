@@ -9,19 +9,36 @@ try {
 const BASE_URL = localConfig.BASE_URL || 'https://aihelp-backend.shuai.help/api';
 const WECHAT_APP_ID = localConfig.WECHAT_APP_ID || '';
 const REWARDED_VIDEO_AD_UNIT_ID = localConfig.REWARDED_VIDEO_AD_UNIT_ID || 'adunit-3258e3a8e5773f65';
+const WEB_URL = localConfig.WEB_URL || 'https://aihelp.shuai.help';
 
 module.exports = {
   BASE_URL,
+  WEB_URL,
   WECHAT_APP_ID,
   REWARDED_VIDEO_AD_UNIT_ID,
   API: {
+    // 小程序登录
     LOGIN: `${BASE_URL}/wechat/miniapp/auth/login`,
     ME: `${BASE_URL}/wechat/miniapp/me`,
+    MODELS: `${BASE_URL}/models`,
+    CHAT_COMPLETIONS: `${BASE_URL}/wechat/miniapp/ai/chat/completions`,
+    IMAGE_GENERATIONS: `${BASE_URL}/wechat/miniapp/ai/images/generations`,
+
+    // 奖励
     REWARD_CONFIG: `${BASE_URL}/wechat/miniapp/rewards/config`,
     REWARD_SESSIONS: `${BASE_URL}/wechat/miniapp/rewards/sessions`,
     REWARD_CLAIM: `${BASE_URL}/wechat/miniapp/rewards/claim`,
+
+    // 网页登录扫码确认
     WEB_LOGIN_SCAN: `${BASE_URL}/wechat/miniapp/sessions/scan`,
-    WEB_LOGIN_CONFIRM: `${BASE_URL}/wechat/miniapp/sessions/confirm`
+    WEB_LOGIN_CONFIRM: `${BASE_URL}/wechat/miniapp/sessions/confirm`,
+
+    // 邮箱绑定 / 解绑
+    LINK_EMAIL: `${BASE_URL}/wechat/miniapp/auth/link-email`,
+    UNLINK_EMAIL: `${BASE_URL}/wechat/miniapp/auth/unlink-email`,
+
+    // 邮箱验证码
+    SEND_CODE: `${BASE_URL}/auth/local/send-code`
   },
   STORAGE: {
     TOKEN: 'chatty_miniapp_session_token',

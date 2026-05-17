@@ -12,8 +12,8 @@ import {
   detectPreset,
   describeSize
 } from '@/lib/image/size'
-import { Button } from '@/components/ui/Button'
-import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/dialog'
 
 const TARGET_KEYS = ['auto', '1K', '2K', '4K']
 

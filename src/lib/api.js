@@ -145,6 +145,32 @@ export async function fetchWechatLoginSession(sessionId) {
   return data
 }
 
+export async function sendLocalCode({ email, purpose = 'register' }) {
+  const res = await fetch('/api/auth/local/send-code', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, purpose }),
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
+export async function localResetPassword({ email, code, newPassword }) {
+  const res = await fetch('/api/auth/local/reset-password', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code, newPassword }),
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
 export async function localLogin({ email, password }) {
   const res = await fetch('/api/auth/local/login', {
     method: 'POST',
@@ -158,12 +184,12 @@ export async function localLogin({ email, password }) {
   return data
 }
 
-export async function localRegister({ email, password, displayName }) {
+export async function localRegister({ email, password, displayName, code }) {
   const res = await fetch('/api/auth/local/register', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, displayName }),
+    body: JSON.stringify({ email, password, displayName, code }),
     signal: AbortSignal.timeout(15000)
   })
   const data = await readJson(res)

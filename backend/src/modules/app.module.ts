@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module'
 import { ChatModule } from './chat/chat.module'
 import { HealthModule } from './health/health.module'
 import { ImagesModule } from './images/images.module'
+import { MiniappAiModule } from './miniapp-ai/miniapp-ai.module'
 import { ModelsModule } from './models/models.module'
 import { PrismaModule } from './prisma/prisma.module'
 import { QuotaModule } from './quota/quota.module'
@@ -28,6 +29,7 @@ import { WechatModule } from './wechat/wechat.module'
     RedeemModule,
     ModelsModule,
     ChatModule,
+    MiniappAiModule,
     StorageModule,
     Sub2apiModule,
     RewardsModule,

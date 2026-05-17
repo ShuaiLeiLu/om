@@ -3,7 +3,7 @@
 import { useImageStore } from '@/store/useImageStore'
 import { cn } from '@/lib/utils'
 import { QUALITY_OPTIONS, FORMAT_OPTIONS, MODERATION_OPTIONS } from '@/lib/image/size'
-import { Slider } from '@/components/ui/Slider'
+import { Slider } from '@/components/ui/slider'
 import { SizeSelector } from './SizeSelector'
 
 export function ParamsPanel() {

@@ -10,6 +10,7 @@ import MethodTabs from '@/components/auth/MethodTabs'
 import WechatOneClickPanel from '@/components/auth/WechatOneClickPanel'
 import WechatQrPanel from '@/components/auth/WechatQrPanel'
 import LocalAuthPanel from '@/components/auth/LocalAuthPanel'
+import ForgotPasswordPanel from '@/components/auth/ForgotPasswordPanel'
 
 function LoginPageInner() {
   const searchParams = useSearchParams()
@@ -20,7 +21,7 @@ function LoginPageInner() {
   }, [searchParams])
 
   const [capabilities, setCapabilities] = useState(null)
-  const [method, setMethod] = useState(null) // 'oneclick' | 'qrcode' | 'local'
+  const [method, setMethod] = useState(null) // 'oneclick' | 'qrcode' | 'local' | 'forgot'
   const [capabilitiesError, setCapabilitiesError] = useState('')
   const [localMode, setLocalMode] = useState('login') // login | register
 
@@ -68,8 +69,10 @@ function LoginPageInner() {
   }, [capabilities, oneClickAvailable])
 
   const heading = useMemo(() => {
+    if (method === 'forgot')
+      return { title: '找回密码', sub: '通过邮箱验证码重置' }
     if (method === 'local' && localMode === 'register')
-      return { title: '注册万模 AI', sub: '邮箱 + 密码，10 秒搞定' }
+      return { title: '注册万模 AI', sub: '邮箱 + 验证码 + 密码' }
     if (method === 'local')
       return { title: '账号密码登录', sub: '使用邮箱与密码继续' }
     if (method === 'qrcode')
@@ -98,7 +101,7 @@ function LoginPageInner() {
             )}
           </div>
 
-          {tabs.length > 1 && (
+          {tabs.length > 1 && method !== 'forgot' && (
             <div className="mb-4">
               <MethodTabs methods={tabs} value={method} onChange={setMethod} />
             </div>
@@ -119,12 +122,27 @@ function LoginPageInner() {
               nextUrl={nextUrl}
               onSwitchToQrcode={() => setMethod('qrcode')}
             />
+          ) : method === 'forgot' ? (
+            <ForgotPasswordPanel onBackToLogin={() => setMethod('local')} />
           ) : method === 'local' ? (
-            <LocalAuthPanel
-              mode={localMode}
-              onModeChange={setLocalMode}
-              nextUrl={nextUrl}
-            />
+            <>
+              <LocalAuthPanel
+                mode={localMode}
+                onModeChange={setLocalMode}
+                nextUrl={nextUrl}
+              />
+              {localMode === 'login' && (
+                <div className="mt-3 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setMethod('forgot')}
+                    className="text-[11px] font-medium text-slate-400 transition hover:text-fuchsia-300 tap-transparent"
+                  >
+                    忘记密码？
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <WechatQrPanel nextUrl={nextUrl} />
           )}

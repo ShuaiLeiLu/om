@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Sparkles, Loader2, AlertCircle, Wand2 } from 'lucide-react'
 import { useImageStore } from '@/store/useImageStore'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 export function PromptComposer({ onGenerate, isGenerating, modelName, error }) {
   const prompt = useImageStore((s) => s.prompt)

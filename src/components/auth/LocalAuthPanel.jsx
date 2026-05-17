@@ -15,8 +15,15 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { useAuthStore } from '@/store/useStore'
-import { localLogin, localRegister, fetchMe, fetchQuotaSummary } from '@/lib/api'
+import {
+  localLogin,
+  localRegister,
+  fetchMe,
+  fetchQuotaSummary,
+  sendLocalCode
+} from '@/lib/api'
 import { cn } from '@/lib/utils'
+import CodeField from './CodeField'
 
 // 邮箱 + 密码本地登录面板（含注册子模式）。
 //
@@ -40,7 +47,8 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/p
   const [form, setForm] = useState({
     email: '',
     password: '',
-    displayName: ''
+    displayName: '',
+    code: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -50,10 +58,21 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/p
     setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
   const passwordHints = useMemo(() => evaluatePassword(form.password), [form.password])
+  const emailValid = useMemo(() => isEmail(form.email), [form.email])
   const canSubmit =
     form.email.trim().length > 0 &&
     form.password.length >= 8 &&
-    (mode === 'login' || (passwordHints.hasLetter && passwordHints.hasDigit))
+    (mode === 'login' ||
+      (passwordHints.hasLetter && passwordHints.hasDigit && form.code.length === 6))
+
+  const handleSendCode = useCallback(async () => {
+    const email = form.email.trim().toLowerCase()
+    if (!emailValid) {
+      setError('请先输入有效的邮箱')
+      throw new Error('请先输入有效的邮箱')
+    }
+    return sendLocalCode({ email, purpose: 'register' })
+  }, [form.email, emailValid])
 
   const onSubmit = async (e) => {
     e?.preventDefault?.()
@@ -67,6 +86,7 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/p
       }
       if (mode === 'register') {
         if (form.displayName.trim()) payload.displayName = form.displayName.trim()
+        payload.code = form.code
         await localRegister(payload)
       } else {
         const result = await localLogin(payload)
@@ -122,6 +142,16 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/p
 
       {mode === 'register' && form.password.length > 0 && (
         <PasswordHints hints={passwordHints} />
+      )}
+
+      {mode === 'register' && (
+        <CodeField
+          value={form.code}
+          onChange={(v) => setForm((p) => ({ ...p, code: v }))}
+          canSend={emailValid}
+          onSend={handleSendCode}
+          onError={setError}
+        />
       )}
 
       {error && (
@@ -256,6 +286,10 @@ function evaluatePassword(pw) {
     hasLetter: /[A-Za-z]/.test(pw),
     hasDigit: /\d/.test(pw)
   }
+}
+
+function isEmail(s) {
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test((s || '').trim())
 }
 
 function translateError(message) {

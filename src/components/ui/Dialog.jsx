@@ -1,50 +1,45 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import * as React from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Responsive dialog.
-// On mobile the dialog becomes a near-full-screen sheet with safe-area padding;
-// on md+ it follows the size prop (sm | md | lg | xl | full).
-export function Dialog({ open, onClose, children, className, size = 'md' }) {
-  const handleKey = useCallback(
-    (e) => {
-      if (e.key === 'Escape') onClose?.()
-    },
-    [onClose]
-  )
+const sizeClasses = {
+  sm: 'max-w-md',
+  md: 'max-w-2xl',
+  lg: 'max-w-4xl',
+  xl: 'max-w-6xl'
+}
 
-  useEffect(() => {
-    if (!open) return
-    document.addEventListener('keydown', handleKey)
+export function Dialog({ open, onClose, size = 'lg', children }) {
+  React.useEffect(() => {
+    if (!open) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose?.()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = ''
+      window.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = previousOverflow
     }
-  }, [open, handleKey])
+  }, [open, onClose])
 
   if (!open) return null
 
-  const sizeClass = {
-    sm: 'md:max-w-md',
-    md: 'md:max-w-xl',
-    lg: 'md:max-w-3xl',
-    xl: 'md:max-w-5xl',
-    full: 'md:max-w-[95vw]'
-  }[size]
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center p-0 animate-fade-in md:items-center md:p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      <button
+        type="button"
+        aria-label="关闭弹窗"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div
         className={cn(
-          'relative flex w-full max-h-[95dvh] flex-col overflow-hidden border border-white/10 bg-slate-950/95 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.5)]',
-          'rounded-t-3xl md:rounded-2xl md:max-h-[90dvh]',
-          'animate-in',
-          sizeClass,
-          className
+          'relative z-10 flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 shadow-[0_32px_80px_rgba(0,0,0,0.45)]',
+          sizeClasses[size] || sizeClasses.lg
         )}
       >
         {children}
@@ -53,40 +48,39 @@ export function Dialog({ open, onClose, children, className, size = 'md' }) {
   )
 }
 
-export function DialogHeader({ title, description, onClose, children }) {
+export function DialogHeader({ title, description, onClose, children, className }) {
   return (
-    <div className="flex shrink-0 items-start justify-between border-b border-white/5 px-5 py-4 md:px-6">
-      <div className="min-w-0 flex-1">
-        {title && <h2 className="text-base font-semibold text-white md:text-lg">{title}</h2>}
-        {description && <p className="mt-1 text-xs text-slate-400">{description}</p>}
-        {children}
+    <div className={cn('border-b border-white/8 px-5 py-4 sm:px-6', className)}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          {title && <h2 className="text-base font-semibold text-white">{title}</h2>}
+          {description && <p className="mt-1 text-sm text-slate-400">{description}</p>}
+          {children}
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white"
+            aria-label="关闭"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-white tap-transparent"
-          aria-label="关闭"
-        >
-          <X size={16} />
-        </button>
-      )}
     </div>
   )
 }
 
 export function DialogBody({ className, children }) {
-  return (
-    <div className={cn('flex-1 overflow-y-auto px-5 py-4 scrollbar-thin md:px-6 md:py-5', className)}>
-      {children}
-    </div>
-  )
+  return <div className={cn('min-h-0 flex-1 p-5 sm:p-6', className)}>{children}</div>
 }
 
 export function DialogFooter({ className, children }) {
   return (
     <div
       className={cn(
-        'flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-white/5 bg-white/[0.02] px-4 py-3 pb-safe md:px-6',
+        'flex items-center justify-end gap-2 border-t border-white/8 px-5 py-4 sm:px-6',
         className
       )}
     >

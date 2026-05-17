@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { Upload, Download, Loader2, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { useToast } from '@/components/ui/Toast'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/toast'
 import { exportAllTasksToZip, importTasksFromZip } from '@/lib/image/zip'
 import { listTasks, clearAllTasks, cleanOrphanImages } from '@/lib/image/db'
 import { useImageStore } from '@/store/useImageStore'

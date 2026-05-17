@@ -115,6 +115,36 @@ enum ImageSource {
   system
 }
 
+enum VerificationPurpose {
+  register
+  reset_password
+  bind_email
+}
+
+enum VerificationStatus {
+  active
+  consumed
+  expired
+  exhausted
+}
+
+model EmailVerificationCode {
+  id          String              @id @default(uuid())
+  email       String
+  purpose     VerificationPurpose
+  codeHash    String
+  status      VerificationStatus  @default(active)
+  attempts    Int                 @default(0)
+  maxAttempts Int                 @default(5)
+  ip          String              @default("")
+  userAgent   String              @default("")
+  createdAt   DateTime            @default(now())
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  @@index([email, purpose, status])
+  @@index([createdAt])
+}
+
 enum ImageTaskMode {
   generate
   edit

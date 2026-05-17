@@ -51,12 +51,18 @@ export class WechatController {
   @Post('wechat/miniapp/auth/link-email')
   linkEmail(
     @Body()
-    body: { miniappSessionToken?: string; email?: string; password?: string }
+    body: {
+      miniappSessionToken?: string
+      email?: string
+      password?: string
+      code?: string
+    }
   ) {
     return this.wechat.linkEmail(
       String(body.miniappSessionToken || ''),
       String(body.email || ''),
-      String(body.password || '')
+      String(body.password || ''),
+      String(body.code || '')
     )
   }
 

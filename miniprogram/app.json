@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/ai/index",
     "pages/rewards/index",
     "pages/profile/index",
     "pages/scan-login/index"
@@ -21,6 +22,10 @@
       {
         "pagePath": "pages/home/index",
         "text": "首页"
+      },
+      {
+        "pagePath": "pages/ai/index",
+        "text": "AI"
       },
       {
         "pagePath": "pages/rewards/index",

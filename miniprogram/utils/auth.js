@@ -35,8 +35,45 @@ async function fetchUserInfo() {
   return user;
 }
 
+async function linkEmail(email, password, code) {
+  await ensureLogin();
+  const token = wx.getStorageSync(config.STORAGE.TOKEN);
+  return request({
+    url: config.API.LINK_EMAIL,
+    method: 'POST',
+    data: { miniappSessionToken: token, email, password, code }
+  });
+}
+
+async function sendEmailCode(email, purpose) {
+  return request({
+    url: config.API.SEND_CODE,
+    method: 'POST',
+    data: { email, purpose: purpose || 'bind_email' }
+  });
+}
+
+async function unlinkEmail() {
+  await ensureLogin();
+  const token = wx.getStorageSync(config.STORAGE.TOKEN);
+  return request({
+    url: config.API.UNLINK_EMAIL,
+    method: 'POST',
+    data: { miniappSessionToken: token }
+  });
+}
+
+function clearLocalSession() {
+  wx.removeStorageSync(config.STORAGE.TOKEN);
+  wx.removeStorageSync(config.STORAGE.USER);
+}
+
 module.exports = {
   login,
   ensureLogin,
-  fetchUserInfo
+  fetchUserInfo,
+  linkEmail,
+  unlinkEmail,
+  sendEmailCode,
+  clearLocalSession
 };

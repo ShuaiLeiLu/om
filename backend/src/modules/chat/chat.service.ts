@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Response } from 'express'
 import { randomToken } from '../../common/http'
@@ -301,7 +301,7 @@ export class ChatService {
 
       const upstream = await fetch(fetchInit.url, fetchInit.init)
       const data = this.asImageGenerationResponse(await this.readJson(upstream))
-      if (!upstream.ok) throw new Error(this.upstreamErrorMessage(data, upstream.status))
+      if (!upstream.ok) throw this.imageUpstreamException(data, upstream.status)
 
       const fallbackMime = this.fallbackMimeForFormat(input.output_format)
       const images = (data.data || [])
@@ -659,6 +659,25 @@ export class ChatService {
       if (typeof message === 'string' && message) return message
     }
     return `sub2api_http_${status}`
+  }
+
+  private imageUpstreamException(data: unknown, status: number) {
+    const message = this.upstreamErrorMessage(data, status)
+    const normalized = message.toLowerCase()
+    if (
+      normalized.includes('image generation is not enabled') ||
+      normalized.includes('not enabled for this group')
+    ) {
+      return new BadRequestException({
+        message: 'image_generation_not_enabled',
+        detail: message
+      })
+    }
+    return new BadGatewayException({
+      message: 'upstream_error',
+      detail: message,
+      status
+    })
   }
 
   private asImageGenerationResponse(data: unknown): ImageGenerationResponse {

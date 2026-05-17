@@ -12,7 +12,7 @@ import StarterPrompts from '@/components/chat/StarterPrompts'
 import { decorateProvider } from '@/lib/config'
 import { isImageGenerationModel } from '@/lib/model-badges'
 import { sendMessage, fileToBase64, fetchModels, fetchMe, fetchQuotaSummary } from '@/lib/api'
-import { ToastProvider, useToast } from '@/components/ui/Toast'
+import { ToastProvider, useToast } from '@/components/ui/toast'
 
 function isLocalConversationId(id) {
   return typeof id === 'string' && id.startsWith('conv_')

@@ -1,49 +1,65 @@
 'use client'
 
+import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-export function SegmentedControl({ value, onChange, options, className, size = 'md' }) {
-  const sizeClass = {
-    sm: 'p-0.5 text-[11px]',
-    md: 'p-1 text-xs',
-    lg: 'p-1.5 text-sm'
-  }[size]
-  const buttonSize = {
-    sm: 'h-6 px-2 rounded-md gap-1',
-    md: 'h-8 px-3 rounded-lg gap-1.5',
-    lg: 'h-10 px-4 rounded-xl gap-2'
-  }[size]
+const TabsContext = React.createContext(null)
 
+export function Tabs({ value, defaultValue, onValueChange, className, children }) {
+  const [internalValue, setInternalValue] = React.useState(defaultValue)
+  const currentValue = value !== undefined ? value : internalValue
+
+  const setValue = React.useCallback(
+    (nextValue) => {
+      if (value === undefined) setInternalValue(nextValue)
+      onValueChange?.(nextValue)
+    },
+    [onValueChange, value]
+  )
+
+  return (
+    <TabsContext.Provider value={{ value: currentValue, setValue }}>
+      <div className={cn('space-y-4', className)}>{children}</div>
+    </TabsContext.Provider>
+  )
+}
+
+export function TabsList({ className, children }) {
   return (
     <div
       className={cn(
-        'inline-flex rounded-xl border border-white/8 bg-white/[0.05]',
-        sizeClass,
+        'inline-flex h-10 items-center rounded-xl border border-white/8 bg-white/[0.04] p-1 text-slate-400',
         className
       )}
     >
-      {options.map((opt) => {
-        const active = value === opt.value
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              'inline-flex items-center justify-center font-medium transition-all',
-              buttonSize,
-              active
-                ? 'bg-gradient-to-br from-indigo-500/70 to-purple-500/60 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] border border-white/15'
-                : 'text-slate-400 hover:text-slate-200'
-            )}
-          >
-            {opt.icon && <opt.icon size={size === 'sm' ? 12 : size === 'lg' ? 16 : 14} />}
-            <span>{opt.label}</span>
-          </button>
-        )
-      })}
+      {children}
     </div>
   )
 }
 
-export default SegmentedControl
+export function TabsTrigger({ value, className, children }) {
+  const context = React.useContext(TabsContext)
+  const active = context?.value === value
+
+  return (
+    <button
+      type="button"
+      onClick={() => context?.setValue(value)}
+      className={cn(
+        'inline-flex min-w-0 items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-all',
+        active
+          ? 'bg-gradient-to-br from-indigo-500/40 to-fuchsia-500/30 text-white border border-white/12'
+          : 'text-slate-400 hover:text-slate-100',
+        className
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function TabsContent({ value, className, children }) {
+  const context = React.useContext(TabsContext)
+  if (context?.value !== value) return null
+  return <div className={cn('outline-none', className)}>{children}</div>
+}
