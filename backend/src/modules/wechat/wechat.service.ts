@@ -145,8 +145,8 @@ export class WechatService {
    * 把当前小程序登录的微信账号与一个邮箱+密码账号绑定。
    *
    * 情况 1：邮箱在系统里不存在 → 直接给当前 User 设 email + passwordHash
-   * 情况 2：邮箱已经被其他 User 占用 → 校验该邮箱账号密码后，把当前微信身份合并过去。
-   * 只有当前小程序账号没有业务数据时才合并，避免误迁移额度、对话或图片任务。
+   * 情况 2：邮箱已经被其他 User 占用 → 如果该邮箱账号没绑定过微信，
+   * 校验该邮箱账号密码后，把当前微信账号数据合并过去。
    */
   async linkEmail(sessionToken: string, email: string, password: string, code: string) {
     const session = await this.verifyMiniappSession(sessionToken)
@@ -163,44 +163,27 @@ export class WechatService {
       throw new BadRequestException('password_too_weak')
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: session.userId },
-      include: {
-        storageUsage: { select: { userId: true } },
-        _count: {
-          select: {
-            sessions: true,
-            qrSessions: true,
-            tokenGrants: true,
-            quotaLedger: true,
-            conversations: true,
-            messages: true,
-            llmRequests: true,
-            usageEvents: true,
-            rewardSessions: true,
-            rewardEvents: true,
-            ownedImages: true,
-            imageTasks: true,
-            imageRefs: true
-          }
-        }
-      }
-    })
+    const user = await this.prisma.user.findUnique({ where: { id: session.userId } })
     if (!user) throw new UnauthorizedException('unauthorized')
 
     if (user.email && user.email !== normalizedEmail) {
       throw new BadRequestException('email_already_set')
     }
 
-    const taken = await this.prisma.user.findUnique({ where: { email: normalizedEmail } })
+    const taken = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      include: {
+        oauthAccounts: {
+          where: { provider: 'wechat_miniapp' },
+          select: { id: true }
+        }
+      }
+    })
     if (taken && taken.id !== user.id) {
+      if (taken.oauthAccounts.length > 0) throw new BadRequestException('email_already_bound_to_other')
       if (!taken.passwordHash) throw new BadRequestException('email_already_bound_to_other')
       const passwordOk = await argon2.verify(taken.passwordHash, password)
       if (!passwordOk) throw new UnauthorizedException('invalid_credentials')
-
-      if (!this.canMergeMiniappUser(user)) {
-        throw new BadRequestException('email_already_bound_to_other')
-      }
 
       await this.verification.verifyCode({
         email: normalizedEmail,
@@ -208,21 +191,7 @@ export class WechatService {
         code
       })
 
-      await this.prisma.$transaction(async (tx) => {
-        await tx.oauthAccount.updateMany({
-          where: { userId: user.id },
-          data: { userId: taken.id }
-        })
-        await tx.wechatMiniappSession.updateMany({
-          where: { userId: user.id },
-          data: { userId: taken.id }
-        })
-        await tx.wechatQrSession.updateMany({
-          where: { userId: user.id },
-          data: { userId: taken.id }
-        })
-        await tx.user.delete({ where: { id: user.id } })
-      })
+      await this.mergeUserIntoExistingEmailUser(user.id, taken.id)
 
       return {
         ok: true as const,
@@ -395,41 +364,61 @@ export class WechatService {
     throw new BadRequestException('wechat_env_version_invalid')
   }
 
-  private canMergeMiniappUser(user: {
-    storageUsage: { userId: string } | null
-    _count: {
-      sessions: number
-      qrSessions: number
-      tokenGrants: number
-      quotaLedger: number
-      conversations: number
-      messages: number
-      llmRequests: number
-      usageEvents: number
-      rewardSessions: number
-      rewardEvents: number
-      ownedImages: number
-      imageTasks: number
-      imageRefs: number
-    }
-  }) {
-    const counts = user._count
-    return (
-      user.storageUsage === null &&
-      counts.sessions === 0 &&
-      counts.qrSessions === 0 &&
-      counts.tokenGrants === 0 &&
-      counts.quotaLedger === 0 &&
-      counts.conversations === 0 &&
-      counts.messages === 0 &&
-      counts.llmRequests === 0 &&
-      counts.usageEvents === 0 &&
-      counts.rewardSessions === 0 &&
-      counts.rewardEvents === 0 &&
-      counts.ownedImages === 0 &&
-      counts.imageTasks === 0 &&
-      counts.imageRefs === 0
-    )
+  private async mergeUserIntoExistingEmailUser(sourceUserId: string, targetUserId: string) {
+    if (sourceUserId === targetUserId) return
+
+    await this.prisma.$transaction(async (tx) => {
+      const sourceStorage = await tx.storageUsage.findUnique({ where: { userId: sourceUserId } })
+      if (sourceStorage) {
+        await tx.storageUsage.upsert({
+          where: { userId: targetUserId },
+          create: {
+            userId: targetUserId,
+            bytesTotal: sourceStorage.bytesTotal,
+            imagesCount: sourceStorage.imagesCount
+          },
+          update: {
+            bytesTotal: { increment: sourceStorage.bytesTotal },
+            imagesCount: { increment: sourceStorage.imagesCount }
+          }
+        })
+        await tx.storageUsage.delete({ where: { userId: sourceUserId } })
+      }
+
+      const sourceImageRefs = await tx.userImageRef.findMany({ where: { userId: sourceUserId } })
+      for (const ref of sourceImageRefs) {
+        await tx.userImageRef.upsert({
+          where: { userId_imageId: { userId: targetUserId, imageId: ref.imageId } },
+          create: {
+            userId: targetUserId,
+            imageId: ref.imageId,
+            count: ref.count,
+            bytes: ref.bytes
+          },
+          update: {
+            count: { increment: ref.count },
+            bytes: { increment: ref.bytes }
+          }
+        })
+      }
+      await tx.userImageRef.deleteMany({ where: { userId: sourceUserId } })
+
+      await tx.oauthAccount.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.userSession.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.wechatQrSession.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.wechatMiniappSession.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.tokenGrant.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.quotaLedger.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.conversation.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.message.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.llmRequest.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.usageEvent.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.adRewardSession.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.adRewardEvent.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.image.updateMany({ where: { ownerUserId: sourceUserId }, data: { ownerUserId: targetUserId } })
+      await tx.imageTask.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      await tx.user.delete({ where: { id: sourceUserId } })
+    })
   }
 
   private async resolveMiniappUser(appid: string, openid: string, unionid: string | null) {
