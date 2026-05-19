@@ -186,6 +186,10 @@ Page({
     }
   },
 
+  openWebLoginCode() {
+    wx.navigateTo({ url: '/pages/web-login-code/index' });
+  },
+
   copyWebUrl() {
     wx.setClipboardData({
       data: config.WEB_URL,

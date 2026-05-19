@@ -31,7 +31,7 @@ import CodeField from './CodeField'
 //  - mode: 'login' | 'register'   外部可控；不传则内部维护
 //  - onModeChange: (next) => void  通知外部切换
 //  - nextUrl: 登录成功后跳转的路径
-export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/profile' }) {
+export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/image' }) {
   const router = useRouter()
   const { setSession } = useAuthStore()
   const [internalMode, setInternalMode] = useState('login')
@@ -97,7 +97,7 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/p
       }
       const [user, quota] = await Promise.all([fetchMe(), fetchQuotaSummary()])
       setSession({ user, quota })
-      router.replace(nextUrl === '/admin' ? '/profile' : nextUrl)
+      router.replace(nextUrl === '/admin' ? '/image' : nextUrl)
     } catch (err) {
       setError(translateError(err?.message))
     } finally {

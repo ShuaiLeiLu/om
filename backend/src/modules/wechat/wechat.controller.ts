@@ -20,6 +20,11 @@ export class WechatController {
     })
   }
 
+  @Get('auth/wechat-miniapp/sessions/:sessionId/sse')
+  subscribeSessionSse(@Param('sessionId') sessionId: string, @Res() res: Response) {
+    this.wechat.subscribeSessionSse(sessionId, res)
+  }
+
   @Get('auth/wechat-miniapp/sessions/:sessionId/qrcode')
   async getWebLoginQrCode(@Param('sessionId') sessionId: string, @Res() res: Response) {
     const qrcode = await this.wechat.getWebLoginQrCode(sessionId)
@@ -38,6 +43,11 @@ export class WechatController {
     return this.wechat.miniappMe(String(req.headers.authorization || '').replace(/^Bearer\s+/i, ''))
   }
 
+  @Post('wechat/miniapp/sessions/scan-and-confirm')
+  scanAndConfirm(@Body() body: { scene?: string; miniappSessionToken?: string }) {
+    return this.wechat.scanAndConfirm(String(body.scene || ''), String(body.miniappSessionToken || ''))
+  }
+
   @Post('wechat/miniapp/sessions/scan')
   scan(@Body() body: { scene?: string; miniappSessionToken?: string }) {
     return this.wechat.scan(String(body.scene || ''), String(body.miniappSessionToken || ''))
@@ -46,6 +56,23 @@ export class WechatController {
   @Post('wechat/miniapp/sessions/confirm')
   confirm(@Body() body: { scene?: string; miniappSessionToken?: string }) {
     return this.wechat.confirm(String(body.scene || ''), String(body.miniappSessionToken || ''))
+  }
+
+  @Post('wechat/miniapp/auth/login-code')
+  createLoginCode(@Body() body: { miniappSessionToken?: string }) {
+    return this.wechat.createLoginCode(String(body.miniappSessionToken || ''))
+  }
+
+  @Post('auth/wechat-miniapp/login-code/verify')
+  verifyLoginCode(
+    @Body() body: { code?: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    return this.wechat.verifyLoginCode(String(body.code || ''), res, {
+      ip: getClientIp(req),
+      userAgent: getUserAgent(req)
+    })
   }
 
   @Post('wechat/miniapp/auth/link-email')

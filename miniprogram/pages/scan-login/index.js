@@ -6,9 +6,8 @@ const { translateLoginError } = require('../../utils/errors');
 Page({
   data: {
     scene: '',
-    status: 'ready', // ready | scanning | scanned | confirmed | failed
-    confirming: false,
-    statusText: '请确认是否登录万模AI网页端',
+    status: 'ready', // ready | confirming | confirmed | failed
+    statusText: '正在确认登录...',
     errorText: ''
   },
 
@@ -23,7 +22,7 @@ Page({
       return;
     }
     this.setData({ scene });
-    this.markScanned();
+    this.autoConfirm();
   },
 
   extractScene(options) {
@@ -33,56 +32,38 @@ Page({
     return m ? m[0] : '';
   },
 
-  async markScanned() {
+  async autoConfirm() {
     if (!this.data.scene) return;
-    this.setData({ status: 'scanning', statusText: '正在向网页发送扫码状态...' });
+    this.setData({ status: 'confirming', statusText: '正在确认登录...' });
     try {
       await auth.ensureLogin();
       const token = wx.getStorageSync(config.STORAGE.TOKEN);
       await request({
-        url: config.API.WEB_LOGIN_SCAN,
-        method: 'POST',
-        data: { scene: this.data.scene, miniappSessionToken: token }
-      });
-      this.setData({
-        status: 'scanned',
-        statusText: '已扫码，请点击下方确认登录'
-      });
-    } catch (error) {
-      console.error('mark scanned failed:', error);
-      this.setData({
-        status: 'failed',
-        statusText: '二维码状态同步失败',
-        errorText: translateLoginError(error)
-      });
-    }
-  },
-
-  async confirmLogin() {
-    if (this.data.confirming || !this.data.scene) return;
-    this.setData({ confirming: true, errorText: '' });
-    try {
-      await auth.ensureLogin();
-      const token = wx.getStorageSync(config.STORAGE.TOKEN);
-      await request({
-        url: config.API.WEB_LOGIN_CONFIRM,
+        url: config.API.WEB_LOGIN_SCAN_AND_CONFIRM,
         method: 'POST',
         data: { scene: this.data.scene, miniappSessionToken: token }
       });
       this.setData({
         status: 'confirmed',
-        statusText: '网页登录已确认，可以回到网页继续使用'
+        statusText: '网页登录成功'
       });
       wx.showToast({ title: '已确认登录', icon: 'success' });
       setTimeout(() => {
         wx.switchTab({ url: '/pages/home/index' });
-      }, 1500);
+      }, 1200);
     } catch (error) {
-      console.error('confirm login failed:', error);
-      this.setData({ errorText: translateLoginError(error) });
-    } finally {
-      this.setData({ confirming: false });
+      console.error('auto confirm failed:', error);
+      this.setData({
+        status: 'failed',
+        statusText: '登录确认失败',
+        errorText: translateLoginError(error)
+      });
     }
+  },
+
+  retry() {
+    this.setData({ errorText: '' });
+    this.autoConfirm();
   },
 
   cancel() {

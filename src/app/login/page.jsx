@@ -2,26 +2,29 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ScanLine, Zap, KeyRound } from 'lucide-react'
+import { ScanLine, Zap, KeyRound, Hash } from 'lucide-react'
 import { fetchAuthCapabilities } from '@/lib/api'
 import { isWechatBrowser, preferredOauthMode } from '@/lib/env-detect'
 import LoginShell, { LoginMarketing } from '@/components/auth/LoginShell'
 import MethodTabs from '@/components/auth/MethodTabs'
 import WechatOneClickPanel from '@/components/auth/WechatOneClickPanel'
 import WechatQrPanel from '@/components/auth/WechatQrPanel'
+import LoginCodePanel from '@/components/auth/LoginCodePanel'
 import LocalAuthPanel from '@/components/auth/LocalAuthPanel'
 import ForgotPasswordPanel from '@/components/auth/ForgotPasswordPanel'
+
+const DEFAULT_AFTER_LOGIN = '/image'
 
 function LoginPageInner() {
   const searchParams = useSearchParams()
   const nextUrl = useMemo(() => {
     const n = searchParams?.get('next')
-    if (!n || !n.startsWith('/') || n.startsWith('//')) return '/profile'
+    if (!n || !n.startsWith('/') || n.startsWith('//')) return DEFAULT_AFTER_LOGIN
     return n
   }, [searchParams])
 
   const [capabilities, setCapabilities] = useState(null)
-  const [method, setMethod] = useState(null) // 'oneclick' | 'qrcode' | 'local' | 'forgot'
+  const [method, setMethod] = useState(null) // 'oneclick' | 'qrcode' | 'logincode' | 'local' | 'forgot'
   const [capabilitiesError, setCapabilitiesError] = useState('')
   const [localMode, setLocalMode] = useState('login') // login | register
 
@@ -65,6 +68,7 @@ function LoginPageInner() {
       list.push({ value: 'local', label: '账号密码', icon: KeyRound })
     }
     list.push({ value: 'qrcode', label: '扫码登录', icon: ScanLine })
+    list.push({ value: 'logincode', label: '登录码', icon: Hash })
     return list
   }, [capabilities, oneClickAvailable])
 
@@ -75,8 +79,10 @@ function LoginPageInner() {
       return { title: '注册万模 AI', sub: '邮箱 + 验证码 + 密码' }
     if (method === 'local')
       return { title: '账号密码登录', sub: '使用邮箱与密码继续' }
+    if (method === 'logincode')
+      return { title: '登录码登录', sub: '输入小程序中的 6 位数字' }
     if (method === 'qrcode')
-      return { title: '微信扫码登录', sub: '手机微信扫码确认' }
+      return { title: '微信扫码登录', sub: '手机微信扫码即可登录' }
     return { title: '登录万模 AI', sub: '使用微信账号继续' }
   }, [method, localMode])
 
@@ -124,6 +130,8 @@ function LoginPageInner() {
             />
           ) : method === 'forgot' ? (
             <ForgotPasswordPanel onBackToLogin={() => setMethod('local')} />
+          ) : method === 'logincode' ? (
+            <LoginCodePanel nextUrl={nextUrl} />
           ) : method === 'local' ? (
             <>
               <LocalAuthPanel

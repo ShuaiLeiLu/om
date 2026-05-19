@@ -47,6 +47,7 @@ const MIN_IMAGE_PIXELS = 655_360
 const MAX_IMAGE_PIXELS = 3840 * 2160
 const MAX_IMAGE_ASPECT_RATIO = 3
 const IMAGE_SIZE_STEP = 16
+const MAX_IMAGE_COUNT = 4
 const IMAGE_MODEL_MARKERS = [
   'image',
   'image2',
@@ -444,10 +445,17 @@ export class ChatService {
     }
     if (input.moderation && !['auto', 'low'].includes(input.moderation))
       throw new BadRequestException('invalid_moderation')
-    if (input.n != null) {
-      const n = Number(input.n)
-      if (!Number.isInteger(n) || n < 1 || n > 8) throw new BadRequestException('invalid_n')
-    }
+    const n = input.n == null ? 1 : Number(input.n)
+    if (!Number.isInteger(n) || n < 1 || n > MAX_IMAGE_COUNT) throw new BadRequestException('invalid_n')
+    const pixels = this.imagePixels(input.size)
+    const maxForSize = pixels >= MAX_IMAGE_PIXELS * 0.9 ? 1 : pixels >= 2048 * 2048 * 0.9 ? 2 : MAX_IMAGE_COUNT
+    if (n > maxForSize) throw new BadRequestException('image_count_too_large_for_size')
+  }
+
+  private imagePixels(size?: string) {
+    if (!size || size === 'auto') return 1024 * 1024
+    const [w, h] = size.split('x').map((n) => Number(n))
+    return w * h
   }
 
   private validateReferenceImages(input: ImageEditInput) {

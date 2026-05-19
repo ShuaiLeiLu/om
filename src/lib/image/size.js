@@ -25,6 +25,8 @@ export const TARGET_PIXELS = {
   '4K': 3840 * 2160
 }
 
+export const MAX_IMAGE_COUNT = 4
+
 export const POPULAR_IMAGE_SIZES = [
   { value: '1024x1024', label: '1024 × 1024', description: '方图 1K' },
   { value: '2048x2048', label: '2048 × 2048', description: '方图 4 MP' },
@@ -67,6 +69,32 @@ export function parseSize(value) {
   const match = String(value).match(/^(\d+)x(\d+)$/i)
   if (!match) return { mode: 'invalid' }
   return { mode: 'fixed', w: Number(match[1]), h: Number(match[2]) }
+}
+
+export function imagePixels(value) {
+  const parsed = parseSize(value)
+  if (parsed.mode !== 'fixed') return TARGET_PIXELS['1K']
+  return parsed.w * parsed.h
+}
+
+export function maxImagesForSize(value) {
+  const pixels = imagePixels(value)
+  if (pixels >= 3840 * 2160 * 0.9) return 1
+  if (pixels >= 2048 * 2048 * 0.9) return 2
+  return MAX_IMAGE_COUNT
+}
+
+export function normalizeImageCount(n, size) {
+  const max = maxImagesForSize(size)
+  const count = Number(n)
+  if (!Number.isInteger(count)) return 1
+  return Math.min(max, Math.max(1, count))
+}
+
+export function imageCountLimitText(size) {
+  const max = maxImagesForSize(size)
+  if (max >= MAX_IMAGE_COUNT) return ''
+  return max === 1 ? '当前尺寸较大，单次最多生成 1 张' : `当前尺寸较大，单次最多生成 ${max} 张`
 }
 
 export function isValidImageSize(value) {

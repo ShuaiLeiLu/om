@@ -12,20 +12,19 @@ import {
   ScanLine,
   Smartphone
 } from 'lucide-react'
-import { createWechatLoginSession, fetchMe, fetchQuotaSummary, fetchWechatLoginSession } from '@/lib/api'
+import { createWechatLoginSession, fetchMe, fetchQuotaSummary, fetchWechatLoginSession, subscribeSessionSse } from '@/lib/api'
 import { useAuthStore } from '@/store/useStore'
 import { cn } from '@/lib/utils'
 
 const STATUS_LABEL = {
   pending: '请使用微信扫码',
-  scanned: '已扫码，请在小程序中确认',
-  confirmed: '登录成功，正在进入个人中心',
+  scanned: '已扫码，正在确认...',
+  confirmed: '登录成功，正在进入...',
   expired: '二维码已过期，请刷新',
   cancelled: '登录已取消，请刷新',
   failed: '登录失败，请刷新'
 }
 
-// 微信小程序扫码登录面板（保留原有流程）。
 export function WechatQrPanel({ nextUrl = '/profile' }) {
   const router = useRouter()
   const { setSession } = useAuthStore()
@@ -55,32 +54,74 @@ export function WechatQrPanel({ nextUrl = '/profile' }) {
     startLogin()
   }, [startLogin])
 
+  // SSE 实时监听，fallback 到轮询
   useEffect(() => {
     if (!session?.sessionId) return
     if (status === 'confirmed' || status === 'expired' || status === 'failed') return
 
     let stopped = false
-    const timer = window.setInterval(async () => {
+    let sse = null
+    let fallbackTimer = null
+
+    const handleConfirmed = async () => {
+      if (stopped) return
+      stopped = true
+      setStatus('confirmed')
       try {
-        const next = await fetchWechatLoginSession(session.sessionId)
-        if (stopped) return
-        setStatus(next.status)
-        if (next.status === 'confirmed') {
-          window.clearInterval(timer)
-          const [user, quota] = await Promise.all([fetchMe(), fetchQuotaSummary()])
-          setSession({ user, quota })
-          router.replace(nextUrl)
-        }
+        const [user, quota] = await Promise.all([fetchMe(), fetchQuotaSummary()])
+        setSession({ user, quota })
+        router.replace(nextUrl)
       } catch (err) {
-        if (stopped) return
         setStatus('failed')
         setError(err.message || '登录状态同步失败')
       }
-    }, 1800)
+    }
+
+    const handleStatus = (newStatus) => {
+      if (stopped) return
+      setStatus(newStatus)
+      if (newStatus === 'confirmed') handleConfirmed()
+      if (newStatus === 'expired' || newStatus === 'failed') stopped = true
+    }
+
+    // 尝试 SSE
+    try {
+      sse = subscribeSessionSse(session.sessionId)
+      sse.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          handleStatus(data.status)
+        } catch {}
+      }
+      sse.onerror = () => {
+        // SSE 失败，降级到轮询
+        if (sse) { sse.close(); sse = null }
+        if (!stopped) startPolling()
+      }
+    } catch {
+      startPolling()
+    }
+
+    function startPolling() {
+      if (stopped || fallbackTimer) return
+      fallbackTimer = window.setInterval(async () => {
+        try {
+          const next = await fetchWechatLoginSession(session.sessionId)
+          if (stopped) return
+          handleStatus(next.status)
+        } catch (err) {
+          if (stopped) return
+          setStatus('failed')
+          setError(err.message || '登录状态同步失败')
+          stopped = true
+        }
+      }, 1800)
+    }
 
     return () => {
       stopped = true
-      window.clearInterval(timer)
+      if (sse) { sse.close(); sse = null }
+      if (fallbackTimer) { window.clearInterval(fallbackTimer); fallbackTimer = null }
     }
   }, [router, session, setSession, status, nextUrl])
 
@@ -141,7 +182,7 @@ export function WechatQrPanel({ nextUrl = '/profile' }) {
       <div className="flex items-start gap-2.5 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5 text-[10px] text-slate-400">
         <Smartphone size={13} className="mt-0.5 shrink-0 text-slate-500" />
         <span className="leading-relaxed">
-          手机微信扫码后会自动跳到「万模AI」小程序，确认登录后网页会自动跳转
+          手机微信扫码后自动完成登录，无需额外确认
         </span>
       </div>
     </div>

@@ -1,44 +1,24 @@
 .tb-inner {
   position: relative;
-  z-index: 1;
 }
 
 .tb-label {
-  font-size: 22rpx;
-  letter-spacing: 4rpx;
-  text-transform: uppercase;
-  color: #64748b;
-  font-weight: 600;
+  font-size: 24rpx;
+  color: #999999;
+  font-weight: 400;
 }
 
 .tb-value {
-  margin-top: 16rpx;
-  font-size: 120rpx;
+  margin-top: 12rpx;
+  font-size: 80rpx;
   font-weight: 700;
   line-height: 1.05;
-  background: linear-gradient(135deg, #818cf8, #c084fc, #f0abfc);
-  -webkit-background-clip: text;
-  color: transparent;
+  color: #1a1a1a;
   letter-spacing: -2rpx;
 }
 
-.tb-inner--success .tb-value {
-  background: linear-gradient(135deg, #6ee7b7, #34d399, #10b981);
-  -webkit-background-clip: text;
-}
-
 .tb-caption {
-  margin-top: 12rpx;
+  margin-top: 8rpx;
   font-size: 24rpx;
-  color: #94a3b8;
-}
-
-.tb-glow {
-  position: absolute;
-  inset: -100rpx -100rpx auto auto;
-  width: 300rpx;
-  height: 300rpx;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.35), transparent 70%);
-  pointer-events: none;
-  z-index: -1;
+  color: #999999;
 }

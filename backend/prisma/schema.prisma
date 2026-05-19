@@ -24,6 +24,7 @@ enum SessionStatus {
 
 enum QrSessionMode {
   login
+  login_code
 }
 
 enum QrSessionStatus {
@@ -261,6 +262,7 @@ model WechatQrSession {
   userId      String?
   openid      String?
   unionid     String?
+  loginCode   String?
   expiresAt   DateTime
   scannedAt   DateTime?
   confirmedAt DateTime?
@@ -269,6 +271,7 @@ model WechatQrSession {
 
   @@index([scene])
   @@index([status])
+  @@index([loginCode, mode, status])
 }
 
 model WechatMiniappSession {

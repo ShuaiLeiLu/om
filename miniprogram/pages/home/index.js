@@ -83,10 +83,6 @@ Page({
     wx.switchTab({ url: '/pages/rewards/index' });
   },
 
-  goAi() {
-    wx.switchTab({ url: '/pages/ai/index' });
-  },
-
   goProfile() {
     wx.switchTab({ url: '/pages/profile/index' });
   },

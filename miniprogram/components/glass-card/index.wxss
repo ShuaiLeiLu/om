@@ -1,24 +1,20 @@
-.glass-card {
+.card {
   box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 24rpx;
   position: relative;
   overflow: hidden;
 }
 
-.glass-card--subtle {
-  background: rgba(255, 255, 255, 0.025);
-  border: 2rpx solid rgba(255, 255, 255, 0.05);
+.card--subtle {
+  background: #fafafa;
 }
 
-.glass-card--normal {
-  background: rgba(255, 255, 255, 0.04);
-  border: 2rpx solid rgba(255, 255, 255, 0.08);
+.card--normal {
+  background: #ffffff;
 }
 
-.glass-card--strong {
-  background: rgba(255, 255, 255, 0.06);
-  border: 2rpx solid rgba(255, 255, 255, 0.1);
-}
-
-.glass-card--glow {
-  box-shadow: 0 16rpx 64rpx rgba(99, 102, 241, 0.2);
+.card--strong {
+  background: #ffffff;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
 }

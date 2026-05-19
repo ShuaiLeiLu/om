@@ -53,7 +53,7 @@ export function ChatLanding({
 
         {!isAuthenticated && (
           <Link
-            href="/login"
+            href="/login?next=/chat"
             className="group inline-flex items-center gap-3 rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/15 to-fuchsia-500/10 px-4 py-3 backdrop-blur-xl transition-all hover:border-indigo-400/50 hover:from-indigo-500/25 hover:to-fuchsia-500/15"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-fuchsia-400">

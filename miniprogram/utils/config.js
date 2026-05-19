@@ -21,7 +21,6 @@ module.exports = {
     LOGIN: `${BASE_URL}/wechat/miniapp/auth/login`,
     ME: `${BASE_URL}/wechat/miniapp/me`,
     MODELS: `${BASE_URL}/models`,
-    IMAGE_GENERATIONS: `${BASE_URL}/wechat/miniapp/ai/images/generations`,
 
     // 奖励
     REWARD_CONFIG: `${BASE_URL}/wechat/miniapp/rewards/config`,
@@ -31,6 +30,10 @@ module.exports = {
     // 网页登录扫码确认
     WEB_LOGIN_SCAN: `${BASE_URL}/wechat/miniapp/sessions/scan`,
     WEB_LOGIN_CONFIRM: `${BASE_URL}/wechat/miniapp/sessions/confirm`,
+    WEB_LOGIN_SCAN_AND_CONFIRM: `${BASE_URL}/wechat/miniapp/sessions/scan-and-confirm`,
+
+    // 登录码
+    CREATE_LOGIN_CODE: `${BASE_URL}/wechat/miniapp/auth/login-code`,
 
     // 邮箱绑定 / 解绑
     LINK_EMAIL: `${BASE_URL}/wechat/miniapp/auth/link-email`,

@@ -60,8 +60,8 @@ export function TaskCard({ taskId, taskStatus, onClick }) {
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border bg-white/[0.04] backdrop-blur-xl text-left transition-all',
-        'border-white/8 hover:border-white/20 hover:bg-white/[0.06] active:scale-[0.99]',
+        'group relative overflow-hidden rounded-xl border bg-white/[0.04] backdrop-blur-xl text-left transition-all sm:rounded-2xl',
+        'border-white/8 hover:border-white/20 hover:bg-white/[0.06] active:scale-[0.98]',
         isFailed && 'border-rose-400/20'
       )}
     >
@@ -117,12 +117,12 @@ export function TaskCard({ taskId, taskStatus, onClick }) {
         )}
       </div>
 
-      <div className="p-3 space-y-1">
-        <p className="line-clamp-2 text-xs text-slate-200 leading-relaxed">{task.prompt}</p>
-        <div className="flex items-center justify-between text-[10px] text-slate-500">
+      <div className="p-2 space-y-0.5 sm:p-3 sm:space-y-1">
+        <p className="line-clamp-2 text-[11px] text-slate-200 leading-relaxed sm:text-xs">{task.prompt}</p>
+        <div className="flex items-center justify-between text-[9px] text-slate-500 sm:text-[10px]">
           <span>{sizeText}</span>
           <span className="flex items-center gap-1">
-            <Clock size={9} />
+            <Clock size={8} />
             {formatRelativeTime(task.createdAt)}
           </span>
         </div>

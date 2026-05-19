@@ -1,12 +1,8 @@
 <view class="page">
-  <view class="page-header">
-    <view class="uppercase-label">My Wallet</view>
-    <view class="row-between gap-2">
-      <view class="brand text-2xl font-bold">
-        <text class="text-gradient">万模 AI</text>
-      </view>
-      <status-pill tone="{{bound ? 'success' : 'warning'}}" text="{{bound ? '已绑定微信' : '绑定中'}}" />
-    </view>
+  <!-- 顶部品牌 -->
+  <view class="header">
+    <view class="brand">万模 AI</view>
+    <status-pill tone="{{bound ? 'success' : 'warning'}}" text="{{bound ? '已绑定' : '绑定中'}}" />
   </view>
 
   <!-- 算力点余额卡 -->
@@ -18,10 +14,10 @@
 
   <!-- 错误态 -->
   <block wx:if="{{error && !loading}}">
-    <glass-card customClass="gap-4" intensity="normal">
+    <glass-card customClass="mt-4" intensity="normal" padding="40rpx 36rpx">
       <view class="state-title">读取失败</view>
       <view class="state-desc">{{error}}</view>
-      <view class="gap-3">
+      <view class="mt-3">
         <gradient-button type="primary" size="md" block="{{true}}" bindtap="refreshData">
           <text>重新加载</text>
         </gradient-button>
@@ -31,44 +27,34 @@
 
   <!-- 加载态 -->
   <block wx:elif="{{loading}}">
-    <glass-card customClass="gap-4" intensity="subtle">
-      <view class="state-title muted">正在同步</view>
-      <view class="state-desc muted">读取微信身份与 算力点余额</view>
+    <glass-card customClass="mt-4" intensity="subtle" padding="40rpx 36rpx">
+      <view class="state-title text-secondary">正在同步...</view>
     </glass-card>
   </block>
 
   <!-- 正常态 -->
   <block wx:else>
     <!-- 快捷入口 -->
-    <view class="gap-4 quick-grid">
-      <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goAi">
-        <view class="quick-icon quick-icon--cyan">图</view>
-        <view class="quick-title">图片创作</view>
-        <view class="quick-sub">输入描述生成图片</view>
-        <view class="quick-meta muted">消耗 算力点</view>
-      </glass-card>
-
+    <view class="mt-4 quick-grid">
       <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goRewards">
-        <view class="quick-icon quick-icon--amber">⚡</view>
-        <view class="quick-title">看广告</view>
-        <view class="quick-sub">领 +{{rewardText}}</view>
-        <view class="quick-meta muted">剩余 {{remainingText}} 次</view>
+        <view class="quick-label">看广告领取</view>
+        <view class="quick-value">+{{rewardText}}</view>
+        <view class="quick-meta">剩余 {{remainingText}} 次</view>
       </glass-card>
 
-      <glass-card intensity="normal" padding="32rpx" customClass="quick-item quick-item--wide" bind:tap="goProfile">
-        <view class="quick-icon quick-icon--indigo">{{emailLinked ? '✓' : '＋'}}</view>
-        <view class="quick-title">{{emailLinked ? '邮箱已绑定' : '绑定邮箱'}}</view>
-        <view class="quick-sub">{{emailLinked ? '可在网页用邮箱登录' : '让网页 / 小程序互通'}}</view>
-        <view class="quick-meta muted">个人中心</view>
+      <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goProfile">
+        <view class="quick-label">{{emailLinked ? '邮箱已绑定' : '绑定邮箱'}}</view>
+        <view class="quick-value">{{emailLinked ? '✓' : '→'}}</view>
+        <view class="quick-meta">个人中心</view>
       </glass-card>
     </view>
 
     <!-- 网页提示 -->
-    <glass-card intensity="subtle" padding="28rpx 32rpx" customClass="gap-4 web-card">
+    <glass-card intensity="subtle" padding="28rpx 32rpx" customClass="mt-3">
       <view class="row-between">
         <view class="flex-1">
-          <view class="text-sm muted">网页图片工作台</view>
-          <view class="gap-1 web-url">{{webUrl}}</view>
+          <view class="text-sm text-secondary">网页工作台</view>
+          <view class="mt-1 web-url">{{webUrl}}</view>
         </view>
         <gradient-button type="ghost" size="sm" bindtap="copyWebUrl">
           <text>复制</text>

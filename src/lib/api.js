@@ -145,6 +145,23 @@ export async function fetchWechatLoginSession(sessionId) {
   return data
 }
 
+export function subscribeSessionSse(sessionId) {
+  return new EventSource(`/api/auth/wechat-miniapp/sessions/${encodeURIComponent(sessionId)}/sse`)
+}
+
+export async function verifyLoginCode(code) {
+  const res = await fetch('/api/auth/wechat-miniapp/login-code/verify', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+    signal: AbortSignal.timeout(15000)
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  return data
+}
+
 export async function sendLocalCode({ email, purpose = 'register' }) {
   const res = await fetch('/api/auth/local/send-code', {
     method: 'POST',

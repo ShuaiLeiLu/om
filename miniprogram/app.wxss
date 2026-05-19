@@ -1,11 +1,7 @@
-/* 全局主题 — 与 web 端深色玻璃态保持一致 */
+/* 全局主题 — 简洁亮色 */
 page {
-  background:
-    radial-gradient(600rpx 600rpx at 0 0, rgba(99, 102, 241, 0.18), transparent 60%),
-    radial-gradient(500rpx 500rpx at 100% 100%, rgba(217, 70, 239, 0.12), transparent 60%),
-    #050614;
-  background-attachment: fixed;
-  color: #f1f5f9;
+  background: #f5f5f5;
+  color: #1a1a1a;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   font-size: 28rpx;
   line-height: 1.55;
@@ -16,7 +12,6 @@ button::after {
   border: none;
 }
 
-/* 微信小程序 button 默认有边框和背景，去掉 */
 button {
   background: transparent;
   border: none;
@@ -25,38 +20,12 @@ button {
   line-height: 1;
 }
 
-/* —— 公共原子样式（在页面 wxml 里直接引用） —— */
-.text-gradient {
-  background: linear-gradient(135deg, #818cf8, #c084fc, #f0abfc);
-  -webkit-background-clip: text;
-  color: transparent;
-}
+/* 文本 */
+.text-primary { color: #1a1a1a; }
+.text-secondary { color: #666666; }
+.text-tertiary { color: #999999; }
+.text-accent { color: #4f7cff; }
 
-.glass {
-  background: rgba(255, 255, 255, 0.04);
-  border: 2rpx solid rgba(255, 255, 255, 0.08);
-  border-radius: 32rpx;
-}
-
-.glass-strong {
-  background: rgba(255, 255, 255, 0.06);
-  border: 2rpx solid rgba(255, 255, 255, 0.1);
-  border-radius: 32rpx;
-}
-
-.brand-gradient {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-}
-
-.muted {
-  color: #94a3b8;
-}
-
-.muted-light {
-  color: #cbd5e1;
-}
-
-/* 文本工具类 */
 .text-xs { font-size: 20rpx; }
 .text-sm { font-size: 24rpx; }
 .text-base { font-size: 28rpx; }
@@ -64,35 +33,54 @@ button {
 .text-xl { font-size: 40rpx; }
 .text-2xl { font-size: 56rpx; }
 .text-3xl { font-size: 72rpx; }
-.text-display { font-size: 96rpx; }
 
 .font-medium { font-weight: 500; }
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
 
-/* 间距工具类 */
-.gap-1 { margin-top: 8rpx; }
-.gap-2 { margin-top: 16rpx; }
-.gap-3 { margin-top: 24rpx; }
-.gap-4 { margin-top: 32rpx; }
-.gap-5 { margin-top: 40rpx; }
-.gap-6 { margin-top: 48rpx; }
+/* 间距 */
+.mt-1 { margin-top: 8rpx; }
+.mt-2 { margin-top: 16rpx; }
+.mt-3 { margin-top: 24rpx; }
+.mt-4 { margin-top: 32rpx; }
+.mt-5 { margin-top: 40rpx; }
 
 /* 页面布局 */
 .page {
-  padding: 32rpx 32rpx 200rpx;
+  padding: 24rpx 32rpx 200rpx;
   box-sizing: border-box;
   min-height: 100vh;
 }
 
 .page-header {
-  padding: 16rpx 0 32rpx;
+  padding: 8rpx 0 24rpx;
 }
 
-.uppercase-label {
-  font-size: 20rpx;
-  letter-spacing: 4rpx;
-  text-transform: uppercase;
-  color: #64748b;
+.section-title {
+  font-size: 30rpx;
   font-weight: 600;
+  color: #1a1a1a;
+}
+
+.section-desc {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+/* 通用行 */
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.flex-1 { flex: 1; min-width: 0; }
+
+/* 分割线 */
+.divider {
+  height: 1rpx;
+  background: #f0f0f0;
+  margin: 0 32rpx;
 }

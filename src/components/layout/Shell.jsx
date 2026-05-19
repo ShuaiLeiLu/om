@@ -194,26 +194,28 @@ export default function Shell({ children, workspace = 'chat' }) {
             </div>
           )}
 
-          {/* New button */}
-          {collapsed ? (
-            <Tip label={workspace === 'chat' ? '开启新对话' : '回到生成入口'} placement="right">
+          {/* New button — only shown in chat workspace */}
+          {workspace === 'chat' && (
+            collapsed ? (
+              <Tip label="开启新对话" placement="right">
+                <button
+                  onClick={createNewItem}
+                  className="mb-3 flex h-10 w-10 mx-auto items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-indigo-500/30 to-fuchsia-500/20 text-white transition-all hover:from-indigo-500/40 hover:to-fuchsia-500/30 active:scale-95 tap-transparent"
+                >
+                  <Plus size={16} />
+                </button>
+              </Tip>
+            ) : (
               <button
                 onClick={createNewItem}
-                className="mb-3 flex h-10 w-10 mx-auto items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-indigo-500/30 to-fuchsia-500/20 text-white transition-all hover:from-indigo-500/40 hover:to-fuchsia-500/30 active:scale-95 tap-transparent"
+                className="mb-4 flex min-h-[44px] items-center gap-3 rounded-xl border border-white/10 bg-gradient-to-br from-indigo-500/15 to-purple-500/10 px-4 py-2.5 text-sm font-medium text-slate-100 transition-all hover:from-indigo-500/25 hover:to-purple-500/20 active:scale-[0.98] tap-transparent"
               >
-                <Plus size={16} />
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-400 to-fuchsia-400">
+                  <Plus size={14} className="text-white" />
+                </div>
+                <span>开启新对话</span>
               </button>
-            </Tip>
-          ) : (
-            <button
-              onClick={createNewItem}
-              className="mb-4 flex min-h-[44px] items-center gap-3 rounded-xl border border-white/10 bg-gradient-to-br from-indigo-500/15 to-purple-500/10 px-4 py-2.5 text-sm font-medium text-slate-100 transition-all hover:from-indigo-500/25 hover:to-purple-500/20 active:scale-[0.98] tap-transparent"
-            >
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-400 to-fuchsia-400">
-                <Plus size={14} className="text-white" />
-              </div>
-              <span>{workspace === 'chat' ? '开启新对话' : '回到生成入口'}</span>
-            </button>
+            )
           )}
 
           {/* List */}

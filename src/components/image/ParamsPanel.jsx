@@ -1,8 +1,16 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useImageStore } from '@/store/useImageStore'
 import { cn } from '@/lib/utils'
-import { QUALITY_OPTIONS, FORMAT_OPTIONS, MODERATION_OPTIONS } from '@/lib/image/size'
+import {
+  QUALITY_OPTIONS,
+  FORMAT_OPTIONS,
+  MODERATION_OPTIONS,
+  imageCountLimitText,
+  maxImagesForSize,
+  normalizeImageCount
+} from '@/lib/image/size'
 import { Slider } from '@/components/ui/slider'
 import { SizeSelector } from './SizeSelector'
 
@@ -13,6 +21,13 @@ export function ParamsPanel() {
   const setSizePreset = useImageStore((s) => s.setSizePreset)
 
   const compressionEnabled = params.output_format === 'jpeg' || params.output_format === 'webp'
+  const maxCount = maxImagesForSize(params.size)
+  const countHint = imageCountLimitText(params.size)
+
+  useEffect(() => {
+    const next = normalizeImageCount(params.n, params.size)
+    if (next !== params.n) setParam('n', next)
+  }, [params.n, params.size, setParam])
 
   return (
     <div className="space-y-4">
@@ -71,16 +86,17 @@ export function ParamsPanel() {
           <input
             type="range"
             min={1}
-            max={8}
+            max={maxCount}
             step={1}
-            value={params.n}
-            onChange={(e) => setParam('n', Number(e.target.value))}
+            value={normalizeImageCount(params.n, params.size)}
+            onChange={(e) => setParam('n', normalizeImageCount(Number(e.target.value), params.size))}
             className="flex-1 slider-input"
           />
           <div className="flex h-8 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm font-mono text-white">
-            {params.n}
+            {normalizeImageCount(params.n, params.size)}
           </div>
         </div>
+        {countHint && <p className="mt-1.5 text-[10px] text-amber-200/80">{countHint}</p>}
       </div>
     </div>
   )

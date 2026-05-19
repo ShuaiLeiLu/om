@@ -22,7 +22,7 @@ const POPUP_FEATURES = 'width=460,height=620,menubar=no,toolbar=no,location=no,s
 export function WechatOneClickPanel({
   mode: forcedMode,
   available,
-  nextUrl = '/profile',
+  nextUrl = '/image',
   onUnavailable,
   onSwitchToQrcode
 }) {

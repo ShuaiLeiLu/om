@@ -1,91 +1,60 @@
-.row-between {
+.header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
-  flex-wrap: wrap;
+  padding: 8rpx 0 24rpx;
 }
 
-.flex-1 { flex: 1; min-width: 0; }
-
-.brand { letter-spacing: -1rpx; }
+.brand {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -1rpx;
+}
 
 .state-title {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
+  color: #1a1a1a;
 }
 
 .state-desc {
-  margin-top: 12rpx;
+  margin-top: 8rpx;
   font-size: 24rpx;
-  color: #94a3b8;
+  color: #999;
 }
 
 .quick-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24rpx;
+  gap: 20rpx;
 }
 
 .quick-item {
   position: relative;
 }
 
-.quick-item--wide {
-  grid-column: span 2;
-}
-
-.quick-icon {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 20rpx;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36rpx;
-  font-weight: 700;
-}
-
-.quick-icon--amber {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15));
-  color: #fbbf24;
-  border: 2rpx solid rgba(251, 191, 36, 0.3);
-}
-
-.quick-icon--indigo {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.15));
-  color: #a5b4fc;
-  border: 2rpx solid rgba(99, 102, 241, 0.3);
-}
-
-.quick-icon--cyan {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.24), rgba(20, 184, 166, 0.14));
-  color: #67e8f9;
-  border: 2rpx solid rgba(6, 182, 212, 0.28);
+.quick-label {
   font-size: 24rpx;
+  color: #999;
 }
 
-.quick-title {
-  margin-top: 20rpx;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #f1f5f9;
-}
-
-.quick-sub {
-  margin-top: 6rpx;
-  font-size: 22rpx;
-  color: #cbd5e1;
+.quick-value {
+  margin-top: 12rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1a1a1a;
 }
 
 .quick-meta {
-  margin-top: 12rpx;
-  font-size: 20rpx;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #cccccc;
 }
 
 .web-url {
   font-size: 24rpx;
-  color: #c7d2fe;
+  color: #1a1a1a;
   word-break: break-all;
   font-family: 'SF Mono', Menlo, Consolas, monospace;
 }

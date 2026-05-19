@@ -29,6 +29,7 @@ function playRewardedVideo(adUnitId) {
     };
     const onError = (error) => {
       cleanup();
+      console.error('rewarded video ad error:', error);
       reject(error || new Error('ad_load_failed'));
     };
 

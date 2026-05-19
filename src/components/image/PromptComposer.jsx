@@ -40,8 +40,8 @@ export function PromptComposer({ onGenerate, isGenerating, modelName, error }) {
             ? '描述你想如何编辑参考图...'
             : '描述你想生成的画面，比如：一只穿着宇航服的橘猫漂浮在土星环旁'
         }
-        rows={4}
-        className="min-h-28 w-full resize-none rounded-lg bg-transparent p-2 text-[15px] text-white placeholder-slate-500 outline-none sm:min-h-32 sm:text-sm"
+        rows={3}
+        className="min-h-20 w-full resize-none rounded-lg bg-transparent p-2 text-sm text-white placeholder-slate-500 outline-none sm:min-h-28 sm:rows-4"
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
             e.preventDefault()
@@ -57,7 +57,7 @@ export function PromptComposer({ onGenerate, isGenerating, modelName, error }) {
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 sm:mt-3">
         <p className="hidden text-[10px] text-slate-500 sm:block">
           {hasRefs ? `已附加 ${refs.length} 张参考图` : '⌘/Ctrl + Enter 快速生成'}
         </p>
@@ -67,7 +67,7 @@ export function PromptComposer({ onGenerate, isGenerating, modelName, error }) {
           variant="gradient"
           size="md"
           className={cn(
-            'shrink-0 w-full min-h-[44px] sm:w-auto',
+            'shrink-0 w-full min-h-[42px] sm:min-h-[44px] sm:w-auto',
             isGenerating && 'pointer-events-none'
           )}
         >

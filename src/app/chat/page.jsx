@@ -121,7 +121,7 @@ function ChatPageInner() {
 
   const handleSelectProvider = (provider) => {
     if (!isAuthenticated) {
-      router.push('/login')
+      router.push('/login?next=/chat')
       return
     }
     const model = provider?.models?.[0]
@@ -147,7 +147,7 @@ function ChatPageInner() {
     if (!text && pendingImages.length === 0) return
     if (isLoading) return
     if (!isAuthenticated) {
-      router.push('/login')
+      router.push('/login?next=/chat')
       return
     }
     if (!selectedModel?.id || !activeConversationId) return

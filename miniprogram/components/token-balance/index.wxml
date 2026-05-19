@@ -1,8 +1,7 @@
-<glass-card intensity="normal" padding="44rpx 40rpx" radius="40rpx" glow="{{true}}">
-  <view class="tb-inner tb-inner--{{tone}}">
+<glass-card intensity="normal" padding="40rpx 36rpx" radius="24rpx">
+  <view class="tb-inner">
     <view class="tb-label">{{label}}</view>
     <view class="tb-value">{{balance}}</view>
     <view class="tb-caption">{{caption}}</view>
-    <view class="tb-glow"></view>
   </view>
 </glass-card>

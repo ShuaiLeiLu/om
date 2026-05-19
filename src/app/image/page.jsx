@@ -33,6 +33,7 @@ import ParamsDrawer from '@/components/image/ParamsDrawer'
 import ReferenceUploader from '@/components/image/ReferenceUploader'
 import TaskGallery from '@/components/image/TaskGallery'
 import TaskDetailDialog from '@/components/image/TaskDetailDialog'
+import { imageCountLimitText, isValidImageSize, normalizeImageCount } from '@/lib/image/size'
 
 function ImagePageInner() {
   const router = useRouter()
@@ -137,11 +138,18 @@ function ImagePageInner() {
       return
     }
     if (!isAuthenticated) {
-      router.push('/login')
+      router.push('/login?next=/image')
       return
     }
     if (!prompt.trim()) return setError('请填写提示词')
     if (!modelId) return setError('请选择图片生成模型')
+    if (!isValidImageSize(params.size)) return setError('当前尺寸不符合 image2 支持范围')
+
+    const imageCount = normalizeImageCount(params.n, params.size)
+    if (imageCount !== params.n) {
+      setError(imageCountLimitText(params.size) || '生成数量已超过当前尺寸限制')
+      return
+    }
 
     const taskId = newTaskId()
     const baseTask = {
@@ -173,7 +181,7 @@ function ImagePageInner() {
         quality: params.quality,
         output_format: params.output_format,
         moderation: params.moderation,
-        n: params.n
+        n: imageCount
       }
       if (params.output_format === 'jpeg' || params.output_format === 'webp') {
         basePayload.output_compression = params.output_compression
@@ -262,39 +270,36 @@ function ImagePageInner() {
   return (
     <Shell workspace="image">
       <div className="flex flex-1 flex-col overflow-y-auto pl-safe pr-safe scrollbar-thin">
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 md:px-8 md:py-10">
+        <div className="w-full px-4 py-5 sm:px-6 md:px-8 lg:px-10 md:py-8">
           <ImageHero isAuthenticated={isAuthenticated} isAuthLoading={isAuthLoading} taskCount={taskIndex.length} />
 
           {/* Default image model + mobile params row */}
           <div className="mb-3 flex items-center justify-between gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              默认生图模型
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setParamsDrawerOpen(true)}
-                className="flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-200 transition hover:bg-white/[0.08] md:hidden tap-transparent"
-                aria-label="调整参数"
-              >
-                <SlidersHorizontal size={13} />
-                <span>{describeSize(params.size)}</span>
-                <span className="text-[10px] text-slate-500">· n={params.n}</span>
-              </button>
-              <div className="flex h-9 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex h-8 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-xs text-white sm:h-9 sm:px-3 sm:text-sm">
                 <span
-                  className="h-2 w-2 rounded-full"
+                  className="h-2 w-2 shrink-0 rounded-full"
                   style={{ background: selectedModel?.color || '#a855f7' }}
                 />
-                <span className="font-medium">{selectedModel?.name || '自动选择'}</span>
+                <span className="truncate font-medium">{selectedModel?.name || '自动选择'}</span>
                 {selectedModel?.providerName && (
-                  <span className="text-[10px] text-slate-500">{selectedModel.providerName}</span>
+                  <span className="hidden text-[10px] text-slate-500 sm:inline">{selectedModel.providerName}</span>
                 )}
               </div>
             </div>
+            <button
+              onClick={() => setParamsDrawerOpen(true)}
+              className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-xs text-slate-200 transition hover:bg-white/[0.08] sm:h-9 sm:px-3 md:hidden tap-transparent"
+              aria-label="调整参数"
+            >
+              <SlidersHorizontal size={13} />
+              <span>{describeSize(params.size)}</span>
+              <span className="text-[10px] text-slate-500">n={params.n}</span>
+            </button>
           </div>
 
           {/* Workbench: composer + refs (mobile) | composer + refs + params (desktop) */}
-          <div className="grid gap-3 md:gap-4 md:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="grid gap-3 md:gap-5 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-3 md:space-y-4">
               <PromptComposer
                 onGenerate={handleGenerate}
@@ -318,11 +323,11 @@ function ImagePageInner() {
           </div>
 
           {/* Gallery */}
-          <div className="mt-8 md:mt-10">
-            <div className="mb-3 flex items-end justify-between md:mb-4">
+          <div className="mt-6 md:mt-10">
+            <div className="mb-2.5 flex items-end justify-between md:mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-white md:text-xl">最近任务</h2>
-                <p className="mt-0.5 text-[11px] text-slate-500 md:text-xs">
+                <h2 className="text-base font-semibold text-white sm:text-lg md:text-xl">最近任务</h2>
+                <p className="mt-0.5 text-[10px] text-slate-500 sm:text-[11px] md:text-xs">
                   共 {taskIndex.length} 个任务 · 点击卡片查看大图
                 </p>
               </div>

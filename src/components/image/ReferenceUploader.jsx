@@ -146,9 +146,9 @@ export function ReferenceUploader() {
 
       <div className="p-3">
         {refs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-400">
-              <ImagePlus size={18} />
+          <div className="flex flex-col items-center justify-center gap-1.5 py-4 text-center sm:gap-2 sm:py-6">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-400 sm:h-10 sm:w-10">
+              <ImagePlus size={16} />
             </div>
             <p className="text-xs text-slate-400">拖拽 / 粘贴 / 点击上传图片</p>
             <p className="text-[10px] text-slate-600">最多 16 张，作为编辑参考</p>

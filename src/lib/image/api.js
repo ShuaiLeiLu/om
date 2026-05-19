@@ -30,13 +30,17 @@ function apiUrl(path) {
 
 function parseError(status, data) {
   const message = data?.message || data?.error || ''
+  const detail = data?.detail || data?.details || ''
   if (status === 401 || message === 'unauthorized') return '请先登录'
   if (message === 'token_insufficient') return '算力点不足'
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'image_generation_not_enabled') return '当前网关分组未开启图片生成'
-  if (message === 'upstream_error') return data?.detail || '上游图片服务返回错误'
+  if (message === 'upstream_error') return detail || '上游图片服务返回错误'
   if (message === 'invalid_size') return '尺寸不支持：image2 要求宽高为 16 的倍数、比例 1:3 到 3:1、最高 3840×2160'
+  if (message === 'invalid_n') return '生成数量不支持：单次最多生成 4 张'
+  if (message === 'image_count_too_large_for_size') return '当前尺寸较大，单次生成数量需要调低'
   if (message === 'too_many_reference_images') return '参考图数量超过限制（最多 16 张）'
+  if (typeof detail === 'string' && detail) return detail
   if (typeof message === 'string' && message) return message
   return `请求失败 (HTTP ${status})`
 }

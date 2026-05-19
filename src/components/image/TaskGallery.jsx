@@ -39,8 +39,8 @@ export function TaskGallery({ onSelect }) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[180px]">
+      <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center">
+        <div className="relative flex-1 min-w-0">
           <Search
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
@@ -54,7 +54,7 @@ export function TaskGallery({ onSelect }) {
           />
         </div>
 
-        <div className="inline-flex items-center gap-1 rounded-xl border border-white/8 bg-white/[0.04] p-1">
+        <div className="inline-flex items-center gap-0.5 self-start rounded-lg border border-white/8 bg-white/[0.04] p-0.5 sm:gap-1 sm:rounded-xl sm:p-1">
           {FILTERS.map((f) => {
             const active = filter === f.value
             return (
@@ -62,7 +62,7 @@ export function TaskGallery({ onSelect }) {
                 key={f.value}
                 onClick={() => setFilter(f.value)}
                 className={cn(
-                  'rounded-lg px-3 py-1.5 text-[11px] font-medium transition-all',
+                  'rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-all sm:rounded-lg sm:px-3',
                   active
                     ? 'bg-gradient-to-br from-indigo-500/60 to-purple-500/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] border border-white/15'
                     : 'text-slate-400 hover:text-slate-200 border border-transparent'
@@ -90,7 +90,7 @@ export function TaskGallery({ onSelect }) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {filtered.map((t) => (
             <TaskCard
               key={t.id}

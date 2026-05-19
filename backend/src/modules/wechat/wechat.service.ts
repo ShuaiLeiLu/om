@@ -7,6 +7,8 @@ import { EmailVerificationService } from '../auth/email-verification.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { nowPlusSeconds, randomToken, sha256 } from '../../common/http'
 
+type SseClient = { sessionId: string; res: Response; timer: ReturnType<typeof setTimeout> }
+
 type Code2SessionResponse = {
   openid?: string
   unionid?: string
@@ -25,6 +27,7 @@ type WechatAccessTokenResponse = {
 @Injectable()
 export class WechatService {
   private accessTokenCache: { token: string; expiresAt: number } | null = null
+  private sseClients: Map<string, SseClient[]> = new Map()
 
   constructor(
     private readonly prisma: PrismaService,
@@ -240,6 +243,164 @@ export class WechatService {
     return { ok: true as const }
   }
 
+  // ── SSE 实时推送 ──────────────────────────────────────────────
+
+  subscribeSessionSse(sessionId: string, res: Response) {
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+    res.setHeader('X-Accel-Buffering', 'no')
+    res.flushHeaders()
+
+    // 立即发送当前状态
+    this.prisma.wechatQrSession.findUnique({ where: { sessionId } }).then((session) => {
+      if (!session) {
+        res.write(`data: ${JSON.stringify({ status: 'failed', message: '会话不存在' })}\n\n`)
+        res.end()
+        return
+      }
+      const status = session.expiresAt <= new Date() ? 'expired' : session.status
+      res.write(`data: ${JSON.stringify({ status })}\n\n`)
+    })
+
+    const timer = setTimeout(() => {
+      res.write(`data: ${JSON.stringify({ status: 'expired', message: '连接超时' })}\n\n`)
+      res.end()
+      this.removeSseClient(sessionId, client)
+    }, 5 * 60 * 1000)
+
+    const client: SseClient = { sessionId, res, timer }
+    const list = this.sseClients.get(sessionId) || []
+    list.push(client)
+    this.sseClients.set(sessionId, list)
+
+    res.on('close', () => this.removeSseClient(sessionId, client))
+  }
+
+  private notifySseClients(sessionId: string, data: { status: string; message?: string }) {
+    const list = this.sseClients.get(sessionId)
+    if (!list?.length) return
+    const payload = `data: ${JSON.stringify(data)}\n\n`
+    for (const client of list) {
+      try { client.res.write(payload) } catch {}
+    }
+    if (data.status === 'confirmed' || data.status === 'expired' || data.status === 'failed') {
+      for (const client of list) {
+        clearTimeout(client.timer)
+        try { client.res.end() } catch {}
+      }
+      this.sseClients.delete(sessionId)
+    }
+  }
+
+  private removeSseClient(sessionId: string, client: SseClient) {
+    clearTimeout(client.timer)
+    const list = this.sseClients.get(sessionId)
+    if (!list) return
+    const idx = list.indexOf(client)
+    if (idx >= 0) list.splice(idx, 1)
+    if (list.length === 0) this.sseClients.delete(sessionId)
+  }
+
+  // ── 登录码 ──────────────────────────────────────────────────
+
+  async createLoginCode(sessionToken: string) {
+    const mini = await this.verifyMiniappSession(sessionToken)
+    if (!mini.userId) throw new UnauthorizedException('wechat_not_bound')
+
+    // 清理该用户之前的未使用登录码
+    await this.prisma.wechatQrSession.updateMany({
+      where: { userId: mini.userId, mode: 'login_code', status: 'pending' },
+      data: { status: 'expired' }
+    })
+
+    const code = String(Math.floor(100000 + Math.random() * 900000)) // 6 位数字
+    const expiresAt = nowPlusSeconds(120) // 2 分钟
+    await this.prisma.wechatQrSession.create({
+      data: {
+        sessionId: randomToken(18),
+        scene: `code_${code}_${randomToken(6)}`,
+        mode: 'login_code',
+        status: 'pending',
+        userId: mini.userId,
+        openid: mini.openid,
+        unionid: mini.unionid,
+        loginCode: code,
+        expiresAt
+      }
+    })
+    return { code, expiresAt }
+  }
+
+  async verifyLoginCode(code: string, res: Response, meta: { ip: string; userAgent: string }) {
+    const trimmed = String(code || '').trim()
+    if (!/^\d{6}$/.test(trimmed)) throw new BadRequestException('invalid_login_code')
+
+    const record = await this.prisma.wechatQrSession.findFirst({
+      where: { loginCode: trimmed, mode: 'login_code', status: 'pending', expiresAt: { gt: new Date() } }
+    })
+    if (!record) throw new BadRequestException('login_code_invalid_or_expired')
+    if (!record.userId) throw new BadRequestException('login_code_no_user')
+
+    await this.prisma.wechatQrSession.update({
+      where: { id: record.id },
+      data: { status: 'confirmed', confirmedAt: new Date() }
+    })
+
+    await this.auth.createUserSession(record.userId, res, meta)
+    return { status: 'confirmed', message: '登录成功' }
+  }
+
+  // ── 扫码登录（合并 scan + confirm 为一步） ──────────────────
+
+  async scanAndConfirm(scene: string, sessionToken: string) {
+    const mini = await this.verifyMiniappSession(sessionToken)
+    const qr = await this.prisma.wechatQrSession.findUnique({ where: { scene } })
+    if (!qr) throw new BadRequestException('qr_session_not_found')
+    if (qr.expiresAt <= new Date()) throw new BadRequestException('qr_session_expired')
+
+    const appid = this.requireAppId()
+    const user = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.oauthAccount.findUnique({
+        where: { provider_appid_openid: { provider: 'wechat_miniapp', appid, openid: mini.openid } },
+        include: { user: true }
+      })
+      if (existing?.user) return existing.user
+      const created = await tx.user.create({ data: { displayName: '微信用户' } })
+      await tx.oauthAccount.create({
+        data: {
+          provider: 'wechat_miniapp',
+          appid,
+          openid: mini.openid,
+          unionid: mini.unionid,
+          userId: created.id
+        }
+      })
+      await tx.wechatMiniappSession.update({
+        where: { id: mini.id },
+        data: { userId: created.id }
+      })
+      return created
+    })
+
+    await this.prisma.wechatQrSession.update({
+      where: { scene },
+      data: {
+        status: 'confirmed',
+        scannedAt: new Date(),
+        confirmedAt: new Date(),
+        userId: user.id,
+        openid: mini.openid,
+        unionid: mini.unionid
+      }
+    })
+
+    // 通知 SSE 客户端
+    this.notifySseClients(qr.sessionId, { status: 'confirmed', message: '登录成功' })
+
+    return { status: 'confirmed', userId: user.id }
+  }
+
   async scan(scene: string, sessionToken: string) {
     const mini = await this.verifyMiniappSession(sessionToken)
     const qr = await this.prisma.wechatQrSession.findUnique({ where: { scene } })
@@ -249,6 +410,7 @@ export class WechatService {
       where: { scene },
       data: { status: 'scanned', scannedAt: new Date(), openid: mini.openid, unionid: mini.unionid }
     })
+    this.notifySseClients(qr.sessionId, { status: 'scanned' })
     return { status: updated.status }
   }
 
@@ -286,6 +448,8 @@ export class WechatService {
       where: { scene },
       data: { status: 'confirmed', confirmedAt: new Date(), userId: user.id, openid: mini.openid, unionid: mini.unionid }
     })
+
+    this.notifySseClients(qr.sessionId, { status: 'confirmed', message: '登录成功' })
 
     return { status: 'confirmed', userId: user.id }
   }

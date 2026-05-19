@@ -3,39 +3,32 @@
   align-items: center;
   gap: 8rpx;
   padding: 6rpx 16rpx;
-  border-radius: 999rpx;
+  border-radius: 8rpx;
   font-size: 20rpx;
-  font-weight: 600;
-  border-width: 2rpx;
-  border-style: solid;
+  font-weight: 500;
 }
 
 .pill--success {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.32);
-  color: #6ee7b7;
+  background: #f0faf4;
+  color: #1a9d5a;
 }
 
 .pill--warning {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.32);
-  color: #fcd34d;
+  background: #fef7ed;
+  color: #c87f2a;
 }
 
 .pill--danger {
-  background: rgba(244, 63, 94, 0.15);
-  border-color: rgba(244, 63, 94, 0.32);
-  color: #fda4af;
+  background: #fff0f0;
+  color: #e54545;
 }
 
 .pill--info {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.32);
-  color: #c7d2fe;
+  background: #f0f4ff;
+  color: #4f7cff;
 }
 
 .pill--neutral {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  background: #f5f5f5;
+  color: #999999;
 }
