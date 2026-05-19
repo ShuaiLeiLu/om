@@ -145,13 +145,8 @@ export class WechatService {
    * 把当前小程序登录的微信账号与一个邮箱+密码账号绑定。
    *
    * 情况 1：邮箱在系统里不存在 → 直接给当前 User 设 email + passwordHash
-   * 情况 2：邮箱已经被其他 User 占用 →
-   *   - 如果当前 User 没有 oauthAccounts 之外的数据（新创建）→ 合并到那个 User，
-   *     将 wechat oauth + miniapp session 都迁过去，删掉旧的"空"账号
-   *   - 如果当前 User 已经有数据（消息/任务等）→ 拒绝，返回 email_already_bound_to_other
-   *
-   * 简化版：只支持「邮箱未占用」的情况，「已占用」直接报错让用户处理冲突。
-   * 后续可以加复杂合并流程。
+   * 情况 2：邮箱已经被其他 User 占用 → 校验该邮箱账号密码后，把当前微信身份合并过去。
+   * 只有当前小程序账号没有业务数据时才合并，避免误迁移额度、对话或图片任务。
    */
   async linkEmail(sessionToken: string, email: string, password: string, code: string) {
     const session = await this.verifyMiniappSession(sessionToken)
@@ -168,14 +163,29 @@ export class WechatService {
       throw new BadRequestException('password_too_weak')
     }
 
-    // 校验邮箱验证码（防止有人乱填别人邮箱来占用）
-    await this.verification.verifyCode({
-      email: normalizedEmail,
-      purpose: 'bind_email',
-      code
+    const user = await this.prisma.user.findUnique({
+      where: { id: session.userId },
+      include: {
+        storageUsage: { select: { userId: true } },
+        _count: {
+          select: {
+            sessions: true,
+            qrSessions: true,
+            tokenGrants: true,
+            quotaLedger: true,
+            conversations: true,
+            messages: true,
+            llmRequests: true,
+            usageEvents: true,
+            rewardSessions: true,
+            rewardEvents: true,
+            ownedImages: true,
+            imageTasks: true,
+            imageRefs: true
+          }
+        }
+      }
     })
-
-    const user = await this.prisma.user.findUnique({ where: { id: session.userId } })
     if (!user) throw new UnauthorizedException('unauthorized')
 
     if (user.email && user.email !== normalizedEmail) {
@@ -184,8 +194,49 @@ export class WechatService {
 
     const taken = await this.prisma.user.findUnique({ where: { email: normalizedEmail } })
     if (taken && taken.id !== user.id) {
-      throw new BadRequestException('email_already_bound_to_other')
+      if (!taken.passwordHash) throw new BadRequestException('email_already_bound_to_other')
+      const passwordOk = await argon2.verify(taken.passwordHash, password)
+      if (!passwordOk) throw new UnauthorizedException('invalid_credentials')
+
+      if (!this.canMergeMiniappUser(user)) {
+        throw new BadRequestException('email_already_bound_to_other')
+      }
+
+      await this.verification.verifyCode({
+        email: normalizedEmail,
+        purpose: 'bind_email',
+        code
+      })
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.oauthAccount.updateMany({
+          where: { userId: user.id },
+          data: { userId: taken.id }
+        })
+        await tx.wechatMiniappSession.updateMany({
+          where: { userId: user.id },
+          data: { userId: taken.id }
+        })
+        await tx.wechatQrSession.updateMany({
+          where: { userId: user.id },
+          data: { userId: taken.id }
+        })
+        await tx.user.delete({ where: { id: user.id } })
+      })
+
+      return {
+        ok: true as const,
+        email: taken.email,
+        emailVerified: !!taken.emailVerifiedAt
+      }
     }
+
+    // 校验邮箱验证码（防止有人乱填别人邮箱来占用）
+    await this.verification.verifyCode({
+      email: normalizedEmail,
+      purpose: 'bind_email',
+      code
+    })
 
     const passwordHash = await argon2.hash(password, { type: argon2.argon2id })
     const updated = await this.prisma.user.update({
@@ -342,6 +393,43 @@ export class WechatService {
     const envVersion = String(this.config.get<string>('WECHAT_MINIAPP_ENV_VERSION') || 'release').trim()
     if (['release', 'trial', 'develop'].includes(envVersion)) return envVersion
     throw new BadRequestException('wechat_env_version_invalid')
+  }
+
+  private canMergeMiniappUser(user: {
+    storageUsage: { userId: string } | null
+    _count: {
+      sessions: number
+      qrSessions: number
+      tokenGrants: number
+      quotaLedger: number
+      conversations: number
+      messages: number
+      llmRequests: number
+      usageEvents: number
+      rewardSessions: number
+      rewardEvents: number
+      ownedImages: number
+      imageTasks: number
+      imageRefs: number
+    }
+  }) {
+    const counts = user._count
+    return (
+      user.storageUsage === null &&
+      counts.sessions === 0 &&
+      counts.qrSessions === 0 &&
+      counts.tokenGrants === 0 &&
+      counts.quotaLedger === 0 &&
+      counts.conversations === 0 &&
+      counts.messages === 0 &&
+      counts.llmRequests === 0 &&
+      counts.usageEvents === 0 &&
+      counts.rewardSessions === 0 &&
+      counts.rewardEvents === 0 &&
+      counts.ownedImages === 0 &&
+      counts.imageTasks === 0 &&
+      counts.imageRefs === 0
+    )
   }
 
   private async resolveMiniappUser(appid: string, openid: string, unionid: string | null) {

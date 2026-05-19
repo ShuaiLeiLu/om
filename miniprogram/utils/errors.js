@@ -22,6 +22,7 @@ const EMAIL_BIND_ERRORS = {
   password_too_weak: '密码需要包含字母与数字',
   email_already_set: '当前账号已绑定其他邮箱',
   email_already_bound_to_other: '该邮箱已被其他用户使用',
+  invalid_credentials: '邮箱或密码不正确',
   wechat_not_bound: '账号绑定中，请稍后再试',
   invalid_code: '验证码不正确',
   code_expired: '验证码已过期，请重新获取',
