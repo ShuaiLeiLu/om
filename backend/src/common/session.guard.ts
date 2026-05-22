@@ -1,4 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
+import { Response } from 'express'
+import { AdminService } from '../modules/admin/admin.service'
 import { PrismaService } from '../modules/prisma/prisma.service'
 import { sha256 } from './http'
 
@@ -22,10 +24,15 @@ export class UserSessionGuard implements CanActivate {
 
 @Injectable()
 export class AdminSessionGuard implements CanActivate {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly admin: AdminService
+  ) {}
 
   async canActivate(context: ExecutionContext) {
-    const req = context.switchToHttp().getRequest()
+    const http = context.switchToHttp()
+    const req = http.getRequest()
+    const res = http.getResponse<Response>()
     const token = req.cookies?.chatty_admin_session
     if (!token) throw new UnauthorizedException('unauthorized')
     const session = await this.prisma.adminSession.findFirst({
@@ -34,6 +41,7 @@ export class AdminSessionGuard implements CanActivate {
     })
     if (!session || session.adminUser.status !== 'active') throw new UnauthorizedException('unauthorized')
     req.admin = { id: session.adminUserId, role: session.adminUser.role, status: session.adminUser.status }
+    await this.admin.maybeRollSession(session.id, token, session.expiresAt, res)
     return true
   }
 }

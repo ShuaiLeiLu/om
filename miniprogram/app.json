@@ -9,16 +9,16 @@
   "lazyCodeLoading": "requiredComponents",
   "window": {
     "backgroundTextStyle": "dark",
-    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarBackgroundColor": "#050814",
     "navigationBarTitleText": "万模AI",
-    "navigationBarTextStyle": "black",
-    "backgroundColor": "#f5f5f5"
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#050814"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#1a1a1a",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "white",
+    "color": "#9ca3af",
+    "selectedColor": "#a855f7",
+    "backgroundColor": "#080b1e",
+    "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/home/index",

@@ -23,29 +23,31 @@ export function ChatLanding({
 
   return (
     <>
-      <div className="mb-7 flex flex-col gap-5 md:mb-8 md:flex-row md:items-end md:justify-between">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-slate-500 md:text-[11px]">
-            <Sparkles size={11} className="text-indigo-300" />
+      <div className="mb-7 flex flex-col gap-5 md:mb-8 md:flex-row md:items-end md:justify-between border border-white/5 bg-slate-900/10 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden">
+        {/* Glow corner inside header */}
+        <div className="absolute top-0 right-0 h-32 w-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="min-w-0 relative z-10">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/10 px-2.5 py-0.5 text-[9px] uppercase tracking-widest text-indigo-300 font-bold">
+            <Sparkles size={10} className="text-indigo-300 animate-pulse" />
             Chat Workspace
           </div>
-          <h1 className="mt-1.5 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl leading-tight">
             {heroName ? (
               <>
-                <span className="text-slate-300">{greeting}，</span>
-                <span className="text-gradient-brand">{heroName}</span>
+                <span className="text-slate-200">{greeting}，</span>
+                <span className="text-gradient-brand text-glow-purple">{heroName}</span>
               </>
             ) : (
-              <span className="text-gradient-brand">万模 AI</span>
+              <span className="text-gradient-brand text-glow-purple">万模 AI 工作台</span>
             )}
           </h1>
-          <p className="mt-2.5 max-w-xl text-sm text-slate-400 leading-relaxed">
+          <p className="mt-3 max-w-xl text-xs sm:text-sm text-slate-400 leading-relaxed font-medium">
             选择一个厂商开始对话，系统会自动使用该厂商的默认最新模型。或者前往
             <Link
               href="/image"
-              className="mx-1 inline-flex items-center gap-1 text-fuchsia-300 underline-offset-2 hover:text-fuchsia-200 hover:underline"
+              className="mx-1 inline-flex items-center gap-1 text-fuchsia-400 font-semibold underline-offset-4 hover:text-fuchsia-300 hover:underline transition-colors"
             >
-              图片工作台 <ArrowRight size={11} />
+              图片工作台 <ArrowRight size={11} className="inline animate-pulse" />
             </Link>
             生成图片。
           </p>

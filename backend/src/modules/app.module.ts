@@ -1,6 +1,9 @@
-import { Module } from '@nestjs/common'
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
+import { APP_GUARD } from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { CsrfMiddleware } from '../common/csrf.middleware'
 import { AdminModule } from './admin/admin.module'
 import { AuthModule } from './auth/auth.module'
 import { ChatModule } from './chat/chat.module'
@@ -20,6 +23,11 @@ import { WechatModule } from './wechat/wechat.module'
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      { name: 'short', ttl: 1_000, limit: 10 },
+      { name: 'medium', ttl: 60_000, limit: 120 },
+      { name: 'long', ttl: 3_600_000, limit: 2_000 }
+    ]),
     PrismaModule,
     HealthModule,
     AuthModule,
@@ -34,6 +42,11 @@ import { WechatModule } from './wechat/wechat.module'
     Sub2apiModule,
     RewardsModule,
     AdminModule
-  ]
+  ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CsrfMiddleware).forRoutes('*')
+  }
+}

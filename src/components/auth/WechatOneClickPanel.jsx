@@ -188,7 +188,7 @@ export function WechatOneClickPanel({
         </div>
         <div className="flex items-start gap-2">
           <span className="mt-0.5 text-emerald-300">●</span>
-          <span>同一个微信身份与网页 / 小程序 算力点余额完全同步</span>
+          <span>同一个微信身份与客户端 / 小程序 算力点余额完全同步</span>
         </div>
       </div>
 

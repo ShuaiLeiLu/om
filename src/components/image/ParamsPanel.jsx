@@ -59,7 +59,7 @@ export function ParamsPanel() {
         />
       </div>
 
-      <div className={cn(!compressionEnabled && 'opacity-40 pointer-events-none')}>
+      <div className={cn(!compressionEnabled && 'opacity-40 pointer-events-none transition-opacity duration-300')}>
         <Slider
           min={0}
           max={100}
@@ -82,7 +82,7 @@ export function ParamsPanel() {
 
       <div>
         <Label>生成数量</Label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <input
             type="range"
             min={1}
@@ -90,9 +90,9 @@ export function ParamsPanel() {
             step={1}
             value={normalizeImageCount(params.n, params.size)}
             onChange={(e) => setParam('n', normalizeImageCount(Number(e.target.value), params.size))}
-            className="flex-1 slider-input"
+            className="flex-1"
           />
-          <div className="flex h-8 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm font-mono text-white">
+          <div className="flex h-8 w-10 shrink-0 items-center justify-center rounded-lg border border-white/8 bg-white/5 text-xs font-mono font-semibold text-slate-200">
             {normalizeImageCount(params.n, params.size)}
           </div>
         </div>
@@ -104,7 +104,7 @@ export function ParamsPanel() {
 
 function Label({ children }) {
   return (
-    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
       {children}
     </p>
   )
@@ -112,7 +112,7 @@ function Label({ children }) {
 
 function SegGroup({ options, value, onChange }) {
   return (
-    <div className="grid grid-flow-col gap-1 rounded-xl border border-white/8 bg-white/[0.04] p-1">
+    <div className="grid grid-flow-col gap-1 rounded-xl border border-white/5 bg-slate-950/45 p-1 shadow-[inset_0_1px_1px_rgba(0,0,0,0.2)]">
       {options.map((opt) => {
         const active = value === opt.value
         return (
@@ -121,9 +121,9 @@ function SegGroup({ options, value, onChange }) {
             type="button"
             onClick={() => onChange(opt.value)}
             className={cn(
-              'rounded-lg px-2 py-1.5 text-xs font-medium transition-all',
+              'rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all duration-300 active:scale-[0.96]',
               active
-                ? 'bg-gradient-to-br from-indigo-500/60 to-purple-500/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] border border-white/15'
+                ? 'bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500 text-white shadow-[0_2px_10px_rgba(139,92,246,0.25)] border border-indigo-400/20'
                 : 'text-slate-400 hover:text-slate-200 border border-transparent'
             )}
             title={opt.description}

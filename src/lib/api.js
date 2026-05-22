@@ -1,13 +1,100 @@
-export async function fetchModels() {
-  const res = await fetch('/api/models', {
-    credentials: 'include',
-    signal: AbortSignal.timeout(15000)
+const DEFAULT_TIMEOUT = 15000
+
+function buildQuery(params = {}) {
+  const query = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return
+    query.set(key, String(value))
   })
+  return query.toString()
+}
+
+async function readJson(res) {
+  const text = await res.text().catch(() => '')
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+function parseApiError(status, data) {
+  const message = data?.message || data?.error || ''
+  if (status === 401 || message === 'unauthorized') return '请先登录'
+  if (message === 'invalid_credentials') return '账号或密码不正确'
+  if (message === 'username_password_required') return '请输入账号和密码'
+  if (message === 'token_insufficient') return '算力点不足，请先领取或兑换'
+  if (message === 'model_disabled') return '当前模型暂不可用'
+  if (message === 'sub2api_config_incomplete') return '模型网关未配置'
+  if (message === 'sub2api_http_503') return '上游模型服务暂时不可用或繁忙，请稍后重试'
+  if (message === 'sub2api_http_502') return '上游模型网关返回错误，请稍后重试'
+  if (message === 'sub2api_http_504') return '上游模型响应超时，请稍后重试'
+  if (message === 'sub2api_http_429') return '上游模型请求过多，请稍后重试'
+  if (typeof message === 'string' && message.startsWith('sub2api_http_')) {
+    return `上游模型请求失败（HTTP ${message.replace('sub2api_http_', '')}）`
+  }
+  if (typeof data?.reason === 'string' && data.reason) return `同步失败：${data.reason}`
+  if (typeof message === 'string' && message) return message
+  return `请求失败 (HTTP ${status})`
+}
+
+// Read the CSRF cookie set by the backend's double-submit middleware.
+// Returns empty string if running server-side or cookie missing.
+function readCsrfCookie() {
+  if (typeof document === 'undefined') return ''
+  const match = document.cookie.match(/(?:^|;\s*)chatty_csrf=([^;]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
+}
+
+const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+// Shared fetch helper: JSON in, JSON out, normalized error throwing.
+// Replaces the boilerplate that used to wrap every endpoint call.
+async function fetchJson(url, { method = 'GET', body, timeout = DEFAULT_TIMEOUT, headers } = {}) {
+  const init = {
+    method,
+    credentials: 'include',
+    signal: AbortSignal.timeout(timeout),
+    headers: { ...(headers || {}) }
+  }
+  if (body !== undefined) {
+    init.body = typeof body === 'string' ? body : JSON.stringify(body)
+    init.headers = { 'Content-Type': 'application/json', ...init.headers }
+  }
+  if (UNSAFE_METHODS.has(method.toUpperCase())) {
+    const csrf = readCsrfCookie()
+    if (csrf) init.headers = { 'X-CSRF-Token': csrf, ...init.headers }
+  }
+  const res = await fetch(url, init)
   const data = await readJson(res)
   if (!res.ok) throw new Error(parseApiError(res.status, data))
+  if (data && typeof data === 'object' && data.ok === false) {
+    throw new Error(parseApiError(res.status, data))
+  }
+  return data
+}
+
+export { readCsrfCookie }
+
+const adminRequest = fetchJson
+
+function parseSseEvent(text) {
+  const lines = text.split('\n')
+  const event = lines.find(line => line.startsWith('event:'))?.slice(6).trim() || 'message'
+  const dataLines = lines
+    .filter(line => line.startsWith('data:'))
+    .map(line => line.slice(5).trim())
+  if (dataLines.length === 0) return null
+  return { event, data: JSON.parse(dataLines.join('\n')) }
+}
+
+// ---------- Models / Chat ----------
+
+export async function fetchModels() {
+  const data = await fetchJson('/api/models')
   const models = Array.isArray(data) ? data : []
   const groups = new Map()
-
   for (const model of models) {
     const providerId = model.provider || 'model'
     const group = groups.get(providerId) || {
@@ -23,20 +110,16 @@ export async function fetchModels() {
     })
     groups.set(providerId, group)
   }
-
   return Array.from(groups.values())
 }
 
 export async function sendMessage({ conversationId, modelId, messages, onDelta }) {
+  const csrf = readCsrfCookie()
   const res = await fetch('/api/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
     credentials: 'include',
-    body: JSON.stringify({
-      conversationId,
-      model: modelId,
-      messages
-    })
+    body: JSON.stringify({ conversationId, model: modelId, messages })
   })
 
   if (!res.ok || !res.body) {
@@ -77,321 +160,145 @@ export async function sendMessage({ conversationId, modelId, messages, onDelta }
   return { content, meta, done }
 }
 
-export async function generateImage({ conversationId, modelId, prompt }) {
-  const res = await fetch('/api/images/generations', {
+export function generateImage({ conversationId, modelId, prompt }) {
+  return fetchJson('/api/images/generations', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      conversationId,
-      model: modelId,
-      prompt
-    })
+    body: { conversationId, model: modelId, prompt }
   })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
 }
 
-export async function fetchQuotaSummary() {
-  const res = await fetch('/api/quota/summary', {
-    credentials: 'include',
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+// ---------- Account ----------
 
-export async function fetchMe() {
-  const res = await fetch('/api/me', {
-    credentials: 'include',
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const fetchQuotaSummary = () => fetchJson('/api/quota/summary')
+export const fetchMe = () => fetchJson('/api/me')
+export const logout = () => fetchJson('/api/auth/logout', { method: 'POST' })
 
-export async function logout() {
-  const res = await fetch('/api/auth/logout', {
-    method: 'POST',
-    credentials: 'include',
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+// ---------- WeChat QR login ----------
 
-export async function createWechatLoginSession() {
-  const res = await fetch('/api/auth/wechat-miniapp/sessions', {
-    method: 'POST',
-    credentials: 'include',
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const createWechatLoginSession = () =>
+  fetchJson('/api/auth/wechat-miniapp/sessions', { method: 'POST' })
 
-export async function fetchWechatLoginSession(sessionId) {
-  const res = await fetch(`/api/auth/wechat-miniapp/sessions/${encodeURIComponent(sessionId)}`, {
-    credentials: 'include',
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const fetchWechatLoginSession = (sessionId) =>
+  fetchJson(`/api/auth/wechat-miniapp/sessions/${encodeURIComponent(sessionId)}`)
 
 export function subscribeSessionSse(sessionId) {
   return new EventSource(`/api/auth/wechat-miniapp/sessions/${encodeURIComponent(sessionId)}/sse`)
 }
 
-export async function verifyLoginCode(code) {
-  const res = await fetch('/api/auth/wechat-miniapp/login-code/verify', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code }),
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const verifyLoginCode = (code) =>
+  fetchJson('/api/auth/wechat-miniapp/login-code/verify', { method: 'POST', body: { code } })
 
-export async function sendLocalCode({ email, purpose = 'register' }) {
-  const res = await fetch('/api/auth/local/send-code', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, purpose }),
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+// ---------- Local auth ----------
 
-export async function localResetPassword({ email, code, newPassword }) {
-  const res = await fetch('/api/auth/local/reset-password', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, code, newPassword }),
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const sendLocalCode = ({ email, purpose = 'register' }) =>
+  fetchJson('/api/auth/local/send-code', { method: 'POST', body: { email, purpose } })
 
-export async function localLogin({ email, password }) {
-  const res = await fetch('/api/auth/local/login', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const localResetPassword = ({ email, code, newPassword }) =>
+  fetchJson('/api/auth/local/reset-password', { method: 'POST', body: { email, code, newPassword } })
 
-export async function localRegister({ email, password, displayName, code }) {
-  const res = await fetch('/api/auth/local/register', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, displayName, code }),
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const localLogin = ({ email, password }) =>
+  fetchJson('/api/auth/local/login', { method: 'POST', body: { email, password } })
 
-export async function localChangePassword({ oldPassword, newPassword }) {
-  const res = await fetch('/api/auth/local/change-password', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ oldPassword, newPassword }),
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const localRegister = ({ email, password, displayName, code }) =>
+  fetchJson('/api/auth/local/register', { method: 'POST', body: { email, password, displayName, code } })
+
+export const localChangePassword = ({ oldPassword, newPassword }) =>
+  fetchJson('/api/auth/local/change-password', { method: 'POST', body: { oldPassword, newPassword } })
 
 export async function fetchAuthCapabilities() {
-  const res = await fetch('/api/auth/capabilities', {
-    credentials: 'include',
-    signal: AbortSignal.timeout(8000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) {
+  try {
+    return await fetchJson('/api/auth/capabilities', { timeout: 8000 })
+  } catch {
     // 后端未启用 capabilities 时给一个保守默认（只允许扫码）
     return { qrcode: true, wechatOauthWeb: false, wechatOauthH5: false }
   }
-  return data
 }
 
 // 一键登录：拼接前端发起的授权 URL。
 // 实际跳转 / popup 打开由调用方决定。
 export function buildWechatOauthStartUrl({ mode = 'web', next = '/', popup = false, format = 'redirect' } = {}) {
-  const params = new URLSearchParams({
-    mode,
-    next,
-    popup: popup ? '1' : '0',
-    format
-  })
+  const params = new URLSearchParams({ mode, next, popup: popup ? '1' : '0', format })
   return `/api/auth/wechat/oauth/start?${params.toString()}`
 }
 
-export async function fetchWechatOauthStartUrl({ mode = 'web', next = '/', popup = false } = {}) {
-  const url = buildWechatOauthStartUrl({ mode, next, popup, format: 'json' })
-  const res = await fetch(url, {
-    credentials: 'include',
-    signal: AbortSignal.timeout(8000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  return data
-}
+export const fetchWechatOauthStartUrl = ({ mode = 'web', next = '/', popup = false } = {}) =>
+  fetchJson(buildWechatOauthStartUrl({ mode, next, popup, format: 'json' }), { timeout: 8000 })
+
+// ---------- Quota ----------
 
 export async function fetchQuotaLedger({ page = 1, pageSize = 20 } = {}) {
-  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
-  const res = await fetch(`/api/quota/ledger?${params.toString()}`, {
-    credentials: 'include',
-    signal: AbortSignal.timeout(15000)
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
+  const qs = buildQuery({ page, pageSize })
+  const data = await fetchJson(`/api/quota/ledger?${qs}`)
   return Array.isArray(data) ? data : []
 }
 
-export async function adminLogin({ username, password }) {
-  return adminRequest('/api/admin/auth/login', {
-    method: 'POST',
-    body: { username, password }
-  })
-}
+// ---------- Admin ----------
 
-export async function adminLogout() {
-  return adminRequest('/api/admin/auth/logout', { method: 'POST' })
-}
+export const adminLogin = ({ username, password }) =>
+  adminRequest('/api/admin/auth/login', { method: 'POST', body: { username, password } })
 
-export async function fetchAdminMe() {
-  return adminRequest('/api/admin/me')
-}
+export const adminLogout = () => adminRequest('/api/admin/auth/logout', { method: 'POST' })
+export const fetchAdminMe = () => adminRequest('/api/admin/me')
+export const fetchAdminDashboard = () => adminRequest('/api/admin/dashboard')
 
-export async function fetchAdminDashboard() {
-  return adminRequest('/api/admin/dashboard')
-}
+export const fetchAdminUsers = (params = {}) =>
+  adminRequest(`/api/admin/users?${buildQuery(params)}`)
 
-export async function fetchAdminUsers(params = {}) {
-  return adminRequest(`/api/admin/users?${buildQuery(params)}`)
-}
-
-export async function updateAdminUserStatus(userId, status) {
+export function updateAdminUserStatus(userId, status) {
   const action = status === 'active' ? 'enable' : 'disable'
   return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/${action}`, { method: 'POST' })
 }
 
-export async function deleteAdminUser(userId) {
-  return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' })
-}
+export const deleteAdminUser = (userId) =>
+  adminRequest(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' })
 
-export async function adjustAdminQuota(userId, body) {
-  return adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/quota-adjust`, {
-    method: 'POST',
-    body
-  })
-}
+export const adjustAdminQuota = (userId, body) =>
+  adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/quota-adjust`, { method: 'POST', body })
 
-export async function fetchAdminModels() {
-  return adminRequest('/api/admin/models')
-}
+export const fetchAdminModels = () => adminRequest('/api/admin/models')
 
-export async function updateAdminModel(modelId, body) {
-  return adminRequest(`/api/admin/models/${encodeURIComponent(modelId)}`, {
-    method: 'PATCH',
-    body
-  })
-}
+export const updateAdminModel = (modelId, body) =>
+  adminRequest(`/api/admin/models/${encodeURIComponent(modelId)}`, { method: 'PATCH', body })
 
-export async function fetchAdminPlans() {
-  return adminRequest('/api/admin/plans')
-}
+export const fetchAdminPlans = () => adminRequest('/api/admin/plans')
+export const createAdminPlan = (body) => adminRequest('/api/admin/plans', { method: 'POST', body })
 
-export async function createAdminPlan(body) {
-  return adminRequest('/api/admin/plans', {
-    method: 'POST',
-    body
-  })
-}
+export const fetchAdminRedeemCodes = () => adminRequest('/api/admin/redeem-codes')
 
-export async function fetchAdminRedeemCodes() {
-  return adminRequest('/api/admin/redeem-codes')
-}
+export const createAdminRedeemCodes = (body) =>
+  adminRequest('/api/admin/redeem-codes/batch', { method: 'POST', body })
 
-export async function createAdminRedeemCodes(body) {
-  return adminRequest('/api/admin/redeem-codes/batch', {
-    method: 'POST',
-    body
-  })
-}
+export const revokeAdminRedeemCode = (codeId) =>
+  adminRequest(`/api/admin/redeem-codes/${encodeURIComponent(codeId)}/revoke`, { method: 'POST' })
 
-export async function revokeAdminRedeemCode(codeId) {
-  return adminRequest(`/api/admin/redeem-codes/${encodeURIComponent(codeId)}/revoke`, { method: 'POST' })
-}
+export const fetchAdminLlmRequests = (params = {}) =>
+  adminRequest(`/api/admin/llm-requests?${buildQuery(params)}`)
 
-export async function fetchAdminLlmRequests(params = {}) {
-  return adminRequest(`/api/admin/llm-requests?${buildQuery(params)}`)
-}
+export const fetchAdminQuotaLedger = (params = {}) =>
+  adminRequest(`/api/admin/quota-ledger?${buildQuery(params)}`)
 
-export async function fetchAdminQuotaLedger(params = {}) {
-  return adminRequest(`/api/admin/quota-ledger?${buildQuery(params)}`)
-}
+export const fetchAdminUsageEvents = () => adminRequest('/api/admin/usage-events')
 
-export async function fetchAdminUsageEvents() {
-  return adminRequest('/api/admin/usage-events')
-}
+export const syncAdminSub2api = () =>
+  adminRequest('/api/admin/sub2api/sync', { method: 'POST' })
 
-export async function syncAdminSub2api() {
-  return adminRequest('/api/admin/sub2api/sync', { method: 'POST' })
-}
+export const fetchAdminWechatAccounts = (params = {}) =>
+  adminRequest(`/api/admin/wechat/accounts?${buildQuery(params)}`)
 
-export async function fetchAdminWechatAccounts(params = {}) {
-  return adminRequest(`/api/admin/wechat/accounts?${buildQuery(params)}`)
-}
+export const unbindAdminWechatAccount = (accountId) =>
+  adminRequest(`/api/admin/wechat/accounts/${encodeURIComponent(accountId)}/unbind`, { method: 'POST' })
 
-export async function unbindAdminWechatAccount(accountId) {
-  return adminRequest(`/api/admin/wechat/accounts/${encodeURIComponent(accountId)}/unbind`, { method: 'POST' })
-}
+export const fetchAdminRewardConfig = () => adminRequest('/api/admin/wechat/reward-config')
 
-export async function fetchAdminRewardConfig() {
-  return adminRequest('/api/admin/wechat/reward-config')
-}
+export const updateAdminRewardConfig = (body) =>
+  adminRequest('/api/admin/wechat/reward-config', { method: 'PATCH', body })
 
-export async function updateAdminRewardConfig(body) {
-  return adminRequest('/api/admin/wechat/reward-config', {
-    method: 'PATCH',
-    body
-  })
-}
+export const fetchAdminRewardEvents = () => adminRequest('/api/admin/wechat/reward-events')
 
-export async function fetchAdminRewardEvents() {
-  return adminRequest('/api/admin/wechat/reward-events')
-}
+export const fetchAdminAuditLogs = (params = {}) =>
+  adminRequest(`/api/admin/audit-logs?${buildQuery(params)}`)
 
-export async function fetchAdminAuditLogs(params = {}) {
-  return adminRequest(`/api/admin/audit-logs?${buildQuery(params)}`)
-}
+// ---------- Utilities ----------
 
 export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -400,74 +307,4 @@ export function fileToBase64(file) {
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
-}
-
-function parseSseEvent(text) {
-  const lines = text.split('\n')
-  const event = lines.find(line => line.startsWith('event:'))?.slice(6).trim() || 'message'
-  const dataLines = lines
-    .filter(line => line.startsWith('data:'))
-    .map(line => line.slice(5).trim())
-  if (dataLines.length === 0) return null
-  return { event, data: JSON.parse(dataLines.join('\n')) }
-}
-
-async function readJson(res) {
-  const text = await res.text().catch(() => '')
-  if (!text) return null
-  try {
-    return JSON.parse(text)
-  } catch {
-    return text
-  }
-}
-
-async function adminRequest(url, options = {}) {
-  const headers = { ...(options.headers || {}) }
-  const init = {
-    method: options.method || 'GET',
-    credentials: 'include',
-    signal: AbortSignal.timeout(options.timeout || 15000),
-    headers
-  }
-  if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body)
-    init.headers = { 'Content-Type': 'application/json', ...headers }
-  }
-  const res = await fetch(url, init)
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  if (data && typeof data === 'object' && data.ok === false) {
-    throw new Error(parseApiError(res.status, data))
-  }
-  return data
-}
-
-function buildQuery(params = {}) {
-  const query = new URLSearchParams()
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') return
-    query.set(key, String(value))
-  })
-  return query.toString()
-}
-
-function parseApiError(status, data) {
-  const message = data?.message || data?.error || ''
-  if (status === 401 || message === 'unauthorized') return '请先登录'
-  if (message === 'invalid_credentials') return '账号或密码不正确'
-  if (message === 'username_password_required') return '请输入账号和密码'
-  if (message === 'token_insufficient') return '算力点不足，请先领取或兑换'
-  if (message === 'model_disabled') return '当前模型暂不可用'
-  if (message === 'sub2api_config_incomplete') return '模型网关未配置'
-  if (message === 'sub2api_http_503') return '上游模型服务暂时不可用或繁忙，请稍后重试'
-  if (message === 'sub2api_http_502') return '上游模型网关返回错误，请稍后重试'
-  if (message === 'sub2api_http_504') return '上游模型响应超时，请稍后重试'
-  if (message === 'sub2api_http_429') return '上游模型请求过多，请稍后重试'
-  if (typeof message === 'string' && message.startsWith('sub2api_http_')) {
-    return `上游模型请求失败（HTTP ${message.replace('sub2api_http_', '')}）`
-  }
-  if (typeof data?.reason === 'string' && data.reason) return `同步失败：${data.reason}`
-  if (typeof message === 'string' && message) return message
-  return `请求失败 (HTTP ${status})`
 }

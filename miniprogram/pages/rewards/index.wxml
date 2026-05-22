@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page animate-fade-in">
   <view class="page-header">
     <view class="section-title">看广告领算力点</view>
   </view>
@@ -10,10 +10,10 @@
   />
 
   <block wx:if="{{error && !loading}}">
-    <glass-card customClass="mt-4" intensity="normal" padding="40rpx 36rpx">
-      <view class="state-title">读取失败</view>
-      <view class="state-desc">{{error}}</view>
-      <view class="mt-3">
+    <glass-card customClass="mt-4" intensity="strong" padding="48rpx 40rpx">
+      <view class="state-title text-primary">读取失败</view>
+      <view class="state-desc text-secondary">{{error}}</view>
+      <view class="mt-4">
         <gradient-button type="primary" size="md" block="{{true}}" bindtap="refreshData">
           <text>重新加载</text>
         </gradient-button>
@@ -22,27 +22,28 @@
   </block>
 
   <block wx:elif="{{loading}}">
-    <glass-card customClass="mt-4" intensity="subtle" padding="40rpx 36rpx">
+    <glass-card customClass="mt-4 skeleton" intensity="subtle" padding="48rpx 40rpx">
       <view class="state-title text-secondary">正在同步奖励信息...</view>
+      <view class="skeleton-line mt-2"></view>
     </glass-card>
   </block>
 
   <block wx:else>
     <!-- 主奖励卡 -->
-    <glass-card customClass="mt-4" intensity="normal" padding="40rpx 36rpx">
-      <view class="reward-label">今日可领</view>
+    <glass-card customClass="mt-4" intensity="strong" padding="48rpx 40rpx">
+      <view class="reward-label">今日单次可领</view>
       <view class="reward-amount">+{{rewardText}}</view>
-      <view class="reward-unit">算力点 / 次</view>
+      <view class="reward-unit">算力点 / 每次</view>
 
-      <view class="mt-3 quota-row">
-        <text>剩余 {{remainingText}} 次</text>
-        <text>上限 {{limitText}} 次 / 天</text>
+      <view class="mt-4 quota-row text-secondary">
+        <text class="font-medium">今日剩余 {{remainingText}} 次</text>
+        <text class="text-tertiary">日上限 {{limitText}} 次</text>
       </view>
       <view class="progress">
         <view class="progress-inner" style="width: {{progressPercent}}%;"></view>
       </view>
 
-      <view class="mt-3 notice">{{noticeText}}</view>
+      <view class="mt-4 notice text-tertiary">{{noticeText}}</view>
 
       <view class="mt-4">
         <gradient-button
@@ -59,12 +60,21 @@
     </glass-card>
 
     <!-- 规则说明 -->
-    <glass-card customClass="mt-3" intensity="subtle" padding="28rpx 32rpx">
-      <view class="rule-title">规则说明</view>
+    <glass-card customClass="mt-4" intensity="subtle" padding="36rpx 40rpx">
+      <view class="rule-title">活动规则</view>
       <view class="rules">
-        <view class="rule">· 完整观看广告才会发放算力点</view>
-        <view class="rule">· 中途关闭广告不会扣次数，也不会发放</view>
-        <view class="rule">· 余额和领取次数均以后端记录为准</view>
+        <view class="rule">
+          <view class="rule-dot"></view>
+          <text class="rule-text">完整观看视频广告，才会发放对应的算力点</text>
+        </view>
+        <view class="rule">
+          <view class="rule-dot"></view>
+          <text class="rule-text">中途关闭广告不会扣除今日额度，也无法获得奖励</text>
+        </view>
+        <view class="rule">
+          <view class="rule-dot"></view>
+          <text class="rule-text">算力点余额和小程序领奖次数均以后端服务器记录为准</text>
+        </view>
       </view>
     </glass-card>
   </block>

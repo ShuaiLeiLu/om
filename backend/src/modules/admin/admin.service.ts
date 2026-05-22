@@ -8,6 +8,35 @@ import { PrismaService } from '../prisma/prisma.service'
 
 const ADMIN_COOKIE = 'chatty_admin_session'
 const DAY_MS = 24 * 60 * 60 * 1000
+const HOUR_MS = 60 * 60 * 1000
+
+// Admin sessions are short-lived but auto-renewed by the guard while the admin is active.
+// Initial lifetime keeps idle attack windows small; renewal threshold avoids db churn on every request.
+const ADMIN_SESSION_TTL_MS = 12 * HOUR_MS
+const ADMIN_SESSION_RENEW_THRESHOLD_MS = 6 * HOUR_MS
+
+// Whitelist of user fields safe to return in admin list responses.
+// Never include passwordHash here.
+const ADMIN_USER_SELECT = {
+  id: true,
+  displayName: true,
+  avatarUrl: true,
+  email: true,
+  emailVerifiedAt: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLoginAt: true
+} as const
+
+const ADMIN_OAUTH_SELECT = {
+  id: true,
+  provider: true,
+  openid: true,
+  unionid: true,
+  nickname: true,
+  boundAt: true
+} as const
 
 @Injectable()
 export class AdminService {
@@ -52,7 +81,7 @@ export class AdminService {
     meta: { ip: string; userAgent: string }
   ) {
     const token = randomToken()
-    const expiresAt = new Date(Date.now() + 14 * DAY_MS)
+    const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_MS)
     await this.prisma.adminSession.create({
       data: { adminUserId: admin.id, refreshTokenHash: sha256(token), expiresAt, ip: meta.ip, userAgent: meta.userAgent }
     })
@@ -60,6 +89,22 @@ export class AdminService {
     res.cookie(ADMIN_COOKIE, token, this.cookieOptions(expiresAt))
     await this.audit(admin.id, 'admin_login', 'admin_user', admin.id, null, { ip: meta.ip })
     return { id: admin.id, username: admin.username, role: admin.role, expiresAt }
+  }
+
+  /**
+   * Called by AdminSessionGuard on each authenticated request. If the session is close to
+   * expiring, extend it and refresh the cookie so an actively-used session never logs out
+   * mid-task — but an idle session still dies within ADMIN_SESSION_TTL_MS.
+   */
+  async maybeRollSession(sessionId: string, token: string, currentExpiresAt: Date, res: Response) {
+    const remainingMs = currentExpiresAt.getTime() - Date.now()
+    if (remainingMs > ADMIN_SESSION_RENEW_THRESHOLD_MS) return
+    const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_MS)
+    await this.prisma.adminSession.update({
+      where: { id: sessionId },
+      data: { expiresAt }
+    })
+    res.cookie(ADMIN_COOKIE, token, this.cookieOptions(expiresAt))
   }
 
   async logout(token: string | undefined, res: Response) {
@@ -149,7 +194,10 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { oauthAccounts: true }
+      select: {
+        ...ADMIN_USER_SELECT,
+        oauthAccounts: { select: ADMIN_OAUTH_SELECT }
+      }
     })
   }
 
@@ -184,8 +232,12 @@ export class AdminService {
 
   async adjustQuota(adminId: string, userId: string, input: { tokens?: string | number; validDays?: number; remark?: string }) {
     const tokens = BigInt(input.tokens || 0)
-    const validDays = Math.max(1, Number(input.validDays || 30))
+    const validDays = Math.max(1, Math.min(3650, Number(input.validDays || 30)))
     if (tokens === BigInt(0)) throw new BadRequestException('tokens_required')
+    // Cap absolute magnitude to 1e15 tokens — anything beyond is almost certainly a typo or abuse.
+    const MAX_TOKENS_PER_ADJUSTMENT = BigInt('1000000000000000')
+    const magnitude = tokens < BigInt(0) ? -tokens : tokens
+    if (magnitude > MAX_TOKENS_PER_ADJUSTMENT) throw new BadRequestException('tokens_too_large')
     const expiresAt = new Date(Date.now() + validDays * 24 * 60 * 60 * 1000)
     const result = await this.prisma.$transaction(async (tx) => {
       if (tokens < BigInt(0)) {
@@ -259,7 +311,11 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { user: true, conversation: true, usageEvents: true }
+      include: {
+        user: { select: ADMIN_USER_SELECT },
+        conversation: { select: { id: true, title: true, createdAt: true } },
+        usageEvents: true
+      }
     })
   }
 
@@ -273,7 +329,7 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { user: true, grant: true }
+      include: { user: { select: ADMIN_USER_SELECT }, grant: true }
     })
   }
 
@@ -287,7 +343,9 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { adminUser: true }
+      include: {
+        adminUser: { select: { id: true, username: true, email: true, role: true } }
+      }
     })
   }
 
@@ -307,7 +365,7 @@ export class AdminService {
       orderBy: { boundAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { user: true }
+      include: { user: { select: ADMIN_USER_SELECT } }
     })
   }
 

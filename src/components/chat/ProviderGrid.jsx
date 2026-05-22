@@ -17,15 +17,18 @@ export function ProviderGrid({ providers, onSelect, loading }) {
             onClick={() => onSelect(p)}
             disabled={disabled}
             className={cn(
-              'group relative flex flex-col overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] p-3.5 text-left transition-all backdrop-blur-xl tap-transparent',
-              'hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.06]',
+              'group relative flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-slate-900/35 p-3.5 text-left transition-all duration-300 backdrop-blur-xl tap-transparent active:scale-[0.98]',
+              'hover:-translate-y-1 hover:border-white/10 hover:bg-slate-950/60 hover:shadow-[0_8px_30px_var(--hover-glow)]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40',
               'sm:p-5',
               disabled && 'opacity-50 hover:translate-y-0 cursor-not-allowed'
             )}
+            style={{
+              '--hover-glow': p.color ? `${p.color}25` : 'rgba(99,102,241,0.15)'
+            }}
           >
             <div
-              className="absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-25 blur-3xl transition-opacity group-hover:opacity-60"
+              className="absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-15 blur-3xl transition-all duration-300 group-hover:opacity-40 group-hover:scale-110"
               style={{ background: p.color }}
             />
 

@@ -1,11 +1,41 @@
-/* 全局主题 — 简洁亮色 */
+/* 全局主题 — 深色玻璃拟态 (Dark Glassmorphism) */
 page {
-  background: #f5f5f5;
-  color: #1a1a1a;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  /* Shared color tokens — keep page styles consistent and recolorable from one place. */
+  --c-bg: #050814;
+  --c-text: #f3f4f6;
+  --c-text-muted: #9ca3af;
+  --c-text-faint: #6b7280;
+  --c-accent: #a855f7;
+  --c-accent-pink: #ec4899;
+  --c-accent-indigo: #6366f1;
+  --c-glass-border: rgba(255, 255, 255, 0.12);
+  --c-glass-fill: rgba(255, 255, 255, 0.05);
+  --shadow-card: 0 8rpx 32rpx 0 rgba(0, 0, 0, 0.3);
+  --shadow-card-strong: 0 12rpx 40rpx 0 rgba(0, 0, 0, 0.4);
+
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   font-size: 28rpx;
-  line-height: 1.55;
+  line-height: 1.6;
   min-height: 100vh;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 顶部与底部的柔和彩色霓虹光晕 */
+page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 600rpx;
+  background: radial-gradient(circle at 10% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+              radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 50% 40%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 button::after {
@@ -18,14 +48,24 @@ button {
   padding: 0;
   margin: 0;
   line-height: 1;
+  color: inherit;
 }
 
-/* 文本 */
-.text-primary { color: #1a1a1a; }
-.text-secondary { color: #666666; }
-.text-tertiary { color: #999999; }
-.text-accent { color: #4f7cff; }
+/* 颜色系统 */
+.text-primary { color: #ffffff; }
+.text-secondary { color: #9ca3af; }
+.text-tertiary { color: #6b7280; }
+.text-accent { color: #a855f7; }
 
+/* 炫彩渐变文字 */
+.text-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 字体排版 */
 .text-xs { font-size: 20rpx; }
 .text-sm { font-size: 24rpx; }
 .text-base { font-size: 28rpx; }
@@ -38,37 +78,40 @@ button {
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
 
-/* 间距 */
+/* 常用间距 */
 .mt-1 { margin-top: 8rpx; }
 .mt-2 { margin-top: 16rpx; }
 .mt-3 { margin-top: 24rpx; }
 .mt-4 { margin-top: 32rpx; }
 .mt-5 { margin-top: 40rpx; }
 
-/* 页面布局 */
+/* 页面布局包装器 */
 .page {
-  padding: 24rpx 32rpx 200rpx;
+  padding: 32rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header {
-  padding: 8rpx 0 24rpx;
+  padding: 16rpx 0 32rpx;
 }
 
 .section-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5rpx;
 }
 
 .section-desc {
   font-size: 24rpx;
-  color: #999;
-  margin-top: 4rpx;
+  color: #9ca3af;
+  margin-top: 8rpx;
 }
 
-/* 通用行 */
+/* Flex布局助手 */
 .row-between {
   display: flex;
   align-items: center;
@@ -78,9 +121,47 @@ button {
 
 .flex-1 { flex: 1; min-width: 0; }
 
-/* 分割线 */
+/* 磨砂玻璃分割线 */
 .divider {
   height: 1rpx;
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.06);
   margin: 0 32rpx;
 }
+
+/* 动效：骨架屏流光闪烁 */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.03) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 12rpx;
+}
+
+/* 动效：微光渐现 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 动效：加载圈 */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 36rpx;
+  height: 36rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.1);
+  border-left-color: #a855f7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+

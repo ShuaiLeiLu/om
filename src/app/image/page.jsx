@@ -22,8 +22,7 @@ import {
   generateImageRequest,
   editImageRequest,
   urlToBlob,
-  getImageDimensions,
-  blobToDataUrl
+  getImageDimensions
 } from '@/lib/image/api'
 import { ToastProvider, useToast } from '@/components/ui/toast'
 import ImageHero from '@/components/image/ImageHero'
@@ -189,13 +188,15 @@ function ImagePageInner() {
 
       let result
       if (refs.length > 0) {
-        const refDataUrls = []
+        const refBlobs = []
         for (const r of refs) {
           const rec = await getImage(r.hash)
           if (!rec) continue
-          refDataUrls.push(await blobToDataUrl(rec.blob))
+          const mime = rec.blob.type || 'image/png'
+          const ext = mime.includes('jpeg') ? 'jpg' : mime.includes('webp') ? 'webp' : mime.includes('gif') ? 'gif' : 'png'
+          refBlobs.push({ blob: rec.blob, ext })
         }
-        result = await editImageRequest({ ...basePayload, images: refDataUrls })
+        result = await editImageRequest({ ...basePayload, refBlobs })
       } else {
         result = await generateImageRequest(basePayload)
       }

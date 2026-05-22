@@ -12,6 +12,12 @@
 //
 // See docs/backend-image-api.md for full spec.
 
+function readCsrfCookie() {
+  if (typeof document === 'undefined') return ''
+  const match = document.cookie.match(/(?:^|;\s*)chatty_csrf=([^;]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
+}
+
 async function readJson(res) {
   const text = await res.text().catch(() => '')
   if (!text) return null
@@ -46,10 +52,11 @@ function parseError(status, data) {
 }
 
 export async function generateImageRequest(payload, { signal } = {}) {
+  const csrf = readCsrfCookie()
   const res = await fetch(apiUrl('/api/images/generations'), {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
     body: JSON.stringify(payload),
     signal
   })
@@ -58,14 +65,34 @@ export async function generateImageRequest(payload, { signal } = {}) {
   return data
 }
 
+// `payload.refBlobs`: optional array of { blob: Blob, ext?: string } sent as multipart files.
+// If absent, sends a JSON body (legacy base64 path) for backward compatibility.
 export async function editImageRequest(payload, { signal } = {}) {
-  const res = await fetch(apiUrl('/api/images/edits'), {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    signal
-  })
+  const csrf = readCsrfCookie()
+  const baseHeaders = csrf ? { 'X-CSRF-Token': csrf } : {}
+  const refBlobs = Array.isArray(payload?.refBlobs) ? payload.refBlobs : null
+  let init
+  if (refBlobs && refBlobs.length > 0) {
+    const form = new FormData()
+    const { refBlobs: _omit, ...rest } = payload
+    for (const [key, value] of Object.entries(rest)) {
+      if (value === undefined || value === null) continue
+      form.append(key, typeof value === 'string' ? value : String(value))
+    }
+    refBlobs.forEach(({ blob, ext = 'png' }, i) => {
+      form.append('images', blob, `ref_${i}.${ext}`)
+    })
+    init = { method: 'POST', credentials: 'include', headers: baseHeaders, body: form, signal }
+  } else {
+    init = {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...baseHeaders },
+      body: JSON.stringify(payload),
+      signal
+    }
+  }
+  const res = await fetch(apiUrl('/api/images/edits'), init)
   const data = await readJson(res)
   if (!res.ok) throw new Error(parseError(res.status, data))
   return data

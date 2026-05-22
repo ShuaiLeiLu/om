@@ -48,23 +48,23 @@ export function ChatComposer({
   }
 
   return (
-    <div className="shrink-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-slate-950/30 px-3 pb-2 pt-4 pl-safe pr-safe pb-safe sm:px-4 sm:pt-6 sm:pb-4">
+    <div className="shrink-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-slate-950/30 px-3 pb-2 pt-4 pl-safe pr-safe pb-safe sm:px-4 sm:pt-6 sm:pb-4 relative z-15">
       <div className="mx-auto max-w-3xl">
         {pendingImages.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2 px-1">
+          <div className="mb-2.5 flex flex-wrap gap-2 px-1">
             {pendingImages.map((img, i) => (
               <div key={i} className="group relative">
                 <img
                   src={img}
-                  className="h-16 w-16 rounded-xl object-cover border border-white/10 shadow-lg"
+                  className="h-16 w-16 rounded-xl object-cover border border-white/10 shadow-lg transition-transform duration-300 group-hover:scale-105"
                   alt=""
                 />
                 <button
                   onClick={() => onRemoveImage(i)}
-                  className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white shadow-lg transition-transform active:scale-90 tap-transparent"
+                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500/90 text-white shadow-md transition-all duration-200 hover:bg-rose-500 hover:scale-110 active:scale-90 tap-transparent"
                   aria-label="移除"
                 >
-                  <X size={11} />
+                  <X size={10} />
                 </button>
               </div>
             ))}
@@ -73,10 +73,10 @@ export function ChatComposer({
 
         <div
           className={cn(
-            'relative flex flex-col gap-1 rounded-3xl border bg-slate-900/60 backdrop-blur-2xl transition-all duration-200',
-            'shadow-[0_8px_32px_rgba(0,0,0,0.3)]',
-            'border-white/10 focus-within:border-indigo-400/50 focus-within:bg-slate-900/80',
-            'focus-within:shadow-[0_8px_32px_rgba(99,102,241,0.18),0_0_0_3px_rgba(99,102,241,0.12)]'
+            'relative flex flex-col gap-1 rounded-3xl border bg-slate-900/60 backdrop-blur-2xl transition-all duration-300 group',
+            'shadow-[0_8px_32px_rgba(0,0,0,0.35)]',
+            'border-white/8 focus-within:border-indigo-500/40 focus-within:bg-slate-900/85',
+            'focus-within:shadow-[0_8px_32px_rgba(99,102,241,0.18)]'
           )}
         >
           <textarea
@@ -96,12 +96,12 @@ export function ChatComposer({
           />
 
           {/* toolbar */}
-          <div className="flex items-end justify-between gap-2 px-1.5 pb-1.5 pt-1 sm:px-2 sm:pb-2">
+          <div className="flex items-end justify-between gap-2 px-1.5 pb-1.5 pt-1 sm:px-2 sm:pb-2 relative z-10">
             <div className="flex min-w-0 items-center gap-1">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={disabled}
-                className="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-200 disabled:opacity-50 active:scale-95 tap-transparent"
+                className="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-slate-400 transition-all duration-200 hover:bg-white/5 hover:text-slate-200 disabled:opacity-50 active:scale-95 tap-transparent"
                 aria-label="附加图片"
               >
                 <ImagePlus size={17} />
@@ -140,9 +140,9 @@ export function ChatComposer({
                 onClick={onSend}
                 disabled={!hasContent || isLoading || disabled}
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-xl transition-all tap-transparent',
+                  'flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 tap-transparent',
                   hasContent && !isLoading && !disabled
-                    ? 'bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-[0_6px_20px_rgba(99,102,241,0.45)] hover:brightness-110 active:scale-95'
+                    ? 'bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500 text-white shadow-[0_4px_16px_rgba(99,102,241,0.4)] hover:shadow-[0_4px_24px_rgba(139,92,246,0.6)] hover:scale-[1.06] active:scale-[0.92]'
                     : 'bg-white/5 text-slate-600 cursor-not-allowed'
                 )}
                 aria-label="发送"
@@ -150,11 +150,14 @@ export function ChatComposer({
                 {isLoading ? (
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
-                  <Send size={16} />
+                  <Send size={15} />
                 )}
               </button>
             </div>
           </div>
+
+          {/* Glowing fiber line at the bottom of the container */}
+          <div className="absolute bottom-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent blur-[0.5px] opacity-0 transition-opacity duration-300 group-focus-within:opacity-100 pointer-events-none" />
         </div>
 
         <p className="mt-2 hidden text-center text-[10px] text-slate-600 sm:block">

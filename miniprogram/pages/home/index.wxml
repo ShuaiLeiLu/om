@@ -1,23 +1,48 @@
-<view class="page">
+<view class="page animate-fade-in">
   <!-- 顶部品牌 -->
   <view class="header">
-    <view class="brand">万模 AI</view>
+    <view class="brand text-gradient">万模 AI</view>
     <status-pill tone="{{bound ? 'success' : 'warning'}}" text="{{bound ? '已绑定' : '绑定中'}}" />
   </view>
+
+  <!-- 作用说明区域 (明显且发光) -->
+  <glass-card intensity="strong" glow="{{true}}" padding="32rpx 36rpx" customClass="info-banner">
+    <view class="info-header">
+      <text class="info-sparkle">✨</text>
+      <text class="info-title text-gradient">小程序算力助手</text>
+    </view>
+    <view class="info-desc text-secondary mt-1">
+      本小程序为万模 AI 客户端的配套算力管理工具。您可以在这里：
+    </view>
+    <view class="info-list mt-2">
+      <view class="info-item">
+        <view class="info-dot info-dot--purple"></view>
+        <text class="info-text"><text class="text-primary font-semibold">看广告赚算力</text>：完整观看视频广告，免费增加算力额度</text>
+      </view>
+      <view class="info-item">
+        <view class="info-dot info-dot--pink"></view>
+        <text class="info-text"><text class="text-primary font-semibold">余额实时共享</text>：小程序余额与客户端同步，随时用于创作</text>
+      </view>
+      <view class="info-item">
+        <view class="info-dot info-dot--blue"></view>
+        <text class="info-text"><text class="text-primary font-semibold">客户端安全登录</text>：生成登录码或扫码，实现客户端一键登录</text>
+      </view>
+    </view>
+  </glass-card>
 
   <!-- 算力点余额卡 -->
   <token-balance
     balance="{{balanceText}}"
     label="算力点余额"
-    caption="网页 / 小程序共享额度"
+    caption="客户端 / 小程序共享额度"
   />
 
   <!-- 错误态 -->
   <block wx:if="{{error && !loading}}">
-    <glass-card customClass="mt-4" intensity="normal" padding="40rpx 36rpx">
-      <view class="state-title">读取失败</view>
-      <view class="state-desc">{{error}}</view>
-      <view class="mt-3">
+    <glass-card customClass="mt-4" intensity="strong" padding="48rpx 40rpx">
+      <view class="state-title text-primary">读取失败</view>
+      <view class="state-desc text-secondary">{{error}}</view>
+      <view class="mt-4">
         <gradient-button type="primary" size="md" block="{{true}}" bindtap="refreshData">
           <text>重新加载</text>
         </gradient-button>
@@ -27,39 +52,64 @@
 
   <!-- 加载态 -->
   <block wx:elif="{{loading}}">
-    <glass-card customClass="mt-4" intensity="subtle" padding="40rpx 36rpx">
-      <view class="state-title text-secondary">正在同步...</view>
+    <glass-card customClass="mt-4 skeleton" intensity="subtle" padding="48rpx 40rpx">
+      <view class="state-title text-secondary">正在同步数据...</view>
+      <view class="skeleton-line mt-2"></view>
     </glass-card>
   </block>
 
   <!-- 正常态 -->
   <block wx:else>
-    <!-- 快捷入口 -->
-    <view class="mt-4 quick-grid">
-      <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goRewards">
-        <view class="quick-label">看广告领取</view>
-        <view class="quick-value">+{{rewardText}}</view>
-        <view class="quick-meta">剩余 {{remainingText}} 次</view>
-      </glass-card>
-
-      <glass-card intensity="normal" padding="32rpx" customClass="quick-item" bind:tap="goProfile">
-        <view class="quick-label">{{emailLinked ? '邮箱已绑定' : '绑定邮箱'}}</view>
-        <view class="quick-value">{{emailLinked ? '✓' : '→'}}</view>
-        <view class="quick-meta">个人中心</view>
-      </glass-card>
-    </view>
-
-    <!-- 网页提示 -->
-    <glass-card intensity="subtle" padding="28rpx 32rpx" customClass="mt-3">
-      <view class="row-between">
-        <view class="flex-1">
-          <view class="text-sm text-secondary">网页工作台</view>
-          <view class="mt-1 web-url">{{webUrl}}</view>
+    <!-- 重新设计的菜单 -->
+    <view class="mt-4 menu-container">
+      <!-- 主功能：看广告领算力 -->
+      <glass-card intensity="strong" padding="36rpx 40rpx" customClass="menu-main-card" bind:tap="goRewards">
+        <view class="menu-main-content">
+          <view class="menu-main-text">
+            <view class="menu-label-tag">PRIMARY ACTION</view>
+            <view class="menu-main-title">看广告获取算力点</view>
+            <view class="menu-main-desc mt-1">今日可领 +{{rewardText}} 点，剩余 {{remainingText}} 次数</view>
+          </view>
+          <view class="menu-main-action">
+            <view class="play-btn-circle">
+              <view class="play-triangle"></view>
+            </view>
+          </view>
         </view>
-        <gradient-button type="ghost" size="sm" bindtap="copyWebUrl">
-          <text>复制</text>
-        </gradient-button>
+      </glass-card>
+
+      <!-- 次功能网格 -->
+      <view class="menu-sub-grid mt-3">
+        <!-- 客户端登录码 -->
+        <navigator url="/pages/web-login-code/index" hover-class="none" class="flex-1">
+          <glass-card intensity="normal" padding="32rpx" customClass="menu-sub-card">
+            <view class="menu-sub-icon menu-sub-icon--code">
+              <view class="icon-code-dots">
+                <view class="icon-dot-mini"></view>
+                <view class="icon-dot-mini"></view>
+                <view class="icon-dot-mini"></view>
+                <view class="icon-dot-mini"></view>
+              </view>
+            </view>
+            <view class="menu-sub-title mt-2">客户端登录码</view>
+            <view class="menu-sub-desc mt-1">客户端免密验证登录</view>
+          </glass-card>
+        </navigator>
+
+        <!-- 关联账户设置 -->
+        <view bind:tap="goProfile" class="flex-1">
+          <glass-card intensity="normal" padding="32rpx" customClass="menu-sub-card">
+            <view class="menu-sub-icon menu-sub-icon--link">
+              <view class="icon-link-chain">
+                <view class="icon-link-ring"></view>
+                <view class="icon-link-ring icon-link-ring--second"></view>
+              </view>
+            </view>
+            <view class="menu-sub-title mt-2">{{emailLinked ? '账号已关联' : '关联客户端'}}</view>
+            <view class="menu-sub-desc mt-1">{{emailLinked ? '查看已绑定账户' : '点击前往绑定邮箱'}}</view>
+          </glass-card>
+        </view>
       </view>
-    </glass-card>
+    </view>
   </block>
 </view>

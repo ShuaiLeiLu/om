@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Controller, Post, Req, Res } from '@nestjs/common'
 import { Request, Response } from 'express'
+import { ChatImageService } from '../chat/chat-image.service'
 import { ChatService } from '../chat/chat.service'
 import { WechatService } from '../wechat/wechat.service'
 
@@ -11,6 +12,7 @@ function bearer(req: Request) {
 export class MiniappAiController {
   constructor(
     private readonly chat: ChatService,
+    private readonly chatImage: ChatImageService,
     private readonly wechat: WechatService
   ) {}
 
@@ -63,7 +65,7 @@ export class MiniappAiController {
   ) {
     const session = await this.wechat.verifyMiniappSession(bearer(req))
     if (!session.userId) throw new BadRequestException('wechat_not_bound')
-    return this.chat.generateImage(session.userId, {
+    return this.chatImage.generateImage(session.userId, {
       conversationId: body.conversationId,
       model: String(body.model || ''),
       prompt: String(body.prompt || ''),

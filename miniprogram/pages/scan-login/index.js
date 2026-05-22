@@ -17,7 +17,7 @@ Page({
       this.setData({
         status: 'failed',
         statusText: '没有捕获到登录二维码信息',
-        errorText: '请回到网页端重新生成二维码'
+        errorText: '请回到客户端重新生成二维码'
       });
       return;
     }
@@ -45,7 +45,7 @@ Page({
       });
       this.setData({
         status: 'confirmed',
-        statusText: '网页登录成功'
+        statusText: '客户端登录成功'
       });
       wx.showToast({ title: '已确认登录', icon: 'success' });
       setTimeout(() => {

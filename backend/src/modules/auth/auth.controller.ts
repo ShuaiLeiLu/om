@@ -9,6 +9,7 @@ import {
   Res,
   UseGuards
 } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { Request, Response } from 'express'
 import { CurrentUser } from '../../common/current-user'
 import { getClientIp, getUserAgent } from '../../common/http'
@@ -70,6 +71,7 @@ export class AuthController {
   // ---------- 邮箱 + 密码 ----------
 
   /** 发送邮箱验证码。purpose: register | reset_password | bind_email */
+  @Throttle({ medium: { limit: 5, ttl: 60_000 } })
   @Post('auth/local/send-code')
   sendCode(
     @Body() body: { email?: string; purpose?: 'register' | 'reset_password' | 'bind_email' },
@@ -88,6 +90,7 @@ export class AuthController {
     })
   }
 
+  @Throttle({ medium: { limit: 5, ttl: 60_000 } })
   @Post('auth/local/register')
   async register(
     @Body()
@@ -111,6 +114,7 @@ export class AuthController {
     return { user }
   }
 
+  @Throttle({ medium: { limit: 5, ttl: 60_000 } })
   @Post('auth/local/reset-password')
   resetPassword(@Body() body: { email?: string; code?: string; newPassword?: string }) {
     return this.local.resetPassword({
@@ -120,6 +124,7 @@ export class AuthController {
     })
   }
 
+  @Throttle({ medium: { limit: 10, ttl: 60_000 } })
   @Post('auth/local/login')
   async localLogin(
     @Body() body: { email?: string; password?: string },

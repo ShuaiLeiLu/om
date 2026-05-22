@@ -16,6 +16,11 @@ function playRewardedVideo(adUnitId) {
     if (!rewardedVideoAd || activeAdUnitId !== adUnitId) {
       activeAdUnitId = adUnitId;
       rewardedVideoAd = wx.createRewardedVideoAd({ adUnitId });
+      if (rewardedVideoAd.onError) {
+        rewardedVideoAd.onError((err) => {
+          console.warn('RewardedVideoAd preload warning/error:', err);
+        });
+      }
     }
 
     const cleanup = () => {

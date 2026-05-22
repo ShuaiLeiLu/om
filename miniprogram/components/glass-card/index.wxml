@@ -1,5 +1,5 @@
 <view
-  class="card card--{{intensity}} {{customClass}}"
+  class="card card--{{intensity}} {{glow ? 'card--glow' : ''}} {{customClass}}"
   style="padding: {{padding}}; border-radius: {{radius}};"
 >
   <slot></slot>

@@ -101,8 +101,8 @@ export function StarterPrompts({
             key={s.title}
             onClick={() => onPick(s.prompt)}
             className={cn(
-              'group relative flex items-start gap-2.5 overflow-hidden rounded-2xl border bg-white/[0.03] p-3 text-left transition-all tap-transparent',
-              'border-white/8 hover:bg-white/[0.06] hover:border-white/15 active:scale-[0.99]',
+              'group relative flex items-start gap-2.5 overflow-hidden rounded-2xl border bg-slate-900/35 p-3 text-left transition-all duration-300 tap-transparent active:scale-[0.98]',
+              'border-white/5 hover:border-indigo-500/20 hover:bg-slate-950/60 hover:shadow-[0_8px_20px_rgba(99,102,241,0.08)]',
               'sm:p-4 sm:gap-3'
             )}
           >

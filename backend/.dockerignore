@@ -4,5 +4,9 @@ dist
 .gitignore
 .npm-cache
 .env
+.env.*
 .DS_Store
 ._*
+*.log
+README.md
+CONFIG_CHECKLIST.md

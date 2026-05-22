@@ -1,77 +1,109 @@
 .state-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 32rpx;
+  font-weight: 700;
 }
 
 .state-desc {
-  margin-top: 8rpx;
+  margin-top: 12rpx;
   font-size: 24rpx;
-  color: #999;
+  line-height: 1.6;
+}
+
+.skeleton-line {
+  height: 28rpx;
+  width: 60%;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .reward-label {
   font-size: 24rpx;
-  color: #999;
+  color: #9ca3af;
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
 }
 
 .reward-amount {
-  margin-top: 8rpx;
-  font-size: 72rpx;
-  font-weight: 700;
+  margin-top: 16rpx;
+  font-size: 80rpx;
+  font-weight: 800;
   line-height: 1.1;
-  color: #1a1a1a;
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   letter-spacing: -2rpx;
+  display: inline-block;
+  text-shadow: 0 0 24rpx rgba(236, 72, 153, 0.15);
 }
 
 .reward-unit {
-  margin-top: 4rpx;
+  margin-top: 8rpx;
   font-size: 22rpx;
-  color: #cccccc;
+  color: #6b7280;
 }
 
 .quota-row {
   display: flex;
   justify-content: space-between;
-  font-size: 22rpx;
-  color: #999;
+  font-size: 24rpx;
+  letter-spacing: 0.5rpx;
 }
 
 .progress {
-  margin-top: 12rpx;
-  height: 8rpx;
-  border-radius: 4rpx;
-  background: #f0f0f0;
+  margin-top: 20rpx;
+  height: 12rpx;
+  border-radius: 6rpx;
+  background: rgba(255, 255, 255, 0.05);
   overflow: hidden;
 }
 
 .progress-inner {
   height: 100%;
-  border-radius: 4rpx;
-  background: #1a1a1a;
-  transition: width 0.3s ease;
+  border-radius: 6rpx;
+  background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .notice {
   font-size: 22rpx;
-  color: #999;
+  line-height: 1.5;
 }
 
 .rule-title {
-  font-size: 26rpx;
-  font-weight: 500;
-  color: #666;
-  margin-bottom: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 20rpx;
+  letter-spacing: 0.5rpx;
 }
 
 .rules {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
 .rule {
-  font-size: 24rpx;
-  color: #999;
-  line-height: 1.6;
+  display: flex;
+  gap: 16rpx;
+  align-items: flex-start;
 }
+
+.rule-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #a855f7;
+  box-shadow: 0 0 8rpx #a855f7;
+  flex-shrink: 0;
+  margin-top: 14rpx;
+}
+
+.rule-text {
+  font-size: 24rpx;
+  color: #9ca3af;
+  line-height: 1.6;
+  flex: 1;
+}
+

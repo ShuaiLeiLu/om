@@ -97,7 +97,7 @@ export function LoginCodePanel({ nextUrl = '/profile' }) {
           登录码
         </p>
         <p className="mt-0.5 text-[10px] text-slate-500">
-          在小程序「我的」→「网页登录码」获取
+          在小程序「我的」→「客户端登录码」获取
         </p>
       </div>
 
@@ -116,13 +116,13 @@ export function LoginCodePanel({ nextUrl = '/profile' }) {
             onPaste={i === 0 ? handlePaste : undefined}
             disabled={isVerifying || isSuccess}
             className={cn(
-              'h-12 w-10 rounded-xl border text-center text-lg font-bold transition-all outline-none',
-              'bg-white/[0.04] text-white placeholder-slate-600',
-              'focus:border-fuchsia-400/50 focus:ring-1 focus:ring-fuchsia-400/30',
+              'h-12 w-10 rounded-xl border text-center text-lg font-bold transition-all duration-300 outline-none',
+              'bg-white/[0.03] text-white placeholder-slate-600 border-white/8 backdrop-blur-xl',
+              'focus:border-fuchsia-400/50 focus:shadow-[0_0_15px_rgba(217,70,239,0.25)] focus:scale-105',
               isSuccess
-                ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
                 : error
-                  ? 'border-rose-400/40'
+                  ? 'border-rose-500/30 bg-rose-500/5 text-rose-300'
                   : 'border-white/10'
             )}
             autoComplete="one-time-code"
@@ -133,21 +133,21 @@ export function LoginCodePanel({ nextUrl = '/profile' }) {
       {/* 状态反馈 */}
       {isVerifying && (
         <div className="flex items-center justify-center gap-2 text-xs text-slate-300">
-          <Loader2 size={14} className="animate-spin" />
+          <Loader2 size={14} className="animate-spin text-fuchsia-400" />
           验证中...
         </div>
       )}
 
       {isSuccess && (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2.5 text-xs text-emerald-200">
-          <CheckCircle2 size={14} />
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5 text-xs text-emerald-200">
+          <CheckCircle2 size={14} className="text-emerald-400" />
           登录成功，正在跳转...
         </div>
       )}
 
       {error && (
-        <div className="flex items-start gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2.5 text-xs text-rose-200">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-xs text-rose-200">
+          <AlertCircle size={14} className="mt-0.5 shrink-0 text-rose-400" />
           <span className="break-words">{error}</span>
         </div>
       )}
@@ -156,7 +156,7 @@ export function LoginCodePanel({ nextUrl = '/profile' }) {
       <div className="flex items-start gap-2.5 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5 text-[10px] text-slate-400">
         <Smartphone size={13} className="mt-0.5 shrink-0 text-slate-500" />
         <span className="leading-relaxed">
-          打开小程序 →「我的」→「网页登录码」，输入显示的 6 位数字即可登录
+          打开小程序 →「我的」→「客户端登录码」，输入显示的 6 位数字即可登录
         </span>
       </div>
     </div>

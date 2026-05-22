@@ -90,18 +90,18 @@ function LoginPageInner() {
     <LoginShell>
       <LoginMarketing />
 
-      <div className="relative w-full">
+      <div className="relative w-full animate-in">
         {/* Glow backdrop */}
-        <div className="pointer-events-none absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-500/15 via-fuchsia-500/10 to-emerald-500/10 blur-2xl" />
+        <div className="pointer-events-none absolute -inset-8 rounded-[40px] bg-gradient-to-br from-indigo-500/20 via-purple-500/15 to-fuchsia-500/15 blur-3xl opacity-80" />
 
-        <div className="relative rounded-3xl border border-white/10 bg-slate-950/60 p-5 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.4)] sm:p-6">
-          <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="relative rounded-3xl border border-white/10 bg-slate-950/40 p-6 backdrop-blur-3xl shadow-[0_32px_100px_rgba(0,0,0,0.5)] sm:p-8 neon-border transition-all duration-500 hover:border-white/15">
+          <div className="mb-5 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-white sm:text-lg">{heading.title}</h2>
-              <p className="mt-0.5 text-[11px] text-slate-400 truncate">{heading.sub}</p>
+              <h2 className="text-lg font-bold text-white tracking-tight sm:text-xl">{heading.title}</h2>
+              <p className="mt-1 text-[11px] text-slate-400 tracking-wide truncate">{heading.sub}</p>
             </div>
             {inWechat && (
-              <span className="shrink-0 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-200">
+              <span className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-200">
                 微信内打开
               </span>
             )}

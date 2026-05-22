@@ -27,7 +27,7 @@ module.exports = {
     REWARD_SESSIONS: `${BASE_URL}/wechat/miniapp/rewards/sessions`,
     REWARD_CLAIM: `${BASE_URL}/wechat/miniapp/rewards/claim`,
 
-    // 网页登录扫码确认
+    // 客户端登录扫码确认
     WEB_LOGIN_SCAN: `${BASE_URL}/wechat/miniapp/sessions/scan`,
     WEB_LOGIN_CONFIRM: `${BASE_URL}/wechat/miniapp/sessions/confirm`,
     WEB_LOGIN_SCAN_AND_CONFIRM: `${BASE_URL}/wechat/miniapp/sessions/scan-and-confirm`,

@@ -1,6 +1,6 @@
-<view class="page">
+<view class="page animate-fade-in">
   <view class="page-header">
-    <view class="section-title">网页登录</view>
+    <view class="section-title">客户端安全登录</view>
   </view>
 
   <!-- 状态区域 -->
@@ -10,13 +10,13 @@
       <text wx:elif="{{status === 'failed'}}">×</text>
       <view wx:else class="spinner"></view>
     </view>
-    <view class="status-text">{{statusText}}</view>
+    <view class="status-text text-primary">{{statusText}}</view>
     <view wx:if="{{errorText}}" class="status-error">{{errorText}}</view>
   </view>
 
   <!-- 操作 -->
-  <glass-card intensity="normal" padding="36rpx" customClass="mt-4">
-    <view class="action-row">
+  <glass-card intensity="strong" padding="48rpx 40rpx" customClass="mt-4">
+    <view class="action-row {{status === 'failed' ? 'action-row--double' : 'action-row--single'}}">
       <gradient-button
         type="ghost"
         size="md"
@@ -33,14 +33,14 @@
         block="{{true}}"
         bindtap="retry"
       >
-        <text>重试</text>
+        <text>重新登录</text>
       </gradient-button>
     </view>
 
-    <view class="mt-3 tip">扫码后自动确认登录，网页端将使用同一份算力点余额。</view>
+    <view class="mt-4 tip text-tertiary">扫码确认后，客户端将同步关联此微信的算力点余额。</view>
   </glass-card>
 
-  <glass-card intensity="subtle" padding="28rpx 32rpx" customClass="mt-3">
-    <view class="tip">仅在你本人发起登录时扫码，如非本人操作请直接返回。</view>
+  <glass-card intensity="subtle" padding="36rpx 40rpx" customClass="mt-4">
+    <view class="tip text-tertiary">安全提示：仅在您本人操作客户端登录时进行扫码确认，防范账号盗用风险。</view>
   </glass-card>
 </view>

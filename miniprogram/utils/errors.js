@@ -49,7 +49,7 @@ function translateRewardError(error) {
 
 function translateLoginError(error) {
   const code = extractCode(error);
-  return LOGIN_ERRORS[code] || '网页登录确认失败，请重试';
+  return LOGIN_ERRORS[code] || '客户端登录确认失败，请重试';
 }
 
 function translateEmailBindError(error) {
