@@ -227,8 +227,8 @@ export async function fetchAuthCapabilities() {
   try {
     return await fetchJson('/api/auth/capabilities', { timeout: 8000 })
   } catch {
-    // 后端未启用 capabilities 时给一个保守默认（只允许扫码）
-    return { qrcode: true, wechatOauthWeb: false, wechatOauthH5: false }
+    // 后端未启用 capabilities 时仍保留本地账号入口，避免邮箱登录被误隐藏。
+    return { qrcode: true, local: true, wechatOauthWeb: false, wechatOauthH5: false }
   }
 }
 

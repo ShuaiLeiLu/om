@@ -12,12 +12,13 @@ let frontendStarted = false
 let stopping = false
 let frontendChild = null
 let backendChild = null
+let backendPort = 3001
 
-function startProcess(name, args, cwd) {
+function startProcess(name, args, cwd, extraEnv = {}) {
   const child = spawn(npmCmd, args, {
     cwd,
     stdio: 'inherit',
-    env: process.env,
+    env: { ...process.env, ...extraEnv },
     detached: !isWindows,
   })
 
@@ -99,10 +100,20 @@ function checkPortAvailable(port, host) {
 }
 
 async function checkDevPortsAvailable() {
-  for (const port of [3000, 3001]) {
-    await checkPortAvailable(port, '127.0.0.1')
-    await checkPortAvailable(port, '::')
+  await checkPortAvailable(3000, '127.0.0.1')
+  await checkPortAvailable(3000, '::')
+}
+
+async function findAvailablePort(startPort, attempts = 20) {
+  for (let port = startPort; port < startPort + attempts; port += 1) {
+    try {
+      await checkPortAvailable(port, '127.0.0.1')
+      await checkPortAvailable(port, '::')
+      return port
+    } catch {}
   }
+
+  throw new Error(`no available backend port found from ${startPort} to ${startPort + attempts - 1}`)
 }
 
 async function waitForBackend(url, timeoutMs = 30_000) {
@@ -134,21 +145,26 @@ function startFrontend() {
   }
 
   frontendStarted = true
-  console.log('[dev] backend is ready, starting frontend')
-  frontendChild = startProcess('frontend', ['run', 'dev:frontend'], rootDir)
+  console.log(`[dev] backend is ready on ${backendPort}, starting frontend`)
+  frontendChild = startProcess('frontend', ['run', 'dev:frontend'], rootDir, {
+    NEXT_PUBLIC_API_BASE_URL: `http://127.0.0.1:${backendPort}`
+  })
 }
 
 async function main() {
   await checkDevPortsAvailable()
+  backendPort = await findAvailablePort(Number(process.env.PORT || 3001))
 
-  console.log('[dev] starting backend')
-  backendChild = startProcess('backend', ['run', 'dev'], backendDir)
+  console.log(`[dev] starting backend on ${backendPort}`)
+  backendChild = startProcess('backend', ['run', 'dev'], backendDir, {
+    PORT: String(backendPort)
+  })
 
   for (const signal of shutdownSignals) {
     process.on(signal, () => shutdown(0))
   }
 
-  await waitForBackend('http://127.0.0.1:3001/api/health')
+  await waitForBackend(`http://127.0.0.1:${backendPort}/api/health`)
   startFrontend()
 }
 

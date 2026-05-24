@@ -31,7 +31,30 @@ async function readJson(res) {
 function apiUrl(path) {
   // Keep image calls on the same origin as the app so they use the Next.js
   // /api rewrite, cookies, and CSRF token exactly like the rest of the frontend.
+  //
+  // In local dev, Next's rewrite proxy can reset large image JSON responses.
+  // When the dev script exposes the backend URL, call that backend port directly
+  // but preserve the browser hostname so host-only cookies still apply.
+  const direct = localDevApiUrl(path)
+  if (direct) return direct
   return path
+}
+
+function localDevApiUrl(path) {
+  if (typeof window === 'undefined') return ''
+  const rawBase = process.env.NEXT_PUBLIC_API_BASE_URL
+  if (!rawBase) return ''
+  let base
+  try {
+    base = new URL(rawBase)
+  } catch {
+    return ''
+  }
+  const pageHost = window.location.hostname
+  const localHosts = new Set(['localhost', '127.0.0.1', '::1'])
+  if (!localHosts.has(pageHost) || !localHosts.has(base.hostname)) return ''
+  const cleanPath = path.startsWith('/api/') ? path : `/api${path.startsWith('/') ? path : `/${path}`}`
+  return `${base.protocol}//${pageHost}:${base.port}${cleanPath}`
 }
 
 async function fetchImageApi(path, init) {

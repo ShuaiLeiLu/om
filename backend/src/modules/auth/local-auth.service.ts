@@ -29,6 +29,7 @@ import { EmailVerificationService } from './email-verification.service'
 const PASSWORD_MIN = 8
 const PASSWORD_MAX = 128
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const PHONE_RE = /^1\d{10}$/
 
 @Injectable()
 export class LocalAuthService {
@@ -110,9 +111,9 @@ export class LocalAuthService {
     const admin = await this.admin.tryLoginWithIdentifier(login, args.password, args.res, meta)
     if (admin) return { ...admin, type: 'admin' as const }
 
-    const email = this.normalizeEmail(login)
+    const identifier = this.normalizeLoginIdentifier(login)
 
-    const user = await this.prisma.user.findUnique({ where: { email } })
+    const user = await this.prisma.user.findUnique({ where: { email: identifier } })
     // Time-constant-ish: hash a dummy when missing to avoid login enumeration timing.
     if (!user || !user.passwordHash) {
       try {
@@ -167,6 +168,12 @@ export class LocalAuthService {
       throw new BadRequestException('invalid_email')
     }
     return v
+  }
+
+  private normalizeLoginIdentifier(raw: string): string {
+    const v = String(raw || '').trim().toLowerCase()
+    if (PHONE_RE.test(v)) return v
+    return this.normalizeEmail(v)
   }
 
   private validatePassword(pw: string) {
