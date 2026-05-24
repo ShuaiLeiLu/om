@@ -64,7 +64,7 @@ export function decorateProvider(provider) {
     name: meta.name || provider.displayName || id,
     logo: meta.logo,
     initial: meta.initial || String(provider.displayName || id).slice(0, 1).toUpperCase(),
-    color: meta.color || '#6366f1',
+    color: meta.color || '#1F6B66',
     description: meta.description || '可用模型',
     models: Array.isArray(provider.models) ? provider.models : []
   }

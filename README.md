@@ -161,6 +161,32 @@ npm run prisma:migrate --prefix backend
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+也提供自动发布脚本（前后端双容器）：
+
+```bash
+# 1) 在服务器上执行（仓库已在服务器）
+chmod +x scripts/deploy-prod.sh
+./scripts/deploy-prod.sh
+
+# 2) 在本地一键发到远端服务器并发布
+chmod +x scripts/deploy-remote.sh
+./scripts/deploy-remote.sh --password '<your_ssh_password>'
+```
+
+常用可选参数：
+
+```bash
+# 跳过数据库迁移
+./scripts/deploy-prod.sh --skip-migrate
+
+# 本地发版时指定远端目录和主机
+./scripts/deploy-remote.sh \
+  --host 43.155.204.215 \
+  --user root \
+  --remote-dir /opt/chatty \
+  --password '<your_ssh_password>'
+```
+
 默认服务：
 
 - `chatty-backend`：后端服务，容器端口 `3001`
@@ -223,4 +249,3 @@ Default local URLs:
 
 - Web: `http://localhost:3000`
 - API: `http://localhost:3001/api`
-

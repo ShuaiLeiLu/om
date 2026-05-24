@@ -64,10 +64,24 @@ enum TokenGrantStatus {
 enum QuotaLedgerType {
   redeem_code
   ad_reward
+  recharge
   manual_adjustment
   model_usage
   grant_expired
   refund
+}
+
+enum RechargeOrderStatus {
+  pending
+  paid
+  cancelled
+  expired
+}
+
+enum RechargePaymentMethod {
+  wechat
+  alipay
+  apple
 }
 
 enum ConversationStatus {
@@ -182,6 +196,7 @@ model User {
   usageEvents    UsageEvent[]
   rewardSessions AdRewardSession[]
   rewardEvents   AdRewardEvent[]
+  rechargeOrders RechargeOrder[]
   ownedImages    Image[]
   imageTasks     ImageTask[]
   storageUsage   StorageUsage?
@@ -317,6 +332,26 @@ model RedeemCode {
 
   @@index([planId])
   @@index([status])
+}
+
+model RechargeOrder {
+  id            String                @id @default(uuid())
+  orderNo       String                @unique
+  userId        String
+  tokens        BigInt
+  amountCents   Int
+  currency      String                @default("CNY")
+  paymentMethod RechargePaymentMethod
+  status        RechargeOrderStatus   @default(pending)
+  paidAt        DateTime?
+  expiresAt     DateTime
+  remark        String                @default("")
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }
 
 model TokenGrant {

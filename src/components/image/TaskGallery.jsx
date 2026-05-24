@@ -43,18 +43,18 @@ export function TaskGallery({ onSelect }) {
         <div className="relative flex-1 min-w-0">
           <Search
             size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-500 pointer-events-none"
           />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索提示词..."
-            className="input-glass pl-9"
+            className="h-10 w-full rounded-xl border border-ink-700/10 bg-rice-50 pl-9 pr-3 text-sm text-ink-900 outline-none transition focus:border-celadon-500/45"
           />
         </div>
 
-        <div className="inline-flex items-center gap-0.5 self-start rounded-lg border border-white/8 bg-white/[0.04] p-0.5 sm:gap-1 sm:rounded-xl sm:p-1">
+        <div className="inline-flex items-center gap-0.5 self-start rounded-lg border border-ink-700/10 bg-rice-200/70 p-0.5 sm:gap-1 sm:rounded-xl sm:p-1">
           {FILTERS.map((f) => {
             const active = filter === f.value
             return (
@@ -64,8 +64,8 @@ export function TaskGallery({ onSelect }) {
                 className={cn(
                   'rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-all sm:rounded-lg sm:px-3',
                   active
-                    ? 'bg-gradient-to-br from-indigo-500/60 to-purple-500/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] border border-white/15'
-                    : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                    ? 'bg-rice-50 text-celadon-700 shadow-[var(--shadow-paper)] border border-ink-700/5'
+                    : 'text-ink-500 hover:text-ink-900 border border-transparent'
                 )}
               >
                 {f.label}
@@ -77,13 +77,13 @@ export function TaskGallery({ onSelect }) {
 
       {filtered.length === 0 ? (
         <div className="card-glass flex flex-col items-center justify-center px-6 py-16 text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5">
-            <Filter className="text-slate-500" size={20} />
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-rice-200">
+            <Filter className="text-ink-500" size={20} />
           </div>
-          <p className="text-sm font-medium text-slate-300">
+          <p className="text-sm font-medium text-ink-900">
             {taskIndex.length === 0 ? '还没有生成任务' : '没有匹配的任务'}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-ink-500">
             {taskIndex.length === 0
               ? '在上方输入提示词，点击生成开始你的第一张图'
               : '尝试调整搜索词或筛选条件'}

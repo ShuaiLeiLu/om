@@ -33,12 +33,12 @@ export function Dialog({ open, onClose, size = 'lg', children }) {
       <button
         type="button"
         aria-label="关闭弹窗"
-        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+        className="absolute inset-0 bg-ink-900/35 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative z-10 flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 shadow-[0_32px_80px_rgba(0,0,0,0.45)]',
+          'relative z-10 flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-[28px] border border-ink-700/10 bg-rice-50 shadow-[var(--shadow-paper-lg)]',
           sizeClasses[size] || sizeClasses.lg
         )}
       >
@@ -50,18 +50,18 @@ export function Dialog({ open, onClose, size = 'lg', children }) {
 
 export function DialogHeader({ title, description, onClose, children, className }) {
   return (
-    <div className={cn('border-b border-white/8 px-5 py-4 sm:px-6', className)}>
+    <div className={cn('border-b border-ink-700/10 px-5 py-4 sm:px-6', className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          {title && <h2 className="text-base font-semibold text-white">{title}</h2>}
-          {description && <p className="mt-1 text-sm text-slate-400">{description}</p>}
+          {title && <h2 className="font-serif text-base font-semibold text-ink-900">{title}</h2>}
+          {description && <p className="mt-1 text-sm text-ink-500">{description}</p>}
           {children}
         </div>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-500 transition hover:bg-ink-700/5 hover:text-ink-900"
             aria-label="关闭"
           >
             <X size={16} />
@@ -80,7 +80,7 @@ export function DialogFooter({ className, children }) {
   return (
     <div
       className={cn(
-        'flex items-center justify-end gap-2 border-t border-white/8 px-5 py-4 sm:px-6',
+        'flex items-center justify-end gap-2 border-t border-ink-700/10 px-5 py-4 sm:px-6',
         className
       )}
     >

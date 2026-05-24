@@ -24,25 +24,25 @@ export function ParamsDrawer({ open, onClose }) {
   return (
     <div className="fixed inset-0 z-[80] flex items-end animate-fade-in md:hidden">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-ink-900/35 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative w-full max-h-[85dvh] overflow-y-auto rounded-t-3xl border-t border-l border-r border-white/10',
-          'bg-slate-950/95 backdrop-blur-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.5)]',
+          'relative w-full max-h-[85dvh] overflow-y-auto rounded-t-[28px] border-t border-l border-r border-ink-700/10',
+          'bg-rice-50 shadow-[0_-18px_40px_-28px_rgba(20,18,12,.45)]',
           'pb-safe animate-in scrollbar-thin'
         )}
         style={{ animation: 'slide-up 0.25s ease-out forwards' }}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-slate-950/95 px-4 py-3 backdrop-blur-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-700/10 bg-rice-50/95 px-4 py-3 backdrop-blur-xl">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal size={14} className="text-fuchsia-300" />
-            <h3 className="text-sm font-semibold text-white">生成参数</h3>
+            <SlidersHorizontal size={14} className="text-celadon-600" />
+            <h3 className="font-serif text-sm font-semibold text-ink-900">生成参数</h3>
           </div>
           <button
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white tap-transparent"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-500 transition hover:bg-ink-700/5 hover:text-ink-900 tap-transparent"
             aria-label="关闭"
           >
             <X size={16} />
@@ -56,7 +56,7 @@ export function ParamsDrawer({ open, onClose }) {
         <div className="px-4 pb-3">
           <button
             onClick={onClose}
-            className="flex h-11 w-full items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(99,102,241,0.35)] active:scale-[0.98] tap-transparent"
+            className="flex h-11 w-full items-center justify-center rounded-2xl bg-gradient-to-br from-celadon-600 to-celadon-500 text-sm font-semibold text-rice-50 shadow-[var(--shadow-ink)] active:scale-[0.98] tap-transparent"
           >
             完成
           </button>

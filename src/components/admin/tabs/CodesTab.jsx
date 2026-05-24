@@ -124,7 +124,7 @@ export default function CodesTab({ data, saving, setError, refresh }) {
       </Card>
 
       {generated.length > 0 && (
-        <Card className="border-fuchsia-400/30 bg-fuchsia-500/5">
+        <Card className="border-gold-500/30 bg-gold-500/10">
           <CardContent className="pt-6">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -145,7 +145,7 @@ export default function CodesTab({ data, saving, setError, refresh }) {
               readOnly
               value={generated.join('\n')}
               rows={6}
-              className="font-mono text-fuchsia-200"
+              className="font-mono text-celadon-700"
             />
           </CardContent>
         </Card>

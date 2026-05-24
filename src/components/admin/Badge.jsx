@@ -3,13 +3,13 @@
 import { cn } from '@/lib/utils'
 
 const TONES = {
-  emerald: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
-  rose: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
-  amber: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
-  indigo: 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200',
-  fuchsia: 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200',
-  sky: 'border-sky-400/30 bg-sky-500/10 text-sky-200',
-  slate: 'border-white/10 bg-white/5 text-slate-300'
+  emerald: 'border-celadon-600/30 bg-celadon-50 text-celadon-700',
+  rose: 'border-verm-500/30 bg-verm-500/10 text-verm-600',
+  amber: 'border-gold-500/30 bg-gold-500/10 text-gold-600',
+  indigo: 'border-celadon-600/30 bg-celadon-50 text-celadon-700',
+  fuchsia: 'border-verm-500/30 bg-verm-500/10 text-verm-600',
+  sky: 'border-celadon-600/30 bg-celadon-50 text-celadon-700',
+  slate: 'border-ink-700/10 bg-rice-100 text-ink-600'
 }
 
 export function Badge({ tone = 'slate', children, className }) {

@@ -9,10 +9,10 @@ export function Pagination({ page, pageSize, count, onChange, hasMore }) {
   const canNext = hasMore != null ? hasMore : (count || 0) >= (pageSize || 20)
 
   return (
-    <div className="flex items-center justify-between gap-3 pt-3 text-xs text-slate-400">
+    <div className="flex items-center justify-between gap-3 pt-3 text-xs text-ink-500">
       <span>
-        第 <span className="font-mono text-slate-200">{page}</span> 页 · 当前显示{' '}
-        <span className="font-mono text-slate-200">{count}</span> 条
+        第 <span className="font-mono text-ink-800">{page}</span> 页 · 当前显示{' '}
+        <span className="font-mono text-ink-800">{count}</span> 条
       </span>
       <div className="flex items-center gap-1.5">
         <PageBtn disabled={!canPrev} onClick={() => onChange(page - 1)}>
@@ -32,8 +32,8 @@ function PageBtn({ disabled, onClick, children }) {
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex min-h-[36px] items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-300 transition-all tap-transparent',
-        !disabled && 'hover:bg-white/[0.08] hover:text-white',
+        'inline-flex min-h-[36px] items-center gap-1 rounded-xl border border-ink-700/10 bg-rice-50 px-3 text-xs text-ink-600 shadow-[var(--shadow-paper)] transition-all tap-transparent',
+        !disabled && 'hover:bg-rice-100 hover:text-ink-900',
         disabled && 'opacity-40 cursor-not-allowed'
       )}
     >

@@ -152,31 +152,31 @@ export function TaskDetailDialog({ taskId, onClose }) {
 
       <DialogBody className="max-h-[70vh] overflow-y-auto scrollbar-thin">
         {!task ? (
-          <div className="flex h-40 items-center justify-center text-slate-400">
+          <div className="flex h-40 items-center justify-center text-ink-500">
             <Loader2 className="animate-spin" />
           </div>
         ) : (
           <div className="space-y-5">
             {task.error && (
-              <div className="flex items-start gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 text-xs text-rose-200">
+              <div className="flex items-start gap-2 rounded-xl border border-verm-500/30 bg-verm-500/10 p-3 text-xs text-verm-600">
                 <AlertCircle size={14} className="mt-0.5 shrink-0" />
                 <span className="flex-1">{task.error}</span>
               </div>
             )}
 
             <div>
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">提示词</p>
-              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-3 text-sm text-slate-200 leading-relaxed">
+              <p className="mb-2 text-[10px] text-ink-500 label-zh">提 示 词</p>
+              <div className="rounded-xl border border-ink-700/10 bg-rice-100 p-3 text-sm text-ink-700 leading-relaxed">
                 {task.prompt}
               </div>
             </div>
 
             {outputUrls.length > 0 && (
               <div>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <p className="mb-2 text-[10px] text-ink-500 label-zh">
                   生成结果 ({outputUrls.length})
                 </p>
-                <div className="rounded-xl border border-white/8 bg-black/30 overflow-hidden">
+                <div className="rounded-xl border border-ink-700/10 bg-rice-100 overflow-hidden">
                   <div className="relative aspect-square w-full max-h-[55vh] flex items-center justify-center">
                     <img
                       src={outputUrls[activeIdx]?.url}
@@ -185,15 +185,15 @@ export function TaskDetailDialog({ taskId, onClose }) {
                     />
                   </div>
                   {outputUrls.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto border-t border-white/5 bg-white/[0.02] p-2 scrollbar-thin">
+                    <div className="flex gap-2 overflow-x-auto border-t border-ink-700/10 bg-rice-50 p-2 scrollbar-thin">
                       {outputUrls.map((o, i) => (
                         <button
                           key={o.hash}
                           onClick={() => setActiveIdx(i)}
                           className={
                             i === activeIdx
-                              ? 'h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 border-indigo-400'
-                              : 'h-14 w-14 shrink-0 overflow-hidden rounded-md border border-white/10 opacity-60 hover:opacity-100'
+                              ? 'h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 border-celadon-600'
+                              : 'h-14 w-14 shrink-0 overflow-hidden rounded-md border border-ink-700/10 opacity-60 hover:opacity-100'
                           }
                         >
                           <img src={o.url} alt="" className="h-full w-full object-cover" />
@@ -207,14 +207,14 @@ export function TaskDetailDialog({ taskId, onClose }) {
 
             {refUrls.length > 0 && (
               <div>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <p className="mb-2 text-[10px] text-ink-500 label-zh">
                   参考图 ({refUrls.length})
                 </p>
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
                   {refUrls.map((r) => (
                     <div
                       key={r.hash}
-                      className="aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5"
+                      className="aspect-square overflow-hidden rounded-lg border border-ink-700/10 bg-rice-100"
                     >
                       <img src={r.url} alt="" className="h-full w-full object-cover" />
                     </div>

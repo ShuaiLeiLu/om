@@ -4,17 +4,17 @@ import { cn } from '@/lib/utils'
 
 const variantClasses = {
   default:
-    'border border-white/10 bg-white/10 text-slate-100 hover:bg-white/15 active:bg-white/20',
+    'border border-ink-700/10 bg-rice-50 text-ink-700 shadow-[var(--shadow-paper)] hover:bg-rice-100 active:bg-rice-200',
   gradient:
-    'border border-white/15 bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:brightness-110 active:brightness-95',
+    'border border-celadon-700/10 bg-gradient-to-br from-celadon-600 to-celadon-500 text-rice-50 shadow-[var(--shadow-ink)] hover:brightness-105 active:brightness-95',
   glass:
-    'border border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09] active:bg-white/[0.12]',
+    'border border-ink-700/10 bg-rice-50/80 text-ink-700 backdrop-blur-xl hover:bg-rice-50 active:bg-rice-100',
   ghost:
-    'border border-transparent bg-transparent text-slate-400 hover:bg-white/5 hover:text-slate-100 active:bg-white/10',
+    'border border-transparent bg-transparent text-ink-500 hover:bg-ink-700/5 hover:text-ink-900 active:bg-ink-700/10',
   outline:
-    'border border-white/12 bg-transparent text-slate-200 hover:bg-white/[0.06] active:bg-white/[0.1]',
+    'border border-ink-700/15 bg-transparent text-ink-700 hover:bg-rice-50 active:bg-rice-100',
   danger:
-    'border border-rose-400/30 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25 active:bg-rose-500/30'
+    'border border-verm-500/25 bg-verm-500/10 text-verm-600 hover:bg-verm-500/15 active:bg-verm-500/20'
 }
 
 const sizeClasses = {
@@ -26,7 +26,7 @@ const sizeClasses = {
 
 export function buttonVariants({ variant = 'default', size = 'md', className } = {}) {
   return cn(
-    'inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-all tap-transparent disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60',
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-all tap-transparent disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-celadon-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-rice-100',
     variantClasses[variant] || variantClasses.default,
     sizeClasses[size] || sizeClasses.md,
     className

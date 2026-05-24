@@ -9,7 +9,7 @@ import { getImageDimensions } from '@/lib/image/api'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
-const MAX_REFS = 16
+const MAX_REFS = 4
 
 export function ReferenceUploader() {
   const refs = useImageStore((s) => s.refs)
@@ -29,7 +29,7 @@ export function ReferenceUploader() {
         for (const file of files) {
           if (!file.type.startsWith('image/')) continue
           if (refs.length >= MAX_REFS) {
-            toast({ variant: 'error', title: '参考图已达上限', description: '最多 16 张参考图' })
+            toast({ variant: 'error', title: '参考图已达上限', description: `最多 ${MAX_REFS} 张参考图` })
             break
           }
           const blob = file
@@ -104,11 +104,11 @@ export function ReferenceUploader() {
       onDrop={onDrop}
       className={cn(
         'rounded-xl border border-dashed transition-all',
-        isDragging ? 'border-indigo-400/60 bg-indigo-500/10' : 'border-white/10 bg-white/[0.02]'
+        isDragging ? 'border-celadon-600/60 bg-celadon-50' : 'border-ink-700/10 bg-rice-50'
       )}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-ink-700/10">
+        <div className="flex items-center gap-2 text-xs text-ink-500">
           <ImagePlus size={14} />
           <span>参考图</span>
           <span className="chip">
@@ -119,14 +119,14 @@ export function ReferenceUploader() {
           {refs.length > 0 && (
             <button
               onClick={clearRefs}
-              className="rounded-md px-2 py-1 text-[10px] text-slate-400 hover:bg-white/5 hover:text-white"
+              className="rounded-md px-2 py-1 text-[10px] text-ink-500 hover:bg-ink-700/5 hover:text-ink-900"
             >
               全部清除
             </button>
           )}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-[11px] text-slate-200 hover:bg-white/10"
+            className="flex items-center gap-1 rounded-md bg-celadon-50 px-2 py-1 text-[11px] text-celadon-700 hover:bg-celadon-100"
           >
             <Upload size={11} /> 上传
           </button>
@@ -147,11 +147,11 @@ export function ReferenceUploader() {
       <div className="p-3">
         {refs.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-1.5 py-4 text-center sm:gap-2 sm:py-6">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-400 sm:h-10 sm:w-10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rice-200 text-ink-500 sm:h-10 sm:w-10">
               <ImagePlus size={16} />
             </div>
-            <p className="text-xs text-slate-400">拖拽 / 粘贴 / 点击上传图片</p>
-            <p className="text-[10px] text-slate-600">最多 16 张，作为编辑参考</p>
+            <p className="text-xs text-ink-500">拖拽 / 粘贴 / 点击上传图片</p>
+            <p className="text-[10px] text-ink-400">最多 {MAX_REFS} 张，作为编辑参考</p>
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-4 xl:grid-cols-6">
@@ -162,7 +162,7 @@ export function ReferenceUploader() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={processing}
-                className="aspect-square rounded-lg border border-dashed border-white/15 bg-white/[0.02] text-slate-400 transition hover:border-white/30 hover:bg-white/[0.05] hover:text-white flex items-center justify-center"
+                className="aspect-square rounded-lg border border-dashed border-ink-700/15 bg-rice-50 text-ink-500 transition hover:border-celadon-300 hover:bg-celadon-50 hover:text-celadon-700 flex items-center justify-center"
               >
                 <Plus size={18} />
               </button>
@@ -176,15 +176,15 @@ export function ReferenceUploader() {
 
 function RefThumb({ item, onRemove }) {
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5">
+    <div className="group relative aspect-square overflow-hidden rounded-lg border border-ink-700/10 bg-rice-100">
       <img src={item.previewUrl} alt="" className="h-full w-full object-cover" />
       <button
         onClick={onRemove}
-        className="absolute right-1 top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity group-hover:flex group-hover:opacity-100"
+        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-verm-500 text-rice-50 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
       >
         <X size={10} />
       </button>
-      <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/80 to-transparent px-1 py-0.5 text-[9px] text-white/90 group-hover:block">
+      <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-ink-900/80 to-transparent px-1 py-0.5 text-[9px] text-rice-50/90 group-hover:block">
         {item.width && item.height ? `${item.width}×${item.height}` : '?'}
       </div>
     </div>

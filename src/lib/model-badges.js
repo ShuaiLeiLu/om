@@ -5,22 +5,22 @@ const RULES = [
   {
     label: '视觉',
     re: /vision|多模态|vl|image|视觉/i,
-    className: 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200'
+    className: 'border-celadon-600/30 bg-celadon-50 text-celadon-700'
   },
   {
     label: '快速',
     re: /turbo|fast|flash|快|mini|nano|haiku|tiny/i,
-    className: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
+    className: 'border-celadon-600/30 bg-celadon-50 text-celadon-700'
   },
   {
     label: '推理',
     re: /o1\b|opus|max\b|pro\b|ultra|sonnet|reason|thinking|推理/i,
-    className: 'border-amber-400/30 bg-amber-500/10 text-amber-200'
+    className: 'border-gold-500/30 bg-gold-500/10 text-gold-600'
   },
   {
     label: '免费',
     re: /free|免费/i,
-    className: 'border-sky-400/30 bg-sky-500/10 text-sky-200'
+    className: 'border-ink-700/10 bg-rice-100 text-ink-600'
   }
 ]
 

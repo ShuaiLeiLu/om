@@ -31,6 +31,11 @@ export function ParamsPanel() {
 
   return (
     <div className="space-y-4">
+      <div className="mb-1 flex items-center justify-between">
+        <h3 className="font-serif text-base font-semibold text-ink-900">参数 · 调和</h3>
+        <span className="chip-ink chip text-[10px]">已调整</span>
+      </div>
+
       <div>
         <Label>尺寸</Label>
         <SizeSelector
@@ -72,7 +77,10 @@ export function ParamsPanel() {
       </div>
 
       <div>
-        <Label>审核强度</Label>
+        <div className="mb-1.5 flex items-center justify-between">
+          <Label className="mb-0">内容审核</Label>
+          <span className="chip text-[10px] py-0 px-1.5">已开启</span>
+        </div>
         <SegGroup
           options={MODERATION_OPTIONS}
           value={params.moderation}
@@ -92,19 +100,23 @@ export function ParamsPanel() {
             onChange={(e) => setParam('n', normalizeImageCount(Number(e.target.value), params.size))}
             className="flex-1"
           />
-          <div className="flex h-8 w-10 shrink-0 items-center justify-center rounded-lg border border-white/8 bg-white/5 text-xs font-mono font-semibold text-slate-200">
+          <div className="flex h-8 w-10 shrink-0 items-center justify-center rounded-lg border border-ink-700/10 bg-rice-50 text-xs font-mono font-semibold text-ink-700">
             {normalizeImageCount(params.n, params.size)}
           </div>
         </div>
-        {countHint && <p className="mt-1.5 text-[10px] text-amber-200/80">{countHint}</p>}
+        {countHint && <p className="mt-1.5 text-[10px] text-gold-600">{countHint}</p>}
+      </div>
+
+      <div className="rounded-2xl border border-ink-700/10 bg-rice-100 px-3 py-2.5 text-[10px] leading-relaxed text-ink-500">
+        系统会自动过滤违反《生成式人工智能服务管理暂行办法》的内容，生成前请确认提示词不含违法违规内容。
       </div>
     </div>
   )
 }
 
-function Label({ children }) {
+function Label({ children, className }) {
   return (
-    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+    <p className={cn('mb-1.5 text-[10px] text-ink-500 label-zh', className)}>
       {children}
     </p>
   )
@@ -112,7 +124,7 @@ function Label({ children }) {
 
 function SegGroup({ options, value, onChange }) {
   return (
-    <div className="grid grid-flow-col gap-1 rounded-xl border border-white/5 bg-slate-950/45 p-1 shadow-[inset_0_1px_1px_rgba(0,0,0,0.2)]">
+    <div className="grid grid-flow-col gap-1 rounded-xl border border-ink-700/10 bg-rice-200/70 p-1">
       {options.map((opt) => {
         const active = value === opt.value
         return (
@@ -123,8 +135,8 @@ function SegGroup({ options, value, onChange }) {
             className={cn(
               'rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all duration-300 active:scale-[0.96]',
               active
-                ? 'bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500 text-white shadow-[0_2px_10px_rgba(139,92,246,0.25)] border border-indigo-400/20'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                ? 'bg-rice-50 text-celadon-700 shadow-[var(--shadow-paper)] border border-ink-700/5'
+                : 'text-ink-500 hover:text-ink-900 border border-transparent'
             )}
             title={opt.description}
           >

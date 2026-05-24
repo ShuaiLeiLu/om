@@ -17,28 +17,20 @@ export function ProviderGrid({ providers, onSelect, loading }) {
             onClick={() => onSelect(p)}
             disabled={disabled}
             className={cn(
-              'group relative flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-slate-900/35 p-3.5 text-left transition-all duration-300 backdrop-blur-xl tap-transparent active:scale-[0.98]',
-              'hover:-translate-y-1 hover:border-white/10 hover:bg-slate-950/60 hover:shadow-[0_8px_30px_var(--hover-glow)]',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40',
+              'card group relative flex flex-col overflow-hidden p-3.5 text-left transition-all duration-300 tap-transparent active:scale-[0.98]',
+              'hover:-translate-y-1 hover:border-celadon-200 hover:shadow-[var(--shadow-paper-lg)]',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-celadon-500/50',
               'sm:p-5',
               disabled && 'opacity-50 hover:translate-y-0 cursor-not-allowed'
             )}
-            style={{
-              '--hover-glow': p.color ? `${p.color}25` : 'rgba(99,102,241,0.15)'
-            }}
           >
-            <div
-              className="absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-15 blur-3xl transition-all duration-300 group-hover:opacity-40 group-hover:scale-110"
-              style={{ background: p.color }}
-            />
-
             <div className="relative flex items-center justify-between gap-2">
               <div
                 className={cn(
-                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 shadow-inner sm:h-11 sm:w-11',
+                  'logo-dot shrink-0 border border-ink-700/10 sm:h-11 sm:w-11',
                   isDeepseek ? 'bg-white' : ''
                 )}
-                style={!isDeepseek ? { backgroundColor: `${p.color}1F` } : undefined}
+                style={!isDeepseek ? { background: p.color } : undefined}
               >
                 {p.logo ? (
                   <img
@@ -47,39 +39,36 @@ export function ProviderGrid({ providers, onSelect, loading }) {
                     className="h-5 w-5 object-contain sm:h-6 sm:w-6"
                   />
                 ) : (
-                  <span
-                    className="text-base font-bold sm:text-lg"
-                    style={{ color: p.color }}
-                  >
+                  <span className="text-[11px] font-bold text-rice-50 sm:text-xs">
                     {p.initial}
                   </span>
                 )}
               </div>
               {count > 0 ? (
-                <span className="shrink-0 rounded-full border border-white/8 bg-white/5 px-2 py-0.5 text-[10px] font-mono text-slate-300">
+                <span className="shrink-0 rounded-full border border-celadon-600/15 bg-celadon-50 px-2 py-0.5 text-[10px] font-mono text-celadon-700">
                   默认
                 </span>
               ) : (
-                <span className="shrink-0 rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-0.5 text-[9px] text-amber-300">
+                <span className="shrink-0 rounded-full border border-gold-500/25 bg-gold-500/10 px-2 py-0.5 text-[9px] text-gold-600">
                   无
                 </span>
               )}
             </div>
 
-            <h3 className="relative mt-3 text-sm font-semibold text-white sm:mt-4 sm:text-base">
+            <h3 className="relative mt-3 text-sm font-semibold text-ink-900 sm:mt-4 sm:text-base">
               {p.name}
             </h3>
-            <p className="relative mt-1 line-clamp-2 text-[11px] text-slate-400 leading-relaxed sm:text-xs">
+            <p className="relative mt-1 line-clamp-2 text-[11px] text-ink-500 leading-relaxed sm:text-xs">
               {model?.name || p.description}
             </p>
 
             <div className="relative mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
-              <span className="text-slate-500">
+              <span className="text-ink-500">
                 {count > 0 ? '点击开始对话' : '暂未配置'}
               </span>
               <ArrowRight
                 size={13}
-                className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-300"
+                className="text-ink-400 transition-transform group-hover:translate-x-0.5 group-hover:text-celadon-700"
               />
             </div>
           </button>

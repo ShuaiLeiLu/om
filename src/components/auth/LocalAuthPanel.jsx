@@ -155,7 +155,7 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/i
       )}
 
       {error && (
-        <div className="flex items-start gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+        <div className="flex items-start gap-2 rounded-xl border border-verm-500/30 bg-verm-500/10 px-3 py-2 text-xs text-verm-600">
           <AlertCircle size={13} className="mt-0.5 shrink-0" />
           <span className="flex-1 break-words">{error}</span>
         </div>
@@ -166,8 +166,8 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/i
         disabled={!canSubmit || loading}
         className={cn(
           'group mt-1 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white transition-all tap-transparent',
-          'bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-pink-500',
-          'shadow-[0_10px_30px_rgba(168,85,247,0.35)] hover:brightness-110 active:scale-[0.98]',
+          'bg-gradient-to-br from-celadon-600 to-celadon-500',
+          'shadow-[var(--shadow-ink)] hover:brightness-105 active:scale-[0.98]',
           (!canSubmit || loading) && 'opacity-50 pointer-events-none'
         )}
       >
@@ -185,12 +185,12 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/i
         )}
       </button>
 
-      <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400">
+      <div className="flex items-center justify-between pt-1 text-[11px] text-ink-500">
         <span>{mode === 'login' ? '还没有账号？' : '已经有账号了？'}</span>
         <button
           type="button"
           onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          className="font-medium text-fuchsia-300 transition hover:text-fuchsia-200 tap-transparent"
+          className="font-medium text-celadon-700 transition hover:text-celadon-500 tap-transparent"
         >
           {mode === 'login' ? '立即注册' : '直接登录'}
         </button>
@@ -202,18 +202,18 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/i
 function Field({ icon: Icon, label, ...rest }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-slate-400">{label}</span>
+      <span className="mb-1 block text-[11px] font-medium text-ink-500">{label}</span>
       <div className="relative">
         {Icon && (
           <Icon
             size={14}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
           />
         )}
         <input
           {...rest}
           className={cn(
-            'w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[15px] text-white placeholder-slate-500 outline-none transition focus:border-indigo-400/50 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]',
+            'w-full min-h-[44px] rounded-xl border border-ink-700/10 bg-rice-50 px-3.5 py-2.5 text-[16px] sm:text-[15px] text-ink-900 placeholder-ink-400 outline-none transition focus:border-celadon-500/45 focus:bg-white',
             Icon && 'pl-10'
           )}
         />
@@ -225,11 +225,11 @@ function Field({ icon: Icon, label, ...rest }) {
 function PasswordField({ value, onChange, show, onToggle, autoComplete }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-slate-400">密码</span>
+      <span className="mb-1 block text-[11px] font-medium text-ink-500">密码</span>
       <div className="relative">
         <Lock
           size={14}
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
         />
         <input
           type={show ? 'text' : 'password'}
@@ -237,12 +237,12 @@ function PasswordField({ value, onChange, show, onToggle, autoComplete }) {
           onChange={onChange}
           placeholder="至少 8 位，含字母与数字"
           autoComplete={autoComplete}
-          className="w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-11 py-2.5 text-[15px] text-white placeholder-slate-500 outline-none transition focus:border-indigo-400/50 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]"
+          className="w-full min-h-[44px] rounded-xl border border-ink-700/10 bg-rice-50 pl-10 pr-11 py-2.5 text-[16px] sm:text-[15px] text-ink-900 placeholder-ink-400 outline-none transition focus:border-celadon-500/45 focus:bg-white"
         />
         <button
           type="button"
           onClick={onToggle}
-          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-slate-200 tap-transparent"
+          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-500 transition hover:bg-ink-700/5 hover:text-ink-900 tap-transparent"
           aria-label={show ? '隐藏密码' : '显示密码'}
           tabIndex={-1}
         >
@@ -266,12 +266,12 @@ function PasswordHints({ hints }) {
           key={it.label}
           className={cn(
             'inline-flex items-center gap-1',
-            it.ok ? 'text-emerald-300' : 'text-slate-500'
+            it.ok ? 'text-celadon-700' : 'text-ink-400'
           )}
         >
           <CheckCircle2
             size={10}
-            className={it.ok ? 'text-emerald-400' : 'text-slate-600'}
+            className={it.ok ? 'text-celadon-600' : 'text-ink-400'}
           />
           {it.label}
         </span>

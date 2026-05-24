@@ -63,23 +63,23 @@ toast.dismiss = dismissToast
 const tone = {
   success: {
     icon: CheckCircle2,
-    className: 'border-emerald-400/30 bg-emerald-500/12 text-emerald-50',
-    iconClassName: 'text-emerald-300'
+    className: 'border-celadon-600/25 bg-rice-50 text-ink-900',
+    iconClassName: 'text-celadon-700'
   },
   error: {
     icon: XCircle,
-    className: 'border-rose-400/30 bg-rose-500/12 text-rose-50',
-    iconClassName: 'text-rose-300'
+    className: 'border-verm-500/30 bg-rice-50 text-ink-900',
+    iconClassName: 'text-verm-600'
   },
   info: {
     icon: Info,
-    className: 'border-sky-400/30 bg-sky-500/12 text-sky-50',
-    iconClassName: 'text-sky-300'
+    className: 'border-celadon-600/20 bg-rice-50 text-ink-900',
+    iconClassName: 'text-celadon-700'
   },
   default: {
     icon: Info,
-    className: 'border-white/10 bg-slate-950/92 text-slate-50',
-    iconClassName: 'text-slate-300'
+    className: 'border-ink-700/10 bg-rice-50 text-ink-900',
+    iconClassName: 'text-ink-500'
   }
 }
 
@@ -120,7 +120,7 @@ export function Toaster({ position = 'top-center', className }) {
           <div
             key={item.id}
             className={cn(
-              'pointer-events-auto flex w-full items-start gap-3 rounded-xl border px-3 py-3 shadow-2xl shadow-black/30 backdrop-blur-2xl',
+              'pointer-events-auto flex w-full items-start gap-3 rounded-xl border px-3 py-3 shadow-[var(--shadow-paper-lg)] backdrop-blur-xl',
               config.className
             )}
           >
@@ -128,13 +128,13 @@ export function Toaster({ position = 'top-center', className }) {
             <div className="min-w-0 flex-1">
               {item.title && <p className="text-sm font-medium leading-5">{item.title}</p>}
               {item.description && (
-                <p className="mt-0.5 text-xs leading-5 text-slate-300">{item.description}</p>
+                <p className="mt-0.5 text-xs leading-5 text-ink-500">{item.description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={() => dismissToast(item.id)}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-white/10 hover:text-white"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-ink-400 transition hover:bg-ink-700/5 hover:text-ink-900"
               aria-label="关闭通知"
             >
               <X size={14} />

@@ -33,14 +33,14 @@ export function ChatHeader({
   }, [])
 
   return (
-    <div className="hidden h-14 shrink-0 items-center justify-between gap-3 border-b border-white/5 bg-slate-950/45 px-4 backdrop-blur-3xl pl-safe pr-safe md:flex md:px-6 relative z-20">
+    <div className="hidden h-14 shrink-0 items-center justify-between gap-3 border-b border-ink-700/10 bg-rice-50/88 px-4 backdrop-blur-xl pl-safe pr-safe md:flex md:px-6 relative z-20">
       <button
         onClick={onChangeModel}
-        className="group flex min-w-0 items-center gap-3 rounded-xl border border-white/5 bg-white/[0.015] px-2.5 py-1.5 transition-all duration-300 hover:border-white/12 hover:bg-white/5 hover:scale-[1.01] active:scale-[0.98] tap-transparent"
+        className="group flex min-w-0 items-center gap-3 rounded-xl border border-ink-700/10 bg-rice-50 px-2.5 py-1.5 shadow-[var(--shadow-paper)] transition-all duration-300 hover:border-celadon-200 hover:bg-rice-100 active:scale-[0.98] tap-transparent"
       >
         <div
           className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 transition-transform duration-300 group-hover:scale-105 shadow-inner',
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-ink-700/10 transition-transform duration-300 group-hover:scale-105 shadow-inner',
             isDeepseek ? 'bg-white' : ''
           )}
           style={!isDeepseek ? { backgroundColor: `${provider?.color}20` } : undefined}
@@ -55,12 +55,12 @@ export function ChatHeader({
         </div>
         <div className="flex min-w-0 flex-col items-start">
           <div className="flex items-center gap-1.5">
-            <span className="truncate max-w-[200px] text-sm font-semibold text-white lg:max-w-none">
+            <span className="truncate max-w-[200px] text-sm font-semibold text-ink-900 lg:max-w-none">
               {model?.name}
             </span>
             <ChevronDown
               size={12}
-              className="text-slate-500 transition-transform group-hover:translate-y-0.5"
+              className="text-ink-500 transition-transform group-hover:translate-y-0.5"
             />
           </div>
           <div className="flex items-center gap-1.5">
@@ -68,10 +68,10 @@ export function ChatHeader({
               size={6}
               className={cn(
                 'fill-current transition-all duration-300',
-                isStreaming ? 'text-amber-400 animate-pulse' : 'text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+                isStreaming ? 'text-gold-600 animate-pulse' : 'text-celadon-600'
               )}
             />
-            <span className="truncate text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+            <span className="truncate text-[10px] uppercase tracking-widest text-ink-500 font-medium">
               {isStreaming ? '响应中' : provider?.name}
             </span>
           </div>
@@ -80,12 +80,12 @@ export function ChatHeader({
 
       <div className="flex shrink-0 items-center gap-2">
         {tokenBalance != null && (
-          <div className="hidden lg:flex items-center gap-1.5 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]">
-            <Coins size={12} className="text-amber-300 animate-pulse" />
-            <span className="text-xs font-mono font-semibold text-slate-200">
+          <div className="hidden lg:flex items-center gap-1.5 rounded-xl border border-ink-700/10 bg-rice-50 px-3 py-1.5 shadow-[var(--shadow-paper)]">
+            <Coins size={12} className="text-gold-600" />
+            <span className="text-xs font-mono font-semibold text-ink-900">
               {tokenBalance.toLocaleString('en-US')}
             </span>
-            <span className="text-[10px] text-slate-500 font-medium">算力点</span>
+            <span className="text-[10px] text-ink-500 font-medium">算力点</span>
           </div>
         )}
 
@@ -110,13 +110,13 @@ export function ChatHeader({
         <div className="relative lg:hidden" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-slate-300 transition-all duration-300 hover:bg-white/[0.06] active:scale-95 tap-transparent"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-ink-700/10 bg-rice-50 text-ink-600 transition-all duration-300 hover:bg-rice-100 active:scale-95 tap-transparent"
             aria-label="更多操作"
           >
             <MoreHorizontal size={16} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full z-30 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950/95 p-1 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.45)] animate-fade-in">
+            <div className="absolute right-0 top-full z-30 mt-2 w-44 rounded-2xl border border-ink-700/10 bg-rice-50 p-1 shadow-[var(--shadow-paper-lg)] animate-fade-in">
               <MenuItem
                 icon={RefreshCw}
                 label="重新生成"
@@ -149,9 +149,9 @@ function HeaderIconButton({ icon: Icon, label, danger, ...rest }) {
     <button
       title={label}
       className={cn(
-        'flex h-9 w-9 items-center justify-center rounded-xl border border-white/8 bg-white/[0.02] text-slate-400 transition-all duration-300',
-        'hover:bg-white/[0.06] hover:border-white/15 hover:text-slate-100 hover:scale-[1.05] active:scale-[0.95]',
-        danger && 'hover:text-rose-300 hover:border-rose-400/30 hover:bg-rose-500/10 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)]',
+        'flex h-9 w-9 items-center justify-center rounded-xl border border-ink-700/10 bg-rice-50 text-ink-500 transition-all duration-300',
+        'hover:bg-rice-100 hover:border-celadon-200 hover:text-ink-900 hover:scale-[1.05] active:scale-[0.95]',
+        danger && 'hover:text-verm-600 hover:border-verm-500/30 hover:bg-verm-500/10',
         'disabled:opacity-30 disabled:pointer-events-none tap-transparent'
       )}
       {...rest}
@@ -165,9 +165,9 @@ function MenuItem({ icon: Icon, label, danger, ...rest }) {
   return (
     <button
       className={cn(
-        'flex w-full min-h-[40px] items-center gap-2 rounded-xl px-3 text-sm text-slate-200 transition-all duration-200 tap-transparent',
-        'hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none',
-        danger && 'hover:bg-rose-500/10 hover:text-rose-300'
+        'flex w-full min-h-[40px] items-center gap-2 rounded-xl px-3 text-sm text-ink-700 transition-all duration-200 tap-transparent',
+        'hover:bg-rice-100 disabled:opacity-40 disabled:pointer-events-none',
+        danger && 'hover:bg-verm-500/10 hover:text-verm-600'
       )}
       {...rest}
     >

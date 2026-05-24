@@ -5,7 +5,7 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 export default function Markdown({ content }) {
   return (
-    <div className="prose prose-invert prose-sm max-w-none break-words">
+    <div className="prose prose-sm max-w-none break-words text-ink-700 prose-headings:text-ink-900 prose-strong:text-ink-900 prose-a:text-celadon-700 prose-code:text-verm-600 prose-pre:bg-ink-900">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -16,7 +16,7 @@ export default function Markdown({ content }) {
                 style={oneDark}
                 language={match[1]}
                 PreTag="div"
-                className="rounded-xl border border-slate-700/50"
+                className="rounded-xl border border-ink-700/20"
                 {...props}
               >
                 {String(children).replace(/\n$/, '')}
@@ -29,8 +29,8 @@ export default function Markdown({ content }) {
           },
           table({ children }) {
             return (
-              <div className="my-4 overflow-x-auto rounded-xl border border-slate-800">
-                <table className="min-w-full divide-y divide-slate-800">
+              <div className="my-4 overflow-x-auto rounded-xl border border-ink-700/10">
+                <table className="min-w-full divide-y divide-rice-300">
                   {children}
                 </table>
               </div>
@@ -38,14 +38,14 @@ export default function Markdown({ content }) {
           },
           th({ children }) {
             return (
-              <th className="bg-slate-900 px-4 py-2 text-left text-xs font-semibold text-slate-300">
+              <th className="bg-rice-100 px-4 py-2 text-left text-xs font-semibold text-ink-700">
                 {children}
               </th>
             )
           },
           td({ children }) {
             return (
-              <td className="border-t border-slate-800 px-4 py-2 text-sm text-slate-400">
+              <td className="border-t border-rice-300 px-4 py-2 text-sm text-ink-600">
                 {children}
               </td>
             )

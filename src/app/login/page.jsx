@@ -34,10 +34,11 @@ function LoginPageInner() {
         setCapabilities(cap)
         const inWx = isWechatBrowser()
         const oneClickAvailable = inWx ? cap.wechatOauthH5 : cap.wechatOauthWeb
-        // 默认顺序：一键登录 > 账号密码 > 扫码
+        // 设计稿顺序：微信 → 账号 → 扫码 → 验证码
         if (oneClickAvailable) setMethod('oneclick')
+        else if (cap.qrcode) setMethod('qrcode')
         else if (cap.local) setMethod('local')
-        else setMethod('qrcode')
+        else setMethod('logincode')
       })
       .catch((err) => {
         setCapabilitiesError(err.message || '能力探测失败')
@@ -47,7 +48,7 @@ function LoginPageInner() {
           wechatOauthWeb: false,
           wechatOauthH5: false
         })
-        setMethod('local')
+        setMethod('qrcode')
       })
   }, [])
 
@@ -61,13 +62,11 @@ function LoginPageInner() {
   const tabs = useMemo(() => {
     if (!capabilities) return []
     const list = []
-    if (oneClickAvailable) {
-      list.push({ value: 'oneclick', label: '一键登录', icon: Zap, badge: '推荐' })
-    }
+    list.push({ value: oneClickAvailable ? 'oneclick' : 'qrcode', label: '微信', icon: Zap, badge: '推荐' })
     if (capabilities.local) {
       list.push({ value: 'local', label: '账号密码', icon: KeyRound })
     }
-    list.push({ value: 'qrcode', label: '扫码登录', icon: ScanLine })
+    if (oneClickAvailable) list.push({ value: 'qrcode', label: '扫码登录', icon: ScanLine })
     list.push({ value: 'logincode', label: '登录码', icon: Hash })
     return list
   }, [capabilities, oneClickAvailable])
@@ -91,17 +90,14 @@ function LoginPageInner() {
       <LoginMarketing />
 
       <div className="relative w-full animate-in">
-        {/* Glow backdrop */}
-        <div className="pointer-events-none absolute -inset-8 rounded-[40px] bg-gradient-to-br from-indigo-500/20 via-purple-500/15 to-fuchsia-500/15 blur-3xl opacity-80" />
-
-        <div className="relative rounded-3xl border border-white/10 bg-slate-950/40 p-6 backdrop-blur-3xl shadow-[0_32px_100px_rgba(0,0,0,0.5)] sm:p-8 neon-border transition-all duration-500 hover:border-white/15">
+        <div className="relative rounded-[28px] border border-ink-700/10 bg-rice-50 p-6 shadow-[var(--shadow-paper-lg)] sm:p-8 ricepaper">
           <div className="mb-5 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-white tracking-tight sm:text-xl">{heading.title}</h2>
-              <p className="mt-1 text-[11px] text-slate-400 tracking-wide truncate">{heading.sub}</p>
+              <h2 className="font-serif text-lg font-semibold text-ink-900 tracking-tight sm:text-xl">{heading.title}</h2>
+              <p className="mt-1 text-[11px] text-ink-500 tracking-wide truncate">{heading.sub}</p>
             </div>
             {inWechat && (
-              <span className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-200">
+              <span className="shrink-0 rounded-full border border-celadon-600/20 bg-celadon-50 px-2.5 py-0.5 text-[10px] font-medium text-celadon-700">
                 微信内打开
               </span>
             )}
@@ -114,7 +110,7 @@ function LoginPageInner() {
           )}
 
           {capabilitiesError && (
-            <div className="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+            <div className="mb-4 rounded-xl border border-gold-500/30 bg-gold-500/10 px-3 py-2 text-[11px] text-gold-600">
               {capabilitiesError}
             </div>
           )}
@@ -144,7 +140,7 @@ function LoginPageInner() {
                   <button
                     type="button"
                     onClick={() => setMethod('forgot')}
-                    className="text-[11px] font-medium text-slate-400 transition hover:text-fuchsia-300 tap-transparent"
+                    className="text-[11px] font-medium text-ink-500 transition hover:text-celadon-700 tap-transparent"
                   >
                     忘记密码？
                   </button>

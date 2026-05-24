@@ -49,13 +49,27 @@ function readCsrfCookie() {
 
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
+function createTimeoutSignal(timeout) {
+  if (!timeout || timeout <= 0) return {}
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return { signal: AbortSignal.timeout(timeout) }
+  }
+  if (typeof AbortController !== 'undefined') {
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), timeout)
+    return { signal: controller.signal, clear: () => window.clearTimeout(timer) }
+  }
+  return {}
+}
+
 // Shared fetch helper: JSON in, JSON out, normalized error throwing.
 // Replaces the boilerplate that used to wrap every endpoint call.
 async function fetchJson(url, { method = 'GET', body, timeout = DEFAULT_TIMEOUT, headers } = {}) {
+  const timeoutSignal = createTimeoutSignal(timeout)
   const init = {
     method,
     credentials: 'include',
-    signal: AbortSignal.timeout(timeout),
+    ...(timeoutSignal.signal ? { signal: timeoutSignal.signal } : {}),
     headers: { ...(headers || {}) }
   }
   if (body !== undefined) {
@@ -66,13 +80,17 @@ async function fetchJson(url, { method = 'GET', body, timeout = DEFAULT_TIMEOUT,
     const csrf = readCsrfCookie()
     if (csrf) init.headers = { 'X-CSRF-Token': csrf, ...init.headers }
   }
-  const res = await fetch(url, init)
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseApiError(res.status, data))
-  if (data && typeof data === 'object' && data.ok === false) {
-    throw new Error(parseApiError(res.status, data))
+  try {
+    const res = await fetch(url, init)
+    const data = await readJson(res)
+    if (!res.ok) throw new Error(parseApiError(res.status, data))
+    if (data && typeof data === 'object' && data.ok === false) {
+      throw new Error(parseApiError(res.status, data))
+    }
+    return data
+  } finally {
+    timeoutSignal.clear?.()
   }
-  return data
 }
 
 export { readCsrfCookie }
@@ -231,6 +249,16 @@ export async function fetchQuotaLedger({ page = 1, pageSize = 20 } = {}) {
   const data = await fetchJson(`/api/quota/ledger?${qs}`)
   return Array.isArray(data) ? data : []
 }
+
+export const redeemCode = (code) =>
+  fetchJson('/api/redeem', { method: 'POST', body: { code } })
+
+export const fetchRechargePlans = () => fetchJson('/api/recharge/plans')
+
+export const fetchRechargeOrders = () => fetchJson('/api/recharge/orders')
+
+export const createRechargeOrder = ({ planId, paymentMethod = 'wechat' }) =>
+  fetchJson('/api/recharge/orders', { method: 'POST', body: { planId, paymentMethod } })
 
 // ---------- Admin ----------
 

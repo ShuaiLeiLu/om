@@ -13,6 +13,7 @@ import { MiniappAiModule } from './miniapp-ai/miniapp-ai.module'
 import { ModelsModule } from './models/models.module'
 import { PrismaModule } from './prisma/prisma.module'
 import { QuotaModule } from './quota/quota.module'
+import { RechargeModule } from './recharge/recharge.module'
 import { RedeemModule } from './redeem/redeem.module'
 import { RewardsModule } from './rewards/rewards.module'
 import { StorageModule } from './storage/storage.module'
@@ -34,6 +35,7 @@ import { WechatModule } from './wechat/wechat.module'
     WechatModule,
     QuotaModule,
     ImagesModule,
+    RechargeModule,
     RedeemModule,
     ModelsModule,
     ChatModule,

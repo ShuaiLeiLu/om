@@ -93,7 +93,7 @@ export function ImportExportBar() {
         <Trash2 size={13} /> 清空
       </Button>
       {progress && (
-        <span className="text-[10px] text-slate-400">
+        <span className="text-[10px] text-ink-500">
           {progress.phase === 'images' ? '导入图片' : '导入任务'}{' '}
           {progress.current} / {progress.total}
         </span>

@@ -13,7 +13,7 @@ const AlertDialogOverlay = React.forwardRef(function AlertDialogOverlay({ classN
   return (
     <AlertDialogPrimitive.Overlay
       className={cn(
-        'fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+        'fixed inset-0 z-50 bg-ink-900/35 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         className
       )}
       {...props}
@@ -29,10 +29,10 @@ const AlertDialogContent = React.forwardRef(function AlertDialogContent({ classN
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(
-          'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-popover p-6 shadow-2xl shadow-black/40 backdrop-blur-2xl duration-200',
+          'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-ink-700/10 bg-rice-50 p-6 shadow-[var(--shadow-paper-lg)] backdrop-blur-xl duration-200 ricepaper',
           'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
           'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-          'sm:rounded-lg',
+          'sm:rounded-[28px]',
           className
         )}
         {...props}

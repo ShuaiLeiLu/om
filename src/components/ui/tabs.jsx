@@ -28,7 +28,7 @@ export function TabsList({ className, children }) {
   return (
     <div
       className={cn(
-        'inline-flex h-10 items-center rounded-xl border border-white/8 bg-white/[0.04] p-1 text-slate-400',
+        'inline-flex h-10 items-center rounded-xl border border-ink-700/10 bg-rice-200/70 p-1 text-ink-500',
         className
       )}
     >
@@ -48,8 +48,8 @@ export function TabsTrigger({ value, className, children }) {
       className={cn(
         'inline-flex min-w-0 items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-all',
         active
-          ? 'bg-gradient-to-br from-indigo-500/40 to-fuchsia-500/30 text-white border border-white/12'
-          : 'text-slate-400 hover:text-slate-100',
+          ? 'border border-ink-700/5 bg-rice-50 text-celadon-700 shadow-[var(--shadow-paper)]'
+          : 'text-ink-500 hover:text-ink-900',
         className
       )}
     >

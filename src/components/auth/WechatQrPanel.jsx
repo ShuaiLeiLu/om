@@ -133,23 +133,23 @@ export function WechatQrPanel({ nextUrl = '/profile' }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
-            <ScanLine size={12} className="text-fuchsia-300" />
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-900">
+            <ScanLine size={12} className="text-celadon-600" />
             微信扫码登录
           </p>
-          <p className="mt-0.5 text-[10px] text-slate-500">二维码 5 分钟内有效</p>
+          <p className="mt-0.5 text-[10px] text-ink-500">二维码 5 分钟内有效</p>
         </div>
         <button
           onClick={startLogin}
           disabled={isLoading}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-slate-300 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-50 tap-transparent"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-ink-700/10 bg-rice-50 text-ink-600 transition hover:bg-rice-100 disabled:opacity-50 tap-transparent"
           aria-label="刷新二维码"
         >
           <RefreshCw size={13} className={cn(isLoading && 'animate-spin')} />
         </button>
       </div>
 
-      <div className="relative mx-auto aspect-square w-full max-w-[260px] overflow-hidden rounded-2xl border border-white/10 bg-white p-3">
+      <div className="relative mx-auto aspect-square w-full max-w-[260px] overflow-hidden rounded-2xl border border-ink-700/10 bg-white p-3 shadow-[var(--shadow-paper)]">
         {qrUrl && !isLoading && !isFailed ? (
           <img
             src={qrUrl}
@@ -160,27 +160,27 @@ export function WechatQrPanel({ nextUrl = '/profile' }) {
             )}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center rounded-xl bg-slate-100">
+          <div className="flex h-full w-full items-center justify-center rounded-xl bg-rice-100">
             {isFailed ? (
-              <QrCode className="text-slate-400" size={48} strokeWidth={1.5} />
+              <QrCode className="text-ink-400" size={48} strokeWidth={1.5} />
             ) : (
-              <Loader2 size={34} className="animate-spin text-slate-400" />
+              <Loader2 size={34} className="animate-spin text-ink-400" />
             )}
           </div>
         )}
 
         {isSuccess && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-emerald-500/10 backdrop-blur-sm">
-            <CheckCircle2 size={36} className="text-emerald-500" />
-            <p className="text-sm font-semibold text-emerald-700">登录成功</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-celadon-500/10 backdrop-blur-sm">
+            <CheckCircle2 size={36} className="text-celadon-600" />
+            <p className="text-sm font-semibold text-celadon-700">登录成功</p>
           </div>
         )}
       </div>
 
       <StatusBanner status={status} error={error} />
 
-      <div className="flex items-start gap-2.5 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5 text-[10px] text-slate-400">
-        <Smartphone size={13} className="mt-0.5 shrink-0 text-slate-500" />
+      <div className="flex items-start gap-2.5 rounded-xl border border-ink-700/10 bg-rice-100 px-3 py-2.5 text-[10px] text-ink-500">
+        <Smartphone size={13} className="mt-0.5 shrink-0 text-ink-500" />
         <span className="leading-relaxed">
           手机微信扫码后自动完成登录，无需额外确认
         </span>
@@ -195,10 +195,10 @@ function StatusBanner({ status, error }) {
   const isError = status === 'failed' || status === 'expired' || error
   const Icon = isSuccess ? CheckCircle2 : isLoading ? Loader2 : isError ? AlertCircle : Clock3
   const accent = isSuccess
-    ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
+    ? 'border-celadon-600/30 bg-celadon-50 text-celadon-700'
     : isError
-      ? 'border-rose-400/30 bg-rose-500/10 text-rose-200'
-      : 'border-white/8 bg-white/[0.02] text-slate-200'
+      ? 'border-verm-500/30 bg-verm-500/10 text-verm-600'
+      : 'border-ink-700/10 bg-rice-100 text-ink-700'
 
   const label = error || STATUS_LABEL[status] || '等待微信确认'
 

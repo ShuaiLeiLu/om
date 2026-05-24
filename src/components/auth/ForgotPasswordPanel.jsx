@@ -68,18 +68,18 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
   if (phase === 'success') {
     return (
       <div className="space-y-4 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-400/30">
-          <CheckCircle2 size={24} className="text-emerald-300" />
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-celadon-50 border border-celadon-600/20">
+          <CheckCircle2 size={24} className="text-celadon-600" />
         </div>
         <div>
-          <p className="text-base font-semibold text-white">密码已重置</p>
-          <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
+          <p className="text-base font-semibold text-ink-900">密码已重置</p>
+          <p className="mt-1.5 text-xs text-ink-500 leading-relaxed">
             请使用新密码登录万模 AI
           </p>
         </div>
         <button
           onClick={onBackToLogin}
-          className="mt-2 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-5 text-sm font-medium text-slate-100 transition hover:bg-white/[0.08] tap-transparent"
+          className="mt-2 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-2xl border border-ink-700/10 bg-rice-50 px-5 text-sm font-medium text-ink-700 transition hover:bg-rice-100 tap-transparent"
         >
           <ArrowLeft size={13} /> 回到登录
         </button>
@@ -89,16 +89,16 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
 
   return (
     <form className="space-y-3" onSubmit={onSubmit} noValidate>
-      <p className="text-[11px] text-slate-400 leading-relaxed">
+      <p className="text-[11px] text-ink-500 leading-relaxed">
         输入邮箱、获取验证码、设置新密码即可。
       </p>
 
       <label className="block">
-        <span className="mb-1 block text-[11px] font-medium text-slate-400">邮箱</span>
+        <span className="mb-1 block text-[11px] font-medium text-ink-500">邮箱</span>
         <div className="relative">
           <Mail
             size={14}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
           />
           <input
             type="email"
@@ -109,7 +109,7 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
             placeholder="you@example.com"
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-            className="w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-3.5 py-2.5 text-[15px] text-white placeholder-slate-500 outline-none transition focus:border-indigo-400/50 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]"
+            className="w-full min-h-[44px] rounded-xl border border-ink-700/10 bg-rice-50 pl-10 pr-3.5 py-2.5 text-[16px] sm:text-[15px] text-ink-900 placeholder-ink-400 outline-none transition focus:border-celadon-500/45 focus:bg-white"
           />
         </div>
       </label>
@@ -123,11 +123,11 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
       />
 
       <label className="block">
-        <span className="mb-1 block text-[11px] font-medium text-slate-400">新密码</span>
+        <span className="mb-1 block text-[11px] font-medium text-ink-500">新密码</span>
         <div className="relative">
           <Lock
             size={14}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
           />
           <input
             type={showPassword ? 'text' : 'password'}
@@ -135,13 +135,13 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
             autoComplete="new-password"
             value={form.newPassword}
             onChange={(e) => setForm((p) => ({ ...p, newPassword: e.target.value }))}
-            className="w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-11 py-2.5 text-[15px] text-white placeholder-slate-500 outline-none transition focus:border-indigo-400/50 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]"
+            className="w-full min-h-[44px] rounded-xl border border-ink-700/10 bg-rice-50 pl-10 pr-11 py-2.5 text-[16px] sm:text-[15px] text-ink-900 placeholder-ink-400 outline-none transition focus:border-celadon-500/45 focus:bg-white"
           />
           <button
             type="button"
             tabIndex={-1}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-slate-200 tap-transparent"
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-500 transition hover:bg-ink-700/5 hover:text-ink-900 tap-transparent"
             aria-label={showPassword ? '隐藏密码' : '显示密码'}
           >
             {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -158,9 +158,9 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
           ].map((it) => (
             <span
               key={it.label}
-              className={cn('inline-flex items-center gap-1', it.ok ? 'text-emerald-300' : 'text-slate-500')}
+              className={cn('inline-flex items-center gap-1', it.ok ? 'text-celadon-700' : 'text-ink-400')}
             >
-              <CheckCircle2 size={10} className={it.ok ? 'text-emerald-400' : 'text-slate-600'} />
+              <CheckCircle2 size={10} className={it.ok ? 'text-celadon-600' : 'text-ink-400'} />
               {it.label}
             </span>
           ))}
@@ -168,7 +168,7 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
       )}
 
       {error && (
-        <div className="flex items-start gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+        <div className="flex items-start gap-2 rounded-xl border border-verm-500/30 bg-verm-500/10 px-3 py-2 text-xs text-verm-600">
           <AlertCircle size={13} className="mt-0.5 shrink-0" />
           <span className="flex-1 break-words">{error}</span>
         </div>
@@ -179,8 +179,8 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
         disabled={!canSubmit || loading}
         className={cn(
           'mt-1 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white transition-all tap-transparent',
-          'bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-pink-500',
-          'shadow-[0_10px_30px_rgba(168,85,247,0.35)] hover:brightness-110 active:scale-[0.98]',
+          'bg-gradient-to-br from-celadon-600 to-celadon-500',
+          'shadow-[var(--shadow-ink)] hover:brightness-105 active:scale-[0.98]',
           (!canSubmit || loading) && 'opacity-50 pointer-events-none'
         )}
       >
@@ -191,7 +191,7 @@ export function ForgotPasswordPanel({ onBackToLogin }) {
       <button
         type="button"
         onClick={onBackToLogin}
-        className="flex w-full min-h-[40px] items-center justify-center gap-1.5 rounded-xl text-xs text-slate-400 transition hover:text-slate-200 tap-transparent"
+        className="flex w-full min-h-[40px] items-center justify-center gap-1.5 rounded-xl text-xs text-ink-500 transition hover:text-celadon-700 tap-transparent"
       >
         <ArrowLeft size={11} /> 回到登录
       </button>

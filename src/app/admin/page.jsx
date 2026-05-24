@@ -97,8 +97,8 @@ export default function AdminPage() {
 
   if (!admin) {
     return (
-      <div className="flex h-screen-dvh items-center justify-center text-slate-400">
-        <Loader2 className="mr-2 animate-spin text-indigo-400" size={18} />
+      <div className="flex h-screen-dvh items-center justify-center bg-rice-100 text-ink-500 paper">
+        <Loader2 className="mr-2 animate-spin text-celadon-600" size={18} />
         正在校验管理员身份...
       </div>
     )

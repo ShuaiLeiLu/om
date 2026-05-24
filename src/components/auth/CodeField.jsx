@@ -43,12 +43,12 @@ export function CodeField({ value, onChange, canSend, onSend, onError, autoCompl
 
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-slate-400">邮箱验证码</span>
+      <span className="mb-1 block text-[11px] font-medium text-ink-500">邮箱验证码</span>
       <div className="relative flex items-stretch gap-2">
         <div className="relative flex-1">
           <Mail
             size={14}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500"
           />
           <input
             inputMode="numeric"
@@ -59,9 +59,9 @@ export function CodeField({ value, onChange, canSend, onSend, onError, autoCompl
             value={value}
             onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
             className={cn(
-              'w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-3.5 py-2.5',
-              'text-[15px] font-mono tracking-[0.4em] text-white placeholder-slate-500 outline-none transition',
-              'focus:border-indigo-400/50 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]'
+              'w-full min-h-[44px] rounded-xl border border-ink-700/10 bg-rice-50 pl-10 pr-3.5 py-2.5',
+              'text-[16px] sm:text-[15px] font-mono tracking-[0.4em] text-ink-900 placeholder-ink-400 outline-none transition',
+              'focus:border-celadon-500/45 focus:bg-white'
             )}
           />
         </div>
@@ -72,10 +72,10 @@ export function CodeField({ value, onChange, canSend, onSend, onError, autoCompl
           className={cn(
             'shrink-0 min-w-[114px] min-h-[44px] rounded-xl px-3 text-xs font-medium transition-all tap-transparent',
             countdown > 0
-              ? 'bg-white/5 text-slate-400 border border-white/10'
+              ? 'bg-rice-200 text-ink-500 border border-ink-700/10'
               : canSend && !sending
-                ? 'bg-gradient-to-br from-indigo-500/30 to-fuchsia-500/20 text-indigo-100 border border-indigo-400/30 active:scale-[0.97]'
-                : 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed'
+                ? 'bg-celadon-50 text-celadon-700 border border-celadon-600/20 active:scale-[0.97]'
+                : 'bg-rice-200 text-ink-400 border border-ink-700/5 cursor-not-allowed'
           )}
         >
           {sending ? (

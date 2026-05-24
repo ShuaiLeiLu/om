@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CalendarClock, Coins, History, LogOut, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, Coins, Gift, History, LogOut, PlayCircle, RefreshCw, ShieldCheck, Sparkles, Ticket } from 'lucide-react'
 import { fetchMe, fetchQuotaLedger, fetchQuotaSummary, logout } from '@/lib/api'
 import { useAuthStore } from '@/store/useStore'
 import { cn } from '@/lib/utils'
+import ProfileShell from '@/components/profile/ProfileShell'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -52,101 +53,105 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-50 sm:px-6 lg:px-8 bg-dot-grid relative overflow-hidden">
-      {/* Background glow orbits */}
-      <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none animate-orbit-1" />
-      <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-fuchsia-500/10 blur-[120px] pointer-events-none animate-orbit-2" />
+    <ProfileShell active="profile">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] text-celadon-700 label-zh">个 人 中 心</p>
+                <h1 className="mt-1 font-serif text-3xl font-semibold text-ink-900">{spacedName(user?.displayName || '微信用户')}</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/image"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-ink-700/10 bg-rice-50 px-4 text-xs font-semibold text-ink-600 shadow-[var(--shadow-paper)] transition hover:bg-rice-100 active:scale-95 lg:hidden"
+                >
+                  <ArrowLeft size={13} />
+                  返回客户端
+                </Link>
+                <button
+                  onClick={refresh}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-ink-700/10 bg-rice-50 px-4 text-xs font-semibold text-ink-600 shadow-[var(--shadow-paper)] transition hover:bg-rice-100 active:scale-95"
+                >
+                  <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                  刷新
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-verm-500/20 bg-verm-500/5 px-4 text-xs font-semibold text-verm-600 transition hover:bg-verm-500/10 active:scale-95"
+                >
+                  <LogOut size={13} />
+                  退出登录
+                </button>
+              </div>
+            </div>
 
-      <div className="relative z-10 mx-auto max-w-4xl">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href="/image"
-            className="inline-flex items-center gap-2 rounded-full border border-white/5 bg-white/[0.02] px-4 py-2 text-xs font-semibold text-slate-300 transition-all duration-300 hover:bg-white/[0.08] hover:text-white hover:scale-105 active:scale-95 shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
-          >
-            <ArrowLeft size={14} />
-            返回客户端
-          </Link>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={refresh}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/5 bg-white/[0.02] px-4 text-xs font-semibold text-slate-300 transition-all duration-300 hover:bg-white/[0.08] hover:text-white hover:scale-105 active:scale-95 shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
-            >
-              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-              刷新
-            </button>
-            <button
-              onClick={handleLogout}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/5 px-4 text-xs font-semibold text-rose-300 transition-all duration-300 hover:bg-rose-500/15 hover:text-rose-200 hover:scale-105 active:scale-95"
-            >
-              <LogOut size={13} />
-              退出登录
-            </button>
-          </div>
-        </div>
-
-        <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-slate-900/15 p-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+        <section className="relative overflow-hidden rounded-[28px] border border-ink-700/10 bg-rice-50 p-6 shadow-[var(--shadow-paper)] ricepaper">
           <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
             <div className="flex flex-col justify-between gap-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500 text-xl font-bold text-white shadow-[0_4px_12px_rgba(139,92,246,0.3)]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-celadon-600 to-celadon-500 text-xl font-bold text-rice-50 shadow-[var(--shadow-ink)]">
                   {(user?.displayName || '微').slice(0, 1)}
                 </div>
                 <div className="min-w-0">
-                  <h1 className="truncate text-xl font-bold text-white tracking-tight">{user?.displayName || '微信用户'}</h1>
-                  <p className="mt-1 truncate text-[10px] font-mono text-slate-500">ID: {user?.id || '正在同步...'}</p>
+                  <h1 className="truncate font-serif text-3xl font-semibold text-ink-900 tracking-wide">{spacedName(user?.displayName || '微信用户')}</h1>
+                  <p className="mt-1 truncate text-[10px] font-mono text-ink-500">ID: {user?.id || '正在同步...'}</p>
                 </div>
               </div>
 
-              {/* 3D gradient asset card */}
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 p-5 text-white shadow-[0_12px_30px_rgba(99,102,241,0.25)] min-h-[160px] flex flex-col justify-between group">
-                <div className="absolute inset-0 bg-dot-grid opacity-20 pointer-events-none" />
-                <div className="absolute -right-8 -bottom-8 h-32 w-32 bg-white/10 rounded-full blur-2xl pointer-events-none transition-transform duration-500 group-hover:scale-110" />
-                
+              <div className="relative overflow-hidden rounded-2xl border border-celadon-700/20 bg-gradient-to-br from-celadon-600 via-celadon-800 to-ink-800 p-5 text-rice-50 shadow-[var(--shadow-ink)] min-h-[180px] flex flex-col justify-between">
+                <div className="absolute inset-0 bg-dot-grid opacity-25 pointer-events-none" />
+                <div className="seal absolute right-5 top-5 flex h-12 w-12 flex-col items-center justify-center text-center">
+                  <span className="font-serif text-sm font-bold leading-tight">万模</span>
+                </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Coins size={18} className="text-amber-300 animate-pulse" />
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-white/80">Compute Asset Card</span>
+                    <Coins size={18} className="text-gold-400" />
+                    <span className="text-[10px] label-zh text-rice-50/80">万 模 卡</span>
                   </div>
-                  <span className="text-[9px] font-mono tracking-widest text-indigo-200">PREMIUM PLATINUM</span>
                 </div>
 
                 <div className="my-3">
-                  <span className="text-[9px] text-white/60 block uppercase tracking-wider font-semibold">Available Balance</span>
-                  <span className="text-3xl font-bold tracking-tight text-white font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">{balance}</span>
+                  <span className="text-[9px] text-rice-50/60 block uppercase tracking-wider font-semibold">Available Balance</span>
+                  <span className="text-4xl font-light tracking-tight text-rice-50 font-mono">{balance}</span>
                 </div>
 
                 <div className="flex items-end justify-between text-[9px] font-mono">
                   <div>
-                    <span className="text-[8px] text-white/50 block uppercase tracking-wider font-semibold">Holder ID</span>
-                    <span className="text-white/80 max-w-[150px] truncate block">{user?.id || 'SYNCING...'}</span>
+                    <span className="text-[8px] text-rice-50/50 block uppercase tracking-wider font-semibold">Holder ID</span>
+                    <span className="text-rice-50/80 max-w-[150px] truncate block">{user?.id || 'SYNCING...'}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[8px] text-white/50 block uppercase tracking-wider font-semibold">Expiring (7d)</span>
-                    <span className="text-amber-300 font-bold">{expiringSoon}</span>
+                    <span className="text-[8px] text-rice-50/50 block uppercase tracking-wider font-semibold">Expiring (7d)</span>
+                    <span className="text-gold-400 font-bold">{expiringSoon}</span>
                   </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <QuickAction href="/rewards" icon={PlayCircle} label="看视频" />
+                <QuickAction href="/redeem" icon={Ticket} label="兑换码" />
+                <QuickAction href="/recharge" icon={Gift} label="充值" />
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-slate-950/20 p-5 backdrop-blur-md flex flex-col justify-between">
+            <div className="rounded-2xl border border-ink-700/10 bg-rice-100 p-5 flex flex-col justify-between">
               <div>
-                <h2 className="text-xs font-bold text-white flex items-center gap-1.5 mb-4">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                <h2 className="text-xs font-bold text-ink-900 flex items-center gap-1.5 mb-4">
+                  <span className="h-1.5 w-1.5 rounded-full bg-celadon-600" />
                   账号状态与规则
                 </h2>
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/10 p-3.5 text-xs text-emerald-200/90">
-                    <ShieldCheck size={16} className="mt-0.5 shrink-0 text-emerald-400" />
+                  <div className="flex items-start gap-3 rounded-xl border border-celadon-600/15 bg-celadon-50 p-3.5 text-xs text-celadon-800">
+                    <ShieldCheck size={16} className="mt-0.5 shrink-0 text-celadon-600" />
                     <div>
-                      <p className="font-semibold text-emerald-200">微信身份已绑定</p>
-                      <p className="mt-1 leading-relaxed text-emerald-300/60">客户端扫码登录、小程序同步，都归集到同一个后端用户。</p>
+                      <p className="font-semibold text-celadon-800">微信身份已绑定</p>
+                      <p className="mt-1 leading-relaxed text-celadon-700/70">客户端扫码登录、小程序同步，都归集到同一个后端用户。</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.015] p-3.5 text-xs text-slate-300">
-                    <Sparkles size={16} className="mt-0.5 shrink-0 text-indigo-400" />
+                  <div className="flex items-start gap-3 rounded-xl border border-ink-700/10 bg-rice-50 p-3.5 text-xs text-ink-600">
+                    <Sparkles size={16} className="mt-0.5 shrink-0 text-gold-600" />
                     <div>
-                      <p className="font-semibold text-slate-200">数据以后端账本为准</p>
-                      <p className="mt-1 leading-relaxed text-slate-500">模型消耗、奖励、管理员手动调整均以服务端流水为依据。</p>
+                      <p className="font-semibold text-ink-900">数据以后端账本为准</p>
+                      <p className="mt-1 leading-relaxed text-ink-500">模型消耗、奖励、管理员手动调整均以服务端流水为依据。</p>
                     </div>
                   </div>
                 </div>
@@ -155,50 +160,84 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-white/5 bg-slate-900/15 p-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+            <LedgerSection error={error} loading={loading} ledger={ledger} />
+    </ProfileShell>
+  )
+}
+
+function LedgerSection({ error, loading, ledger }) {
+  return (
+        <section className="mt-6 rounded-[28px] border border-ink-700/10 bg-rice-50 p-6 shadow-[var(--shadow-paper)]">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <History size={16} className="text-slate-400" />
-              <h2 className="text-sm font-bold text-white">算力点流水</h2>
+              <History size={16} className="text-ink-500" />
+              <h2 className="font-serif text-sm font-semibold text-ink-900">算力点流水</h2>
             </div>
-            <span className="text-xs text-slate-500 font-medium">最近 30 条</span>
+            <span className="text-xs text-ink-500 font-medium label-zh">最 近 30 条</span>
           </div>
 
           {error ? (
-            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">{error}</div>
+            <div className="rounded-xl border border-verm-500/20 bg-verm-500/10 px-4 py-3 text-xs text-verm-600">{error}</div>
           ) : loading ? (
-            <div className="py-12 text-center text-xs text-slate-500 flex flex-col items-center gap-2">
-              <RefreshCw size={18} className="animate-spin text-indigo-400" />
+            <div className="py-12 text-center text-xs text-ink-500 flex flex-col items-center gap-2">
+              <RefreshCw size={18} className="animate-spin text-celadon-600" />
               正在拉取账单流水...
             </div>
           ) : ledger.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-500">暂无算力点流水</div>
+            <div className="py-12 text-center text-xs text-ink-500">暂无算力点流水</div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950/20">
+            <div className="overflow-hidden rounded-2xl border border-ink-700/10 bg-rice-50">
               {ledger.map((item) => {
                 const isPositive = Number(item.deltaTokens || 0) >= 0
                 return (
-                  <div key={item.id} className="grid gap-3 border-b border-white/5 px-4 py-3.5 last:border-b-0 sm:grid-cols-[1fr_auto_auto] sm:items-center transition-colors duration-200 hover:bg-white/[0.015]">
+                  <div key={item.id} className="grid min-h-12 gap-3 border-b border-rice-200 px-4 py-3.5 last:border-b-0 sm:grid-cols-[1fr_auto_auto] sm:items-center transition-colors duration-200 hover:bg-rice-100">
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-slate-200">{ledgerTitle(item.type)}</p>
-                      <p className="mt-0.5 truncate text-[10.5px] text-slate-500 font-medium">{item.remark || item.relatedId || '系统记录'}</p>
+                      <p className="truncate text-xs font-semibold text-ink-900">{ledgerTitle(item.type)}</p>
+                      <p className="mt-0.5 truncate text-[10.5px] text-ink-500 font-medium">{item.remark || item.relatedId || '系统记录'}</p>
                     </div>
                     <p className={cn(
                       'text-sm font-mono font-bold leading-none',
-                      isPositive ? 'text-emerald-400' : 'text-rose-400'
+                      isPositive ? 'text-celadon-700' : 'text-verm-600'
                     )}>
                       {isPositive ? '+' : ''}{formatToken(item.deltaTokens)}
                     </p>
-                    <p className="text-[10px] font-medium text-slate-500 sm:text-right">{formatDate(item.createdAt)}</p>
+                    <p className="text-[10px] font-medium text-ink-500 sm:text-right">{formatDate(item.createdAt)}</p>
                   </div>
                 )
               })}
             </div>
           )}
         </section>
-      </div>
-    </main>
   )
+}
+
+function QuickAction({ href, icon: Icon, label }) {
+  const content = (
+    <>
+      <Icon size={18} className="text-celadon-700" />
+      <span>{label}</span>
+    </>
+  )
+  const className = 'flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-2xl border border-ink-700/10 bg-rice-50 text-xs font-medium text-ink-700 shadow-[var(--shadow-paper)] transition hover:bg-rice-100 active:scale-[0.98]'
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    )
+  }
+  return (
+    <button className={className}>
+      {content}
+    </button>
+  )
+}
+
+function spacedName(name) {
+  const clean = String(name || '').trim()
+  if (!clean) return '微 信 用 户'
+  if (/^[\u4e00-\u9fff]{2,4}$/.test(clean)) return clean.split('').join(' ')
+  return clean
 }
 
 function formatToken(value) {
