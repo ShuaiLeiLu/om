@@ -76,35 +76,50 @@ export class RechargeService {
   }
 
   async markPaid(adminUserId: string, orderId: string) {
-    const order = await this.prisma.rechargeOrder.findUnique({ where: { id: orderId } })
-    if (!order) throw new BadRequestException('recharge_order_not_found')
-    if (order.status === 'paid') return order
-    if (order.status !== 'pending') throw new BadRequestException('recharge_order_not_payable')
+    return this.prisma.$transaction(async (tx) => {
+      const order = await tx.rechargeOrder.findUnique({ where: { id: orderId } })
+      if (!order) throw new BadRequestException('recharge_order_not_found')
+      if (order.status === 'paid') return order
+      if (order.status !== 'pending') throw new BadRequestException('recharge_order_not_payable')
 
-    const paidOrder = await this.prisma.rechargeOrder.update({
-      where: { id: order.id },
-      data: { status: 'paid', paidAt: new Date() }
+      const paidOrder = await tx.rechargeOrder.update({
+        where: { id: order.id },
+        data: { status: 'paid', paidAt: new Date() }
+      })
+      const grant = await tx.tokenGrant.create({
+        data: {
+          userId: order.userId,
+          source: 'recharge',
+          sourceId: order.id,
+          totalTokens: order.tokens,
+          remainingTokens: order.tokens,
+          expiresAt: new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000)
+        }
+      })
+      const balance = await this.quota.balance(order.userId, tx)
+      await tx.quotaLedger.create({
+        data: {
+          userId: order.userId,
+          grantId: grant.id,
+          type: 'recharge',
+          deltaTokens: order.tokens,
+          balanceAfter: balance,
+          relatedId: order.id,
+          remark: `充值订单：${order.orderNo}`
+        }
+      })
+      await tx.adminAuditLog.create({
+        data: {
+          adminUserId,
+          action: 'recharge_order_mark_paid',
+          targetType: 'recharge_order',
+          targetId: order.id,
+          beforeJson: this.auditJson(order),
+          afterJson: this.auditJson(paidOrder)
+        }
+      })
+      return paidOrder
     })
-    await this.quota.grantTokens({
-      userId: order.userId,
-      source: 'manual_adjustment',
-      sourceId: order.id,
-      tokens: order.tokens,
-      validDays: 3650,
-      ledgerType: 'recharge',
-      remark: `充值订单：${order.orderNo}`
-    })
-    await this.prisma.adminAuditLog.create({
-      data: {
-        adminUserId,
-        action: 'recharge_order_mark_paid',
-        targetType: 'recharge_order',
-        targetId: order.id,
-        beforeJson: this.auditJson(order),
-        afterJson: this.auditJson(paidOrder)
-      }
-    })
-    return paidOrder
   }
 
   private parsePaymentMethod(value?: string): RechargePaymentMethod {

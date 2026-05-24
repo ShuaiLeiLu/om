@@ -260,8 +260,9 @@ function ledgerTitle(type) {
   const map = {
     ad_reward: '广告奖励',
     model_usage: '模型消耗',
-    redeem: '兑换到账',
-    admin_adjust: '后台调整'
+    redeem_code: '兑换到账',
+    recharge: '充值到账',
+    manual_adjustment: '后台调整'
   }
   return map[type] || type || '算力点变动'
 }

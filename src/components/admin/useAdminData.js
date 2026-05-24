@@ -10,6 +10,7 @@ import {
   fetchAdminPlans,
   fetchAdminQuotaLedger,
   fetchAdminRedeemCodes,
+  fetchAdminRechargeOrders,
   fetchAdminRewardConfig,
   fetchAdminRewardEvents,
   fetchAdminUsageEvents,
@@ -38,6 +39,7 @@ export function useAdminData(activeTab, isAuthed) {
     codes: [],
     requests: [],
     ledger: [],
+    rechargeOrders: [],
     usageEvents: [],
     wechatAccounts: [],
     rewardConfig: null,
@@ -108,6 +110,9 @@ export function useAdminData(activeTab, isAuthed) {
             pageSize: 40
           })
           setData((d) => ({ ...d, ledger: arrayOf(res) }))
+        } else if (tab === 'recharge') {
+          const orders = await fetchAdminRechargeOrders()
+          setData((d) => ({ ...d, rechargeOrders: arrayOf(orders) }))
         } else if (tab === 'wechat') {
           const res = await fetchAdminWechatAccounts({
             q: f.wechat.q,

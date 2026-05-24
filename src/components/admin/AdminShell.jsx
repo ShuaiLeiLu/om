@@ -5,11 +5,12 @@ import Link from 'next/link'
 import { LogOut, Menu, RefreshCw, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const TAB_ORDINALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+const TAB_ORDINALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一']
 
 const TAB_LABEL_OVERRIDES = {
   requests: '模型请求',
   ledger: '账本',
+  recharge: '充值',
   wechat: '微信'
 }
 

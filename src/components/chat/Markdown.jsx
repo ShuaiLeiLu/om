@@ -3,7 +3,9 @@ import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
-export default function Markdown({ content }) {
+export default function Markdown({ content, loading }) {
+  const processedContent = loading ? `${content} ▍` : content
+
   return (
     <div className="prose prose-sm max-w-none break-words text-ink-700 prose-headings:text-ink-900 prose-strong:text-ink-900 prose-a:text-celadon-700 prose-code:text-verm-600 prose-pre:bg-ink-900">
       <ReactMarkdown
@@ -52,7 +54,7 @@ export default function Markdown({ content }) {
           }
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   )

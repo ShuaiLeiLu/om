@@ -33,6 +33,7 @@ export function quotaLedgerBadge(type) {
   return {
     redeem_code: { tone: 'fuchsia', label: '兑换码' },
     ad_reward: { tone: 'amber', label: '广告奖励' },
+    recharge: { tone: 'emerald', label: '充值' },
     manual_adjustment: { tone: 'indigo', label: '手动调整' },
     model_usage: { tone: 'sky', label: '模型消耗' },
     grant_expired: { tone: 'slate', label: '过期' },

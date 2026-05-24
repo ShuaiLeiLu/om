@@ -416,7 +416,7 @@ export class AdminService {
   }
 
   private isQuotaLedgerType(type?: string): type is QuotaLedgerType {
-    return ['redeem_code', 'ad_reward', 'manual_adjustment', 'model_usage', 'grant_expired', 'refund'].includes(String(type || ''))
+    return ['redeem_code', 'ad_reward', 'recharge', 'manual_adjustment', 'model_usage', 'grant_expired', 'refund'].includes(String(type || ''))
   }
 
   private cookieOptions(expiresAt: Date) {

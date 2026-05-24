@@ -73,10 +73,8 @@ function MessageBubbleImpl({ message, provider, model, onRetry }) {
           )}
         >
           {message.loading && (!message.content || message.content.length === 0) ? (
-            <div className="flex items-center gap-1.5 py-1.5">
-              <div className="typing-dot" />
-              <div className="typing-dot" />
-              <div className="typing-dot" />
+            <div className="py-1">
+              <div className="w-[1.5px] h-[16px] bg-celadon-500 animate-pulse rounded-full" />
             </div>
           ) : message.error ? (
             <div className="flex items-start gap-2 text-verm-600">
@@ -94,7 +92,7 @@ function MessageBubbleImpl({ message, provider, model, onRetry }) {
               </div>
             </div>
           ) : (
-            <Markdown content={message.content} />
+            <Markdown content={message.content} loading={message.loading} />
           )}
         </div>
 

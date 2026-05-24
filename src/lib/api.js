@@ -260,6 +260,26 @@ export const fetchRechargeOrders = () => fetchJson('/api/recharge/orders')
 export const createRechargeOrder = ({ planId, paymentMethod = 'wechat' }) =>
   fetchJson('/api/recharge/orders', { method: 'POST', body: { planId, paymentMethod } })
 
+// ---------- Rewards ----------
+
+export const fetchRewardsConfig = () => fetchJson('/api/rewards/config')
+
+export const createRewardsSession = () =>
+  fetchJson('/api/rewards/sessions', { method: 'POST' })
+
+export const claimRewards = (rewardSessionId) =>
+  fetchJson('/api/rewards/claim', { method: 'POST', body: { rewardSessionId } })
+
+export const fetchCheckinStatus = () => fetchJson('/api/rewards/checkin/status')
+
+export const performCheckin = () =>
+  fetchJson('/api/rewards/checkin', { method: 'POST' })
+
+export const fetchDailyTasksStatus = () => fetchJson('/api/rewards/tasks/status')
+
+export const claimTaskReward = (taskType) =>
+  fetchJson('/api/rewards/tasks/claim', { method: 'POST', body: { taskType } })
+
 // ---------- Admin ----------
 
 export const adminLogin = ({ username, password }) =>
@@ -306,6 +326,11 @@ export const fetchAdminQuotaLedger = (params = {}) =>
   adminRequest(`/api/admin/quota-ledger?${buildQuery(params)}`)
 
 export const fetchAdminUsageEvents = () => adminRequest('/api/admin/usage-events')
+
+export const fetchAdminRechargeOrders = () => adminRequest('/api/admin/recharge-orders')
+
+export const markAdminRechargeOrderPaid = (orderId) =>
+  adminRequest(`/api/admin/recharge-orders/${encodeURIComponent(orderId)}/mark-paid`, { method: 'POST', body: {} })
 
 export const syncAdminSub2api = () =>
   adminRequest('/api/admin/sub2api/sync', { method: 'POST' })

@@ -51,6 +51,7 @@ enum RedeemCodeStatus {
 enum TokenGrantSource {
   redeem_code
   ad_reward
+  recharge
   manual_adjustment
 }
 

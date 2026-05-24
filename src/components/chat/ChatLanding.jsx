@@ -166,7 +166,7 @@ function ProviderSection({ label, code, children }) {
     <section>
       <div className="mb-3 flex items-center gap-3">
         <span className="label-zh text-xs text-celadon-700">{label}</span>
-        <div className="h-px flex-1 bg-ink-700/10" />
+        <div className="ink-stroke flex-1" />
         <span className="font-mono text-[10px] text-ink-500">{code}</span>
       </div>
       {children}

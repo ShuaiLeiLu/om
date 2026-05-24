@@ -140,7 +140,7 @@ export function ChatComposer({
                 onClick={onSend}
                 disabled={!hasContent || isLoading || disabled}
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 tap-transparent',
+                  'flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-300 tap-transparent',
                   hasContent && !isLoading && !disabled
                     ? 'bg-gradient-to-br from-celadon-600 to-celadon-500 text-rice-50 shadow-[var(--shadow-ink)] hover:scale-[1.06] active:scale-[0.92]'
                     : 'bg-rice-200 text-ink-400 cursor-not-allowed'

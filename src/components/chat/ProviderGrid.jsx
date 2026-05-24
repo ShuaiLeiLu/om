@@ -10,7 +10,44 @@ export function ProviderGrid({ providers, onSelect, loading }) {
         const count = p.models?.length || 0
         const model = p.models?.[0]
         const isDeepseek = p.id === 'deepseek'
+        const isFlagship = p.id === 'openai' || p.id === 'deepseek' || String(model?.name).toLowerCase().includes('gpt-4') || String(model?.name).toLowerCase().includes('gpt-5')
         const disabled = loading || count === 0
+
+        // Custom badges and pricing per design spec
+        let badgeText = '对话'
+        let badgeClass = 'chip-ink text-[10px] py-0.5 px-2'
+        let priceText = '·10 / 千 token'
+
+        if (p.id === 'openai') {
+          badgeText = '旗舰'
+          badgeClass = 'chip-verm text-[10px] py-0.5 px-2'
+          priceText = '·40 / 千 token'
+        } else if (p.id === 'deepseek') {
+          badgeText = '推理'
+          badgeClass = 'chip text-[10px] py-0.5 px-2'
+          priceText = '·5 / 千 token'
+        } else if (p.id === 'qwen') {
+          badgeText = '热门'
+          badgeClass = 'chip-gold text-[10px] py-0.5 px-2'
+          priceText = '·8 / 千 token'
+        } else if (p.id === 'zhipu') {
+          badgeText = '长文'
+          badgeClass = 'chip text-[10px] py-0.5 px-2'
+          priceText = '·6 / 千 token'
+        } else if (p.id === 'moonshot') {
+          badgeText = '200万'
+          badgeClass = 'chip text-[10px] py-0.5 px-2'
+          priceText = '·12 / 千 token'
+        } else if (p.id === 'gemini') {
+          badgeText = '智能'
+          badgeClass = 'chip text-[10px] py-0.5 px-2'
+          priceText = '·15 / 千 token'
+        } else if (p.id === 'grok') {
+          badgeText = '新锐'
+          badgeClass = 'chip-gold text-[10px] py-0.5 px-2'
+          priceText = '·25 / 千 token'
+        }
+
         return (
           <button
             key={p.id}
@@ -21,6 +58,7 @@ export function ProviderGrid({ providers, onSelect, loading }) {
               'hover:-translate-y-1 hover:border-celadon-200 hover:shadow-[var(--shadow-paper-lg)]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-celadon-500/50',
               'sm:p-5',
+              isFlagship && 'ring-1 ring-celadon-200',
               disabled && 'opacity-50 hover:translate-y-0 cursor-not-allowed'
             )}
           >
@@ -28,7 +66,7 @@ export function ProviderGrid({ providers, onSelect, loading }) {
               <div
                 className={cn(
                   'logo-dot shrink-0 border border-ink-700/10 sm:h-11 sm:w-11',
-                  isDeepseek ? 'bg-white' : ''
+                  isDeepseek ? 'bg-[#103D3B]' : ''
                 )}
                 style={!isDeepseek ? { background: p.color } : undefined}
               >
@@ -45,8 +83,8 @@ export function ProviderGrid({ providers, onSelect, loading }) {
                 )}
               </div>
               {count > 0 ? (
-                <span className="shrink-0 rounded-full border border-celadon-600/15 bg-celadon-50 px-2 py-0.5 text-[10px] font-mono text-celadon-700">
-                  默认
+                <span className={cn('shrink-0 rounded-full', badgeClass)}>
+                  {badgeText}
                 </span>
               ) : (
                 <span className="shrink-0 rounded-full border border-gold-500/25 bg-gold-500/10 px-2 py-0.5 text-[9px] text-gold-600">
@@ -56,15 +94,15 @@ export function ProviderGrid({ providers, onSelect, loading }) {
             </div>
 
             <h3 className="relative mt-3 text-sm font-semibold text-ink-900 sm:mt-4 sm:text-base">
-              {p.name}
+              {model?.name || p.name}
             </h3>
-            <p className="relative mt-1 line-clamp-2 text-[11px] text-ink-500 leading-relaxed sm:text-xs">
-              {model?.name || p.description}
+            <p className="relative mt-1 line-clamp-2 text-[11px] text-ink-500 leading-relaxed sm:text-xs h-8 overflow-hidden">
+              {model?.remark || p.description}
             </p>
 
-            <div className="relative mt-3 flex items-center justify-between text-[10px] sm:text-[11px]">
-              <span className="text-ink-500">
-                {count > 0 ? '点击开始对话' : '暂未配置'}
+            <div className="relative mt-3 flex items-center justify-between text-[11px]">
+              <span className="text-celadon-700 font-mono">
+                {count > 0 ? priceText : '暂未配置'}
               </span>
               <ArrowRight
                 size={13}

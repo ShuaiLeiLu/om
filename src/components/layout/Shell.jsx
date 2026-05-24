@@ -361,7 +361,7 @@ function MobileTabbar({ active }) {
   const items = [
     { href: '/chat', label: '对话', icon: MessageSquare, id: 'chat' },
     { href: '/image', label: '绘图', icon: ImageIcon, id: 'image' },
-    { href: '/rewards', label: '奖励', icon: Gift, id: 'reward' },
+    { href: '/rewards', label: '奖励', icon: Gift, id: 'rewards' },
     { href: '/profile', label: '我的', icon: User, id: 'profile' }
   ]
   return (

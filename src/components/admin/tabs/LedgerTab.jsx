@@ -11,6 +11,7 @@ import { formatRelativeTime, formatTokens, quotaLedgerBadge } from '@/lib/admin-
 const TYPE_OPTIONS = [
   { value: 'redeem_code', label: '兑换码' },
   { value: 'ad_reward', label: '广告奖励' },
+  { value: 'recharge', label: '充值' },
   { value: 'manual_adjustment', label: '手动调整' },
   { value: 'model_usage', label: '模型消耗' },
   { value: 'grant_expired', label: '过期' },
@@ -75,7 +76,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
                   <span
                     className={cn(
                       'font-mono font-semibold',
-                      n >= 0 ? 'text-emerald-300' : 'text-rose-300'
+                      n >= 0 ? 'text-celadon-700' : 'text-verm-600'
                     )}
                   >
                     {n >= 0 ? '+' : ''}
@@ -90,7 +91,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
               align: 'right',
               width: 120,
               render: (r) => (
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="font-mono text-[11px] text-ink-500">
                   {formatTokens(r.balanceAfter)}
                 </span>
               )
@@ -101,7 +102,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
               align: 'right',
               width: 110,
               render: (r) => (
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-[11px] text-ink-500">
                   {formatRelativeTime(r.createdAt)}
                 </span>
               )

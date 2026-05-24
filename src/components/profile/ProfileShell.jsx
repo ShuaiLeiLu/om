@@ -68,7 +68,7 @@ function ProfileMobileTabbar({ active }) {
     <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-ink-700/10 bg-rice-50/95 px-2 pb-safe backdrop-blur-xl lg:hidden">
       {items.map((item) => {
         const Icon = item.icon
-        const isActive = item.id === active || (item.id === 'profile' && ['redeem', 'recharge'].includes(active))
+        const isActive = item.id === active || (item.id === 'profile' && ['redeem', 'recharge', 'rewards', 'profile'].includes(active))
         return (
           <Link
             key={item.id}
