@@ -29,9 +29,20 @@ async function readJson(res) {
 }
 
 function apiUrl(path) {
-  const base = process.env.NEXT_PUBLIC_IMAGE_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || ''
-  if (!base) return path
-  return `${base.replace(/\/$/, '')}${path}`
+  // Keep image calls on the same origin as the app so they use the Next.js
+  // /api rewrite, cookies, and CSRF token exactly like the rest of the frontend.
+  return path
+}
+
+async function fetchImageApi(path, init) {
+  try {
+    return await fetch(apiUrl(path), init)
+  } catch (err) {
+    if (err?.name === 'AbortError' || err?.name === 'TimeoutError') {
+      throw new Error('图片接口响应超时，请稍后重试')
+    }
+    throw new Error('图片接口连接失败，请确认前后端服务已启动，并从同一个地址访问页面')
+  }
 }
 
 function parseError(status, data) {
@@ -53,7 +64,7 @@ function parseError(status, data) {
 
 export async function generateImageRequest(payload, { signal } = {}) {
   const csrf = readCsrfCookie()
-  const res = await fetch(apiUrl('/api/images/generations'), {
+  const res = await fetchImageApi('/api/images/generations', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
@@ -92,7 +103,7 @@ export async function editImageRequest(payload, { signal } = {}) {
       signal
     }
   }
-  const res = await fetch(apiUrl('/api/images/edits'), init)
+  const res = await fetchImageApi('/api/images/edits', init)
   const data = await readJson(res)
   if (!res.ok) throw new Error(parseError(res.status, data))
   return data

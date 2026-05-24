@@ -361,11 +361,15 @@ export class ChatImageService {
     fallbackMime: string,
     requestId: string
   ): Promise<PersistedImageResult[]> {
-    if (this.config.get<string>('IMAGE_BACKEND') !== 'minio') return images.map((url) => ({ url }))
-
     const persisted: PersistedImageResult[] = []
     for (const image of images) {
       const decoded = await this.imageToBuffer(image, fallbackMime)
+      if (this.config.get<string>('IMAGE_BACKEND') !== 'minio') {
+        persisted.push({
+          url: `data:${decoded.contentType};base64,${decoded.buffer.toString('base64')}`
+        })
+        continue
+      }
       const stored = await this.images.ingestFromBuffer({
         userId,
         buffer: decoded.buffer,
