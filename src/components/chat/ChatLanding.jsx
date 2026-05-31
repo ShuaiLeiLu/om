@@ -59,7 +59,7 @@ export function ChatLanding({
             )}
           </h1>
           <p className="mt-3 max-w-xl text-xs sm:text-sm text-ink-500 leading-relaxed">
-            选择一个厂商开始对话，系统会自动使用该厂商的默认最新模型。或者前往
+            选择一个厂商，再挑选要使用的具体模型。或者前往
             <Link
               href="/image"
               className="mx-1 inline-flex items-center gap-1 text-celadon-700 font-semibold underline-offset-4 hover:text-celadon-500 hover:underline transition-colors"
@@ -116,7 +116,7 @@ export function ChatLanding({
                 ? '模型列表加载失败'
                 : showEmpty
                   ? '当前没有可用模型'
-                  : `共 ${providers.length} 个厂商可用，每个厂商已自动选择默认模型`}
+                  : `共 ${providers.length} 个厂商可用，可进入厂商查看全部对话模型`}
           </p>
         </div>
         {(showError || (!loadingModels && providers.length > 0)) && onRetry && (

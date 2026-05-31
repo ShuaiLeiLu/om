@@ -1,52 +1,51 @@
 const providerMeta = {
   openai: {
     name: 'OpenAI',
-    logo: '/images/openai.png',
-    initial: 'O',
-    color: '#10a37f',
+    initial: 'AI',
+    color: '#1F6B66',
     description: 'GPT 系列模型'
   },
   gemini: {
     name: 'Gemini',
-    logo: '/images/gemini.png',
     initial: 'G',
-    color: '#4285f4',
+    color: '#5C6BC0',
     description: 'Google Gemini 系列模型'
   },
   zhipu: {
     name: '智谱AI',
-    logo: '/images/zhipu.png',
     initial: '智',
-    color: '#3b5df5',
+    color: '#4F6FBD',
     description: 'GLM 系列模型'
   },
   deepseek: {
     name: 'DeepSeek',
-    logo: '/images/deepseek.png',
     initial: 'D',
-    color: '#4d6bfe',
+    color: '#214F4B',
     description: 'DeepSeek 系列模型'
   },
   qwen: {
     name: '通义千问',
-    logo: '/images/qwen.png',
     initial: '千',
-    color: '#615ced',
+    color: '#7B6BBF',
     description: '阿里云通义千问'
   },
   moonshot: {
     name: 'Moonshot',
-    logo: '/images/moonshot.png',
     initial: 'K',
-    color: '#000000',
+    color: '#2B2A33',
     description: 'Kimi 系列模型'
   },
   grok: {
     name: 'Grok',
-    logo: '/images/grok.svg',
     initial: 'G',
-    color: '#1d9bf0',
+    color: '#2F6F9F',
     description: 'xAI Grok 系列模型'
+  },
+  midjourney: {
+    name: 'Midjourney',
+    initial: 'M',
+    color: '#6d5dfc',
+    description: 'Midjourney 图片生成'
   }
 }
 

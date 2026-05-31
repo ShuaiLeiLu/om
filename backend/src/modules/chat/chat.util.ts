@@ -41,30 +41,15 @@ export async function readJsonBody(res: globalThis.Response) {
 
 export function gatewayKeyForRequest(
   config: ConfigService,
-  requestId: string,
-  options: { image?: boolean } = {}
+  _requestId: string,
+  options: { image?: boolean; model?: string } = {}
 ) {
-  const configuredKeys = options.image
-    ? config.get<string>('SUB2API_IMAGE_GATEWAY_API_KEYS') ||
-      config.get<string>('SUB2API_IMAGE_GATEWAY_API_KEY') ||
+  if (options.image) {
+    return config.get<string>('SUB2API_IMAGE_GATEWAY_API_KEY') ||
       config.get<string>('SUB2API_GATEWAY_API_KEY') ||
-      config.get<string>('SUB2API_GATEWAY_API_KEYS') ||
       ''
-    : config.get<string>('SUB2API_GATEWAY_API_KEYS') || ''
-  const keys = configuredKeys
-    .split(',')
-    .map((key) => key.trim())
-    .filter(Boolean)
-  const fallback = options.image
-    ? config.get<string>('SUB2API_IMAGE_GATEWAY_API_KEY') ||
-      config.get<string>('SUB2API_GATEWAY_API_KEY')
-    : config.get<string>('SUB2API_GATEWAY_API_KEY')
-  if (fallback) keys.push(fallback)
-  if (keys.length === 0) return ''
-
-  // Keep selection deterministic per request so retries use the same upstream key.
-  const index = [...requestId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % keys.length
-  return keys[index]
+  }
+  return config.get<string>('SUB2API_GATEWAY_API_KEY') || ''
 }
 
 export function upstreamErrorMessage(data: unknown, status: number) {
@@ -77,6 +62,10 @@ export function upstreamErrorMessage(data: unknown, status: number) {
     }
     const message = obj.message
     if (typeof message === 'string' && message) return message
+    const description = obj.description
+    if (typeof description === 'string' && description) return description
+    const failReason = obj.failReason
+    if (typeof failReason === 'string' && failReason) return failReason
   }
   return `sub2api_http_${status}`
 }

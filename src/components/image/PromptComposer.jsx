@@ -84,7 +84,7 @@ export function PromptComposer({ onGenerate, isGenerating, modelName, error }) {
             variant="gradient"
             size="md"
             className={cn(
-              'relative z-10 shrink-0 w-full min-h-[42px] sm:min-h-[44px] sm:w-auto font-semibold active:scale-[0.96] transition-all duration-300 hover:scale-[1.02]',
+              'relative shrink-0 w-full min-h-[42px] sm:min-h-[44px] sm:w-auto font-semibold active:scale-[0.96] transition-all duration-300 hover:scale-[1.02]',
               isGenerating && 'pointer-events-none'
             )}
           >

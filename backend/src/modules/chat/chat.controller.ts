@@ -104,6 +104,18 @@ export class ChatController {
     })
   }
 
+  @Get('images/generated/:token')
+  generatedImage(
+    @CurrentUser() user: { id: string },
+    @Param('token') token: string,
+    @Res() res: Response
+  ) {
+    const image = this.chatImage.generatedImageForUser(user.id, token)
+    res.setHeader('Content-Type', image.contentType)
+    res.setHeader('Cache-Control', 'private, max-age=1800')
+    res.send(image.buffer)
+  }
+
   @Throttle({ medium: { limit: 10, ttl: 60_000 } })
   @Post('images/edits')
   @UseInterceptors(

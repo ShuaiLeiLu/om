@@ -9,43 +9,34 @@ export function ProviderGrid({ providers, onSelect, loading }) {
       {providers.map((p) => {
         const count = p.models?.length || 0
         const model = p.models?.[0]
-        const isDeepseek = p.id === 'deepseek'
         const isFlagship = p.id === 'openai' || p.id === 'deepseek' || String(model?.name).toLowerCase().includes('gpt-4') || String(model?.name).toLowerCase().includes('gpt-5')
         const disabled = loading || count === 0
 
         // Custom badges and pricing per design spec
         let badgeText = '对话'
         let badgeClass = 'chip-ink text-[10px] py-0.5 px-2'
-        let priceText = '·10 / 千 token'
 
         if (p.id === 'openai') {
           badgeText = '旗舰'
           badgeClass = 'chip-verm text-[10px] py-0.5 px-2'
-          priceText = '·40 / 千 token'
         } else if (p.id === 'deepseek') {
           badgeText = '推理'
           badgeClass = 'chip text-[10px] py-0.5 px-2'
-          priceText = '·5 / 千 token'
         } else if (p.id === 'qwen') {
           badgeText = '热门'
           badgeClass = 'chip-gold text-[10px] py-0.5 px-2'
-          priceText = '·8 / 千 token'
         } else if (p.id === 'zhipu') {
           badgeText = '长文'
           badgeClass = 'chip text-[10px] py-0.5 px-2'
-          priceText = '·6 / 千 token'
         } else if (p.id === 'moonshot') {
           badgeText = '200万'
           badgeClass = 'chip text-[10px] py-0.5 px-2'
-          priceText = '·12 / 千 token'
         } else if (p.id === 'gemini') {
           badgeText = '智能'
           badgeClass = 'chip text-[10px] py-0.5 px-2'
-          priceText = '·15 / 千 token'
         } else if (p.id === 'grok') {
           badgeText = '新锐'
           badgeClass = 'chip-gold text-[10px] py-0.5 px-2'
-          priceText = '·25 / 千 token'
         }
 
         return (
@@ -65,10 +56,9 @@ export function ProviderGrid({ providers, onSelect, loading }) {
             <div className="relative flex items-center justify-between gap-2">
               <div
                 className={cn(
-                  'logo-dot shrink-0 border border-ink-700/10 sm:h-11 sm:w-11',
-                  isDeepseek ? 'bg-[#103D3B]' : ''
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-ink-700/10 text-xs font-semibold text-rice-50 shadow-[0_10px_24px_-16px_rgba(20,18,12,.55)] sm:h-11 sm:w-11 sm:text-sm'
                 )}
-                style={!isDeepseek ? { background: p.color } : undefined}
+                style={{ background: `linear-gradient(135deg, ${p.color || '#1F6B66'}, ${p.color || '#1F6B66'}cc)` }}
               >
                 {p.logo ? (
                   <img
@@ -77,7 +67,7 @@ export function ProviderGrid({ providers, onSelect, loading }) {
                     className="h-5 w-5 object-contain sm:h-6 sm:w-6"
                   />
                 ) : (
-                  <span className="text-[11px] font-bold text-rice-50 sm:text-xs">
+                  <span className="tracking-normal">
                     {p.initial}
                   </span>
                 )}
@@ -100,10 +90,7 @@ export function ProviderGrid({ providers, onSelect, loading }) {
               {model?.remark || p.description}
             </p>
 
-            <div className="relative mt-3 flex items-center justify-between text-[11px]">
-              <span className="text-celadon-700 font-mono">
-                {count > 0 ? priceText : '暂未配置'}
-              </span>
+            <div className="relative mt-3 flex items-center justify-end text-[11px]">
               <ArrowRight
                 size={13}
                 className="text-ink-400 transition-transform group-hover:translate-x-0.5 group-hover:text-celadon-700"

@@ -13,6 +13,7 @@ import { describeSize } from '@/lib/image/size'
 import {
   listTasks,
   upsertTask,
+  markStaleRunningTasks,
   cleanOrphanImages,
   putImage,
   getImage
@@ -22,7 +23,8 @@ import {
   generateImageRequest,
   editImageRequest,
   urlToBlob,
-  getImageDimensions
+  getImageDimensions,
+  splitMidjourneyGrid
 } from '@/lib/image/api'
 import { ToastProvider, useToast } from '@/components/ui/toast'
 import ImageHero from '@/components/image/ImageHero'
@@ -32,6 +34,7 @@ import ParamsDrawer from '@/components/image/ParamsDrawer'
 import ReferenceUploader from '@/components/image/ReferenceUploader'
 import TaskGallery from '@/components/image/TaskGallery'
 import TaskDetailDialog from '@/components/image/TaskDetailDialog'
+import ImageModelPicker from '@/components/image/ImageModelPicker'
 import { imageCountLimitText, isValidImageSize, normalizeImageCount } from '@/lib/image/size'
 
 function ImagePageInner() {
@@ -98,6 +101,10 @@ function ImagePageInner() {
   useEffect(() => {
     ;(async () => {
       try {
+        const stale = await markStaleRunningTasks()
+        if (stale > 0) console.info(`[image] marked ${stale} stale running tasks`)
+        const split = await splitExistingMidjourneyGrids()
+        if (split > 0) console.info(`[image] split ${split} Midjourney grid tasks`)
         const cleaned = await cleanOrphanImages()
         if (cleaned > 0) console.info(`[image] cleaned ${cleaned} orphan images`)
         const tasks = await listTasks()
@@ -107,6 +114,41 @@ function ImagePageInner() {
       }
     })()
   }, [setTaskIndex])
+
+  async function splitExistingMidjourneyGrids() {
+    const tasks = await listTasks()
+    let updated = 0
+    for (const task of tasks) {
+      if (task.modelId !== 'midjourney' || task.status !== 'done' || task.outputs?.length !== 1) continue
+      const source = await getImage(task.outputs[0])
+      if (!source?.blob) continue
+      const parts = await splitMidjourneyGrid(source.blob, source.blob.type || source.type || 'image/png')
+      if (parts.length !== 4) continue
+      const hashes = []
+      for (const blob of parts) {
+        let dim = { width: null, height: null }
+        try {
+          dim = await getImageDimensions(blob)
+        } catch {}
+        const hash = await sha256Hex(blob)
+        await putImage({
+          hash,
+          blob,
+          type: blob.type || source.type || 'image/png',
+          width: dim.width,
+          height: dim.height
+        })
+        hashes.push(hash)
+      }
+      await upsertTask({
+        ...task,
+        outputs: hashes,
+        params: { ...(task.params || {}), midjourneyGridSplit: true }
+      })
+      updated += 1
+    }
+    return updated
+  }
 
   const imageModels = useMemo(() => {
     return providers.flatMap((p) =>
@@ -142,6 +184,9 @@ function ImagePageInner() {
     }
     if (!prompt.trim()) return setError('请填写提示词')
     if (!modelId) return setError('请选择图片生成模型')
+    if (refs.length > 0 && modelId === 'midjourney') {
+      return setError('MJ 生图暂不支持参考图，请切换到 GPT Image 2')
+    }
     if (!isValidImageSize(params.size)) return setError('当前尺寸不符合 image2 支持范围')
 
     const imageCount = normalizeImageCount(params.n, params.size)
@@ -203,22 +248,28 @@ function ImagePageInner() {
 
       const outputHashes = []
       const images = Array.isArray(result?.images) ? result.images : []
+      const shouldSplitGrid = modelId === 'midjourney'
       for (const src of images) {
         try {
           const blob = await urlToBlob(src)
-          let dim = { width: null, height: null }
-          try {
-            dim = await getImageDimensions(blob)
-          } catch {}
-          const hash = await sha256Hex(blob)
-          await putImage({
-            hash,
-            blob,
-            type: blob.type || `image/${params.output_format}`,
-            width: dim.width,
-            height: dim.height
-          })
-          outputHashes.push(hash)
+          const blobs = shouldSplitGrid
+            ? await splitMidjourneyGrid(blob, blob.type || `image/${params.output_format}`)
+            : [blob]
+          for (const outputBlob of blobs) {
+            let dim = { width: null, height: null }
+            try {
+              dim = await getImageDimensions(outputBlob)
+            } catch {}
+            const hash = await sha256Hex(outputBlob)
+            await putImage({
+              hash,
+              blob: outputBlob,
+              type: outputBlob.type || blob.type || `image/${params.output_format}`,
+              width: dim.width,
+              height: dim.height
+            })
+            outputHashes.push(hash)
+          }
         } catch (err) {
           console.warn('[image] failed to save output', err)
         }
@@ -274,19 +325,14 @@ function ImagePageInner() {
         <div className="w-full px-4 py-5 sm:px-6 md:px-8 lg:px-10 md:py-8">
           <ImageHero isAuthenticated={isAuthenticated} isAuthLoading={isAuthLoading} taskCount={taskIndex.length} />
 
-          {/* Default image model + mobile params row */}
+          {/* Image model + mobile params row */}
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="flex h-8 items-center gap-1.5 rounded-lg border border-ink-700/10 bg-rice-50 px-2.5 text-xs text-ink-900 shadow-[var(--shadow-paper)] sm:h-9 sm:px-3 sm:text-sm">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: selectedModel?.color || '#1F6B66' }}
-                />
-                <span className="truncate font-medium">{selectedModel?.name || '自动选择'}</span>
-                {selectedModel?.providerName && (
-                  <span className="hidden text-[10px] text-ink-500 sm:inline">{selectedModel.providerName}</span>
-                )}
-              </div>
+              <ImageModelPicker
+                models={imageModels}
+                value={modelId}
+                onChange={setModelId}
+              />
             </div>
             <button
               onClick={() => setParamsDrawerOpen(true)}

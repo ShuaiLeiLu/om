@@ -64,7 +64,7 @@ async function fetchImageApi(path, init) {
     if (err?.name === 'AbortError' || err?.name === 'TimeoutError') {
       throw new Error('图片接口响应超时，请稍后重试')
     }
-    throw new Error('图片接口连接失败，请确认前后端服务已启动，并从同一个地址访问页面')
+    throw new Error('图片接口连接中断，请稍后刷新任务列表后重试')
   }
 }
 
@@ -75,6 +75,8 @@ function parseError(status, data) {
   if (message === 'token_insufficient') return '算力点不足'
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'image_generation_not_enabled') return '当前网关分组未开启图片生成'
+  if (message === 'image_generation_timeout') return detail || '上游图片服务响应超时，请稍后重试'
+  if (message === 'midjourney_reference_images_not_supported') return 'MJ 生图暂不支持参考图，请先移除参考图'
   if (message === 'upstream_error') return detail || '上游图片服务返回错误'
   if (message === 'invalid_size') return '尺寸不支持：image2 要求宽高为 16 的倍数、比例 1:3 到 3:1、最高 3840×2160'
   if (message === 'invalid_n') return '生成数量不支持：单次最多生成 4 张'
@@ -135,7 +137,8 @@ export async function editImageRequest(payload, { signal } = {}) {
 // Convert an arbitrary image URL/dataURL into a Blob (handles both data: and http(s):).
 export async function urlToBlob(url) {
   if (!url) throw new Error('empty url')
-  const res = await fetch(url)
+  const target = typeof url === 'string' && url.startsWith('/api/') ? apiUrl(url) : url
+  const res = await fetch(target, { credentials: 'include' })
   if (!res.ok) throw new Error(`fetch failed: ${res.status}`)
   return res.blob()
 }
@@ -173,4 +176,33 @@ export async function getImageDimensions(blobOrUrl) {
     }
     img.src = url
   })
+}
+
+export async function splitMidjourneyGrid(blob, outputType = 'image/png') {
+  if (!blob) return []
+  const bitmap = await createImageBitmap(blob)
+  try {
+    const cellWidth = Math.floor(bitmap.width / 2)
+    const cellHeight = Math.floor(bitmap.height / 2)
+    if (cellWidth < 16 || cellHeight < 16) return [blob]
+    const crops = []
+    for (const [x, y] of [[0, 0], [cellWidth, 0], [0, cellHeight], [cellWidth, cellHeight]]) {
+      const canvas = document.createElement('canvas')
+      canvas.width = cellWidth
+      canvas.height = cellHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return [blob]
+      ctx.drawImage(bitmap, x, y, cellWidth, cellHeight, 0, 0, cellWidth, cellHeight)
+      const crop = await new Promise((resolve, reject) => {
+        canvas.toBlob((nextBlob) => {
+          if (nextBlob) resolve(nextBlob)
+          else reject(new Error('split_grid_failed'))
+        }, outputType)
+      })
+      crops.push(crop)
+    }
+    return crops
+  } finally {
+    bitmap.close?.()
+  }
 }

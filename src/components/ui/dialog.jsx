@@ -29,7 +29,7 @@ export function Dialog({ open, onClose, size = 'lg', children }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6">
       <button
         type="button"
         aria-label="关闭弹窗"

@@ -9,6 +9,7 @@ import ChatComposer from '@/components/chat/ChatComposer'
 import MessageBubble from '@/components/chat/MessageBubble'
 import ChatLanding from '@/components/chat/ChatLanding'
 import StarterPrompts from '@/components/chat/StarterPrompts'
+import ModelPickerView from '@/components/chat/ModelPickerView'
 import { decorateProvider } from '@/lib/config'
 import { isImageGenerationModel } from '@/lib/model-badges'
 import { sendMessage, fileToBase64, fetchModels, fetchMe, fetchQuotaSummary } from '@/lib/api'
@@ -83,7 +84,7 @@ function ChatPageInner() {
           .map(decorateProvider)
           .map((provider) => ({
             ...provider,
-            models: (provider.models || []).filter((model) => !isImageGenerationModel(model)).slice(0, 1)
+            models: (provider.models || []).filter((model) => !isImageGenerationModel(model))
           }))
           .filter((p) => p.models.length > 0)
         setProviders(decorated)
@@ -127,11 +128,16 @@ function ChatPageInner() {
     const model = provider?.models?.[0]
     if (!model) return
     setSelectedProvider(provider)
+    setSelectedModel(null)
+  }
+
+  const handleSelectModel = (model) => {
+    if (!selectedProvider || !model) return
     setSelectedModel(model)
     const convId = `conv_${Date.now()}`
     addConversation({
       id: convId,
-      providerId: provider.id,
+      providerId: selectedProvider.id,
       modelId: model.id,
       modelName: model.name,
       title: '新对话',
@@ -259,15 +265,28 @@ function ChatPageInner() {
           /* ====== Landing ====== */
           <div className="flex-1 overflow-y-auto scrollbar-thin pl-safe pr-safe">
             <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-14">
-              <ChatLanding
-                providers={providers}
-                loadingModels={loadingModels}
-                modelsError={modelsError}
-                isAuthenticated={isAuthenticated}
-                user={user}
-                onSelectProvider={handleSelectProvider}
-                onRetry={loadModels}
-              />
+              {selectedProvider ? (
+                <ModelPickerView
+                  provider={selectedProvider}
+                  models={selectedProvider.models || []}
+                  loading={loadingModels}
+                  onBack={() => {
+                    setSelectedProvider(null)
+                    setSelectedModel(null)
+                  }}
+                  onPick={handleSelectModel}
+                />
+              ) : (
+                <ChatLanding
+                  providers={providers}
+                  loadingModels={loadingModels}
+                  modelsError={modelsError}
+                  isAuthenticated={isAuthenticated}
+                  user={user}
+                  onSelectProvider={handleSelectProvider}
+                  onRetry={loadModels}
+                />
+              )}
             </div>
           </div>
         ) : (

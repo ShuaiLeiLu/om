@@ -10,6 +10,7 @@ const DB_NAME = 'chatty-image-playground'
 const DB_VERSION = 1
 const STORE_TASKS = 'tasks'
 const STORE_IMAGES = 'images'
+const DEFAULT_STALE_RUNNING_TASK_MS = 20 * 60 * 1000
 
 let dbPromise = null
 
@@ -68,6 +69,26 @@ export async function upsertTask(task) {
   const store = await tx(STORE_TASKS, 'readwrite')
   await reqToPromise(store.put(task))
   return task
+}
+
+export async function markStaleRunningTasks(maxAgeMs = DEFAULT_STALE_RUNNING_TASK_MS) {
+  const tasks = await listTasks()
+  const cutoff = Date.now() - maxAgeMs
+  const stale = tasks.filter((task) =>
+    (task.status === 'running' || task.status === 'pending') &&
+    Number(task.createdAt || 0) > 0 &&
+    Number(task.createdAt) < cutoff
+  )
+  if (stale.length === 0) return 0
+  const store = await tx(STORE_TASKS, 'readwrite')
+  await Promise.all(stale.map((task) => reqToPromise(store.put({
+    ...task,
+    status: 'failed',
+    error: task.error || '生成中断，请重新生成',
+    finishedAt: task.finishedAt || Date.now(),
+    durationMs: task.durationMs || Math.max(0, Date.now() - Number(task.createdAt || Date.now()))
+  }))))
+  return stale.length
 }
 
 export async function deleteTask(id) {
