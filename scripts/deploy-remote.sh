@@ -18,9 +18,9 @@ DEPLOY_NETWORK="${DEPLOY_NETWORK:-deploy_default}"
 LOCAL_ROOT="${LOCAL_ROOT:-$(pwd)}"
 TAR_PATH="${TAR_PATH:-/tmp/chatty-release.tar.gz}"
 
-APP_ORIGIN="${APP_ORIGIN:-https://aihelp.shuai.help}"
+APP_ORIGIN="${APP_ORIGIN:-https://om.shuai.help}"
 BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-https://aihelp-backend.shuai.help/api/health}"
-FRONTEND_HEALTH_URL="${FRONTEND_HEALTH_URL:-https://aihelp.shuai.help}"
+FRONTEND_HEALTH_URL="${FRONTEND_HEALTH_URL:-https://om.shuai.help}"
 
 SKIP_MIGRATE="${SKIP_MIGRATE:-false}"
 SKIP_BUILD="${SKIP_BUILD:-false}"

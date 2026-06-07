@@ -11,7 +11,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      APP_ORIGIN: https://aihelp.shuai.help
+      APP_ORIGIN: https://om.shuai.help
     expose:
       - "3001"
     ports:
