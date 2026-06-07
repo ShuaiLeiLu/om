@@ -8,7 +8,7 @@ import {
   fetchAdminLlmRequests,
   fetchAdminModels,
   fetchAdminPlans,
-  fetchAdminQuotaLedger,
+  fetchAdminPointsLedger,
   fetchAdminRedeemCodes,
   fetchAdminRechargeOrders,
   fetchAdminRewardConfig,
@@ -69,7 +69,7 @@ export function useAdminData(activeTab, isAuthed) {
           const [dashboard, requests, ledger, rewardEvents] = await Promise.all([
             fetchAdminDashboard(),
             fetchAdminLlmRequests({ pageSize: 8 }),
-            fetchAdminQuotaLedger({ pageSize: 8 }),
+            fetchAdminPointsLedger({ pageSize: 8 }),
             fetchAdminRewardEvents().catch(() => [])
           ])
           setData((d) => ({
@@ -104,7 +104,7 @@ export function useAdminData(activeTab, isAuthed) {
           })
           setData((d) => ({ ...d, requests: arrayOf(res) }))
         } else if (tab === 'ledger') {
-          const res = await fetchAdminQuotaLedger({
+          const res = await fetchAdminPointsLedger({
             type: f.ledger.type,
             page: f.ledger.page,
             pageSize: 40

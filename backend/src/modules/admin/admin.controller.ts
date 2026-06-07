@@ -56,9 +56,9 @@ export class AdminController {
   }
 
   @UseGuards(AdminSessionGuard)
-  @Post('users/:id/quota-adjust')
-  adjustQuota(@CurrentAdmin() admin: { id: string }, @Param('id') id: string, @Body() body: { tokens?: string | number; validDays?: number; remark?: string }) {
-    return this.admin.adjustQuota(admin.id, id, body)
+  @Post('users/:id/points-adjust')
+  adjustPoints(@CurrentAdmin() admin: { id: string }, @Param('id') id: string, @Body() body: { points?: string | number; remark?: string }) {
+    return this.admin.adjustPoints(admin.id, id, body)
   }
 
   @UseGuards(AdminSessionGuard)
@@ -68,9 +68,9 @@ export class AdminController {
   }
 
   @UseGuards(AdminSessionGuard)
-  @Get('quota-ledger')
-  quotaLedger(@Query() query: { userId?: string; type?: string; page?: string; pageSize?: string }) {
-    return this.admin.listQuotaLedger(query)
+  @Get('points-ledger')
+  pointsLedger(@Query() query: { userId?: string; type?: string; page?: string; pageSize?: string }) {
+    return this.admin.listPointLedger(query)
   }
 
   @UseGuards(AdminSessionGuard)

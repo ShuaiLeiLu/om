@@ -1,20 +1,20 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common'
 import { CurrentUser } from '../../common/current-user'
 import { UserSessionGuard } from '../../common/session.guard'
-import { QuotaService } from './quota.service'
+import { PointsService } from './points.service'
 
 @UseGuards(UserSessionGuard)
-@Controller('quota')
-export class QuotaController {
-  constructor(private readonly quota: QuotaService) {}
+@Controller('points')
+export class PointsController {
+  constructor(private readonly points: PointsService) {}
 
   @Get('summary')
   summary(@CurrentUser() user: { id: string }) {
-    return this.quota.summary(user.id)
+    return this.points.summary(user.id)
   }
 
   @Get('ledger')
   ledger(@CurrentUser() user: { id: string }, @Query() query: { page?: string; pageSize?: string }) {
-    return this.quota.ledger(user.id, query)
+    return this.points.ledger(user.id, query)
   }
 }

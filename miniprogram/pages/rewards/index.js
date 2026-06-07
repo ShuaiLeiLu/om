@@ -98,8 +98,8 @@ Page({
     }
 
     return {
-      balanceText: formatNumber((userInfo && userInfo.tokenBalance) || 0),
-      rewardText: formatNumber((rewardConfig && rewardConfig.rewardTokens) || 0),
+      balanceText: formatNumber((userInfo && userInfo.pointsBalance) || 0),
+      rewardText: formatNumber((rewardConfig && rewardConfig.rewardPoints) || 0),
       remainingText: formatNumber(remaining),
       limitText: formatNumber(limit),
       progressPercent: progress(remaining, limit),
@@ -136,10 +136,10 @@ Page({
         data: { rewardSessionId: session.rewardSessionId }
       });
 
-      const reward = result.rewardTokens || (this.data.rewardConfig && this.data.rewardConfig.rewardTokens) || 0;
+      const reward = result.rewardPoints || (this.data.rewardConfig && this.data.rewardConfig.rewardPoints) || 0;
       wx.showModal({
         title: '算力点 已到账',
-        content: '本次获得 ' + formatNumber(reward) + ' tokens',
+        content: '本次获得 ' + formatNumber(reward) + ' 算力点',
         showCancel: false,
         confirmText: '好的',
         confirmColor: '#a855f7'

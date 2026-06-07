@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Coins, Gift, History, LogOut, PlayCircle, RefreshCw, ShieldCheck, Sparkles, Ticket } from 'lucide-react'
-import { fetchMe, fetchQuotaLedger, fetchQuotaSummary, logout } from '@/lib/api'
+import { fetchMe, fetchPointsLedger, fetchPointsSummary, logout } from '@/lib/api'
 import { useAuthStore } from '@/store/useStore'
 import { cn } from '@/lib/utils'
 import ProfileShell from '@/components/profile/ProfileShell'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, quota, setSession, clearSession } = useAuthStore()
+  const { user, points, setSession, clearSession } = useAuthStore()
   const [ledger, setLedger] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -20,19 +20,17 @@ export default function ProfilePage() {
     refresh()
   }, [])
 
-  const balance = useMemo(() => formatToken(quota?.tokenBalance || 0), [quota])
-  const expiringSoon = useMemo(() => formatToken(quota?.expiringSoonTokens || 0), [quota])
-
+  const balance = useMemo(() => formatToken(points?.pointsBalance || 0), [points])
   async function refresh() {
     try {
       setLoading(true)
       setError('')
-      const [nextUser, nextQuota, nextLedger] = await Promise.all([
+      const [nextUser, nextPoints, nextLedger] = await Promise.all([
         fetchMe(),
-        fetchQuotaSummary(),
-        fetchQuotaLedger({ pageSize: 30 })
+        fetchPointsSummary(),
+        fetchPointsLedger({ pageSize: 30 })
       ])
-      setSession({ user: nextUser, quota: nextQuota })
+      setSession({ user: nextUser, points: nextPoints })
       setLedger(nextLedger)
     } catch (err) {
       if (String(err.message || '').includes('请先登录')) {
@@ -120,8 +118,8 @@ export default function ProfilePage() {
                     <span className="text-rice-50/80 max-w-[150px] truncate block">{user?.id || 'SYNCING...'}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[8px] text-rice-50/50 block uppercase tracking-wider font-semibold">Expiring (7d)</span>
-                    <span className="text-gold-400 font-bold">{expiringSoon}</span>
+                    <span className="text-[8px] text-rice-50/50 block uppercase tracking-wider font-semibold">Point Unit</span>
+                    <span className="text-gold-400 font-bold">积分</span>
                   </div>
                 </div>
               </div>
@@ -188,7 +186,7 @@ function LedgerSection({ error, loading, ledger }) {
           ) : (
             <div className="overflow-hidden rounded-2xl border border-ink-700/10 bg-rice-50">
               {ledger.map((item) => {
-                const isPositive = Number(item.deltaTokens || 0) >= 0
+                const isPositive = Number(item.deltaPoints || 0) >= 0
                 return (
                   <div key={item.id} className="grid min-h-12 gap-3 border-b border-rice-200 px-4 py-3.5 last:border-b-0 sm:grid-cols-[1fr_auto_auto] sm:items-center transition-colors duration-200 hover:bg-rice-100">
                     <div className="min-w-0">
@@ -199,7 +197,7 @@ function LedgerSection({ error, loading, ledger }) {
                       'text-sm font-mono font-bold leading-none',
                       isPositive ? 'text-celadon-700' : 'text-verm-600'
                     )}>
-                      {isPositive ? '+' : ''}{formatToken(item.deltaTokens)}
+                      {isPositive ? '+' : ''}{formatToken(item.deltaPoints)}
                     </p>
                     <p className="text-[10px] font-medium text-ink-500 sm:text-right">{formatDate(item.createdAt)}</p>
                   </div>

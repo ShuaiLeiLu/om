@@ -43,7 +43,7 @@
   color: #6b7280;
 }
 
-.quota-row {
+.points-row {
   display: flex;
   justify-content: space-between;
   font-size: 24rpx;
@@ -106,4 +106,3 @@
   line-height: 1.6;
   flex: 1;
 }
-

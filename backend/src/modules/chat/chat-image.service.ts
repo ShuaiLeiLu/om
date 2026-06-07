@@ -10,8 +10,8 @@ import { ConfigService } from '@nestjs/config'
 import { randomToken } from '../../common/http'
 import { ImagesService } from '../images/images.service'
 import { ModelsService } from '../models/models.service'
+import { PointsService } from '../points/points.service'
 import { PrismaService } from '../prisma/prisma.service'
-import { QuotaService } from '../quota/quota.service'
 import { Sub2apiService } from '../sub2api/sub2api.service'
 import {
   asImageGenerationResponse,
@@ -112,7 +112,7 @@ export class ChatImageService implements OnModuleInit {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly quota: QuotaService,
+    private readonly points: PointsService,
     private readonly images: ImagesService,
     private readonly models: ModelsService,
     private readonly config: ConfigService,
@@ -165,8 +165,8 @@ export class ChatImageService implements OnModuleInit {
     this.validateImageParams(input)
     if (options.mode === 'edits') this.validateReferenceImages(input as ImageEditInput)
 
-    const balance = await this.quota.balance(userId)
-    if (balance <= BigInt(0)) throw new BadRequestException('token_insufficient')
+    const balance = await this.points.balance(userId)
+    if (balance <= BigInt(0)) throw new BadRequestException('points_insufficient')
     const model = await this.models.assertEnabled(input.model)
     if (!this.isImageModel(model)) throw new BadRequestException('model_disabled')
     const requestId = randomToken(18)

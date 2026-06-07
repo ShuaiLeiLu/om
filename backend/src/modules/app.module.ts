@@ -12,7 +12,7 @@ import { ImagesModule } from './images/images.module'
 import { MiniappAiModule } from './miniapp-ai/miniapp-ai.module'
 import { ModelsModule } from './models/models.module'
 import { PrismaModule } from './prisma/prisma.module'
-import { QuotaModule } from './quota/quota.module'
+import { PointsModule } from './points/points.module'
 import { RechargeModule } from './recharge/recharge.module'
 import { RedeemModule } from './redeem/redeem.module'
 import { RewardsModule } from './rewards/rewards.module'
@@ -33,7 +33,7 @@ import { WechatModule } from './wechat/wechat.module'
     HealthModule,
     AuthModule,
     WechatModule,
-    QuotaModule,
+    PointsModule,
     ImagesModule,
     RechargeModule,
     RedeemModule,

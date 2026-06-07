@@ -12,7 +12,7 @@ import StarterPrompts from '@/components/chat/StarterPrompts'
 import ModelPickerView from '@/components/chat/ModelPickerView'
 import { decorateProvider } from '@/lib/config'
 import { isImageGenerationModel } from '@/lib/model-badges'
-import { sendMessage, fileToBase64, fetchModels, fetchMe, fetchQuotaSummary } from '@/lib/api'
+import { sendMessage, fileToBase64, fetchModels, fetchMe, fetchPointsSummary } from '@/lib/api'
 import { ToastProvider, useToast } from '@/components/ui/toast'
 
 function isLocalConversationId(id) {
@@ -33,7 +33,7 @@ function ChatPageInner() {
     clearHistory
   } = useChatStore()
   const { selectedProvider, selectedModel, setSelectedProvider, setSelectedModel } = useModelStore()
-  const { isAuthenticated, user, quota, setAuthLoading, setSession, clearSession } = useAuthStore()
+  const { isAuthenticated, user, points, setAuthLoading, setSession, clearSession } = useAuthStore()
   const { toast } = useToast()
 
   const [input, setInput] = useState('')
@@ -57,12 +57,12 @@ function ChatPageInner() {
     fetchMe()
       .then(async (user) => {
         if (cancelled) return
-        setSession({ user, quota: null })
+        setSession({ user, points: null })
         try {
-          const quota = await fetchQuotaSummary()
-          if (!cancelled) setSession({ user, quota })
+          const points = await fetchPointsSummary()
+          if (!cancelled) setSession({ user, points })
         } catch (err) {
-          console.warn('[chat] quota refresh failed', err)
+          console.warn('[chat] points refresh failed', err)
         }
       })
       .catch(() => !cancelled && clearSession())
@@ -295,7 +295,7 @@ function ChatPageInner() {
             <ChatHeader
               provider={selectedProvider}
               model={selectedModel}
-              tokenBalance={quota?.tokenBalance}
+              pointsBalance={points?.pointsBalance}
               isStreaming={isLoading}
               onChangeModel={() => {
                 setActiveConversationId(null)

@@ -15,7 +15,7 @@ export default function AuditTab({ data, filters, setFilter }) {
       <FilterBar
         search={f.action}
         onSearchChange={(v) => setFilter('audit', { action: v, page: 1 })}
-        searchPlaceholder="按动作名筛选 e.g. quota_adjust"
+        searchPlaceholder="按动作名筛选 e.g. points_adjust"
       />
 
       <Card className="overflow-hidden">

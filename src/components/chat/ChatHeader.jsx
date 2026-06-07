@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 export function ChatHeader({
   provider,
   model,
-  tokenBalance,
+  pointsBalance,
   isStreaming,
   onChangeModel,
   onClearHistory,
@@ -79,11 +79,11 @@ export function ChatHeader({
       </button>
 
       <div className="flex shrink-0 items-center gap-2">
-        {tokenBalance != null && (
+        {pointsBalance != null && (
           <div className="hidden lg:flex items-center gap-1.5 rounded-xl border border-ink-700/10 bg-rice-50 px-3 py-1.5 shadow-[var(--shadow-paper)]">
             <Coins size={12} className="text-gold-600" />
             <span className="text-xs font-mono font-semibold text-ink-900">
-              {tokenBalance.toLocaleString('en-US')}
+              {pointsBalance.toLocaleString('en-US')}
             </span>
             <span className="text-[10px] text-ink-500 font-medium">算力点</span>
           </div>

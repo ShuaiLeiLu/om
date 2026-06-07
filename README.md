@@ -35,7 +35,7 @@ Chatty / 万模AI 是一个面向多模型 AI 服务的全栈应用，包含 Web
 │   └── store/            # Zustand 状态管理
 ├── backend/              # NestJS 后端服务
 │   ├── prisma/           # Prisma schema、迁移和 seed
-│   └── src/modules/      # auth、chat、images、admin、quota 等业务模块
+│   └── src/modules/      # auth、chat、images、admin、points 等业务模块
 ├── miniprogram/          # 微信小程序
 ├── docs/                 # 后端图片与 MinIO 相关设计文档
 ├── public/               # 静态资源
@@ -231,7 +231,7 @@ This repository is maintained with Chinese as the primary documentation language
 - [Image API documentation](docs/backend-image-api.md)
 - [MinIO integration plan](docs/backend-minio-plan.md)
 
-Chatty / Wanmo AI is a full-stack multi-model AI application with a Next.js web app, a NestJS backend, and a WeChat Mini Program. It supports multi-model chat, image generation, user authentication, quota and redemption workflows, rewarded ads, admin management, and Sub2API-based model gateway integration.
+Chatty / Wanmo AI is a full-stack multi-model AI application with a Next.js web app, a NestJS backend, and a WeChat Mini Program. It supports multi-model chat, image generation, user authentication, unified points and redemption workflows, rewarded ads, admin management, and Sub2API-based model gateway integration.
 
 Quick start:
 

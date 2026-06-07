@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { randomToken } from '../../common/http'
 import { PrismaService } from '../prisma/prisma.service'
-import { QuotaService } from '../quota/quota.service'
+import { PointsService } from '../points/points.service'
 import { WechatService } from '../wechat/wechat.service'
 
 @Injectable()
 export class RewardsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly quota: QuotaService,
+    private readonly points: PointsService,
     private readonly wechat: WechatService
   ) {}
 
@@ -23,10 +23,9 @@ export class RewardsService {
     return {
       enabled: config.enabled,
       adUnitId: config.adUnitId,
-      rewardTokens: config.rewardTokens.toString(),
+      rewardPoints: config.rewardPoints.toString(),
       dailyLimitPerUser: config.dailyLimitPerUser,
-      remainingToday: Math.max(0, config.dailyLimitPerUser - claimed),
-      rewardTokenValidDays: config.rewardTokenValidDays
+      remainingToday: Math.max(0, config.dailyLimitPerUser - claimed)
     }
   }
 
@@ -43,7 +42,7 @@ export class RewardsService {
         userId: mini.userId,
         openid: mini.openid,
         adUnitId: config.adUnitId,
-        rewardTokens: config.rewardTokens,
+        rewardPoints: config.rewardPoints,
         expiresAt: new Date(Date.now() + config.sessionTtlSeconds * 1000)
       }
     })
@@ -61,13 +60,11 @@ export class RewardsService {
 
     const config = await this.getConfig()
     await this.assertCanClaim(mini.userId, config.dailyLimitPerUser, config.minIntervalSeconds)
-    const result = await this.quota.grantTokens({
+    const result = await this.points.addPoints({
       userId: mini.userId,
-      source: 'ad_reward',
-      sourceId: reward.rewardSessionId,
-      tokens: reward.rewardTokens,
-      validDays: config.rewardTokenValidDays,
-      ledgerType: 'ad_reward',
+      points: reward.rewardPoints,
+      type: 'ad_reward',
+      relatedId: reward.rewardSessionId,
       remark: '激励视频广告奖励'
     })
     await this.prisma.adRewardSession.update({
@@ -77,7 +74,7 @@ export class RewardsService {
     await this.prisma.adRewardEvent.create({
       data: { rewardSessionId, userId: mini.userId, openid: mini.openid, eventType: 'claim', result: 'granted' }
     })
-    return { ok: true, rewardTokens: reward.rewardTokens.toString(), tokenBalance: result.tokenBalance }
+    return { ok: true, rewardPoints: reward.rewardPoints.toString(), pointsBalance: result.pointsBalance }
   }
 
   async webConfig(userId: string) {
@@ -90,10 +87,9 @@ export class RewardsService {
     return {
       enabled: config.enabled,
       adUnitId: config.adUnitId,
-      rewardTokens: config.rewardTokens.toString(),
+      rewardPoints: config.rewardPoints.toString(),
       dailyLimitPerUser: config.dailyLimitPerUser,
-      remainingToday: Math.max(0, config.dailyLimitPerUser - claimed),
-      rewardTokenValidDays: config.rewardTokenValidDays
+      remainingToday: Math.max(0, config.dailyLimitPerUser - claimed)
     }
   }
 
@@ -110,7 +106,7 @@ export class RewardsService {
         userId,
         openid,
         adUnitId: config.adUnitId,
-        rewardTokens: config.rewardTokens,
+        rewardPoints: config.rewardPoints,
         expiresAt: new Date(Date.now() + config.sessionTtlSeconds * 1000)
       }
     })
@@ -126,13 +122,11 @@ export class RewardsService {
 
     const config = await this.getConfig()
     await this.assertCanClaim(userId, config.dailyLimitPerUser, config.minIntervalSeconds)
-    const result = await this.quota.grantTokens({
+    const result = await this.points.addPoints({
       userId,
-      source: 'ad_reward',
-      sourceId: reward.rewardSessionId,
-      tokens: reward.rewardTokens,
-      validDays: config.rewardTokenValidDays,
-      ledgerType: 'ad_reward',
+      points: reward.rewardPoints,
+      type: 'ad_reward',
+      relatedId: reward.rewardSessionId,
       remark: '网页视频广告奖励'
     })
     await this.prisma.adRewardSession.update({
@@ -142,7 +136,7 @@ export class RewardsService {
     await this.prisma.adRewardEvent.create({
       data: { rewardSessionId, userId, openid: reward.openid, eventType: 'claim', result: 'granted' }
     })
-    return { ok: true, rewardTokens: reward.rewardTokens.toString(), tokenBalance: result.tokenBalance.toString() }
+    return { ok: true, rewardPoints: reward.rewardPoints.toString(), pointsBalance: result.pointsBalance.toString() }
   }
 
   async getCheckinStatus(userId: string) {
@@ -150,7 +144,7 @@ export class RewardsService {
     today.setHours(0, 0, 0, 0)
     const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
 
-    const checkins = await this.prisma.quotaLedger.findMany({
+    const checkins = await this.prisma.pointLedger.findMany({
       where: {
         userId,
         type: 'manual_adjustment',
@@ -204,7 +198,7 @@ export class RewardsService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const existing = await this.prisma.quotaLedger.findFirst({
+    const existing = await this.prisma.pointLedger.findFirst({
       where: {
         userId,
         type: 'manual_adjustment',
@@ -219,20 +213,18 @@ export class RewardsService {
     const status = await this.getCheckinStatus(userId)
     const rewardAmount = status.todayReward
 
-    const result = await this.quota.grantTokens({
+    const result = await this.points.addPoints({
       userId,
-      source: 'manual_adjustment',
-      sourceId: 'checkin_' + today.toISOString().split('T')[0],
-      tokens: BigInt(rewardAmount),
-      validDays: 7,
-      ledgerType: 'manual_adjustment',
+      points: BigInt(rewardAmount),
+      type: 'manual_adjustment',
+      relatedId: 'checkin_' + today.toISOString().split('T')[0],
       remark: '每日签到'
     })
 
     return {
       ok: true,
-      rewardTokens: rewardAmount,
-      tokenBalance: result.tokenBalance.toString(),
+      rewardPoints: rewardAmount,
+      pointsBalance: result.pointsBalance.toString(),
       streak: status.streak + 1
     }
   }
@@ -265,17 +257,8 @@ export class RewardsService {
     })
     const modelCount = modelGroup.length
 
-    const shared = await this.prisma.quotaLedger.findFirst({
-      where: {
-        userId,
-        type: 'manual_adjustment',
-        remark: '分享对话',
-        createdAt: { gte: today }
-      }
-    })
-
     // Check if task rewards have already been claimed
-    const claims = await this.prisma.quotaLedger.findMany({
+    const claims = await this.prisma.pointLedger.findMany({
       where: {
         userId,
         type: 'manual_adjustment',
@@ -290,7 +273,7 @@ export class RewardsService {
       dialog: { completed: dialogCount > 0, count: dialogCount, target: 1, reward: 100, claimed: hasClaimed('任务：完成一次对话') },
       image: { completed: imageCount > 0, count: imageCount, target: 1, reward: 150, claimed: hasClaimed('任务：生成一张图片') },
       models: { completed: modelCount >= 3, count: modelCount, target: 3, reward: 200, claimed: hasClaimed('任务：切换三个模型') },
-      share: { completed: !!shared, count: shared ? 1 : 0, target: 1, reward: 300, claimed: hasClaimed('任务：分享对话') }
+      share: { completed: true, count: hasClaimed('任务：分享对话') ? 1 : 0, target: 1, reward: 300, claimed: hasClaimed('任务：分享对话') }
     }
   }
 
@@ -318,32 +301,11 @@ export class RewardsService {
       // client can trigger share completion directly
       rewardAmount = status.share.reward
       taskRemark = '任务：分享对话'
-      
-      // Also write down the share action to QuotaLedger first if it didn't exist
-      const shared = await this.prisma.quotaLedger.findFirst({
-        where: {
-          userId,
-          type: 'manual_adjustment',
-          remark: '分享对话',
-          createdAt: { gte: today }
-        }
-      })
-      if (!shared) {
-        await this.prisma.quotaLedger.create({
-          data: {
-            userId,
-            type: 'manual_adjustment',
-            deltaTokens: 0,
-            balanceAfter: 0, // transient
-            remark: '分享对话'
-          }
-        })
-      }
     } else {
       throw new BadRequestException('invalid_task_type')
     }
 
-    const existing = await this.prisma.quotaLedger.findFirst({
+    const existing = await this.prisma.pointLedger.findFirst({
       where: {
         userId,
         type: 'manual_adjustment',
@@ -355,20 +317,18 @@ export class RewardsService {
       throw new BadRequestException('task_reward_already_claimed')
     }
 
-    const result = await this.quota.grantTokens({
+    const result = await this.points.addPoints({
       userId,
-      source: 'manual_adjustment',
-      sourceId: `task_${taskType}_` + today.toISOString().split('T')[0],
-      tokens: BigInt(rewardAmount),
-      validDays: 7,
-      ledgerType: 'manual_adjustment',
+      points: BigInt(rewardAmount),
+      type: 'manual_adjustment',
+      relatedId: `task_${taskType}_` + today.toISOString().split('T')[0],
       remark: taskRemark
     })
 
     return {
       ok: true,
-      rewardTokens: rewardAmount,
-      tokenBalance: result.tokenBalance.toString()
+      rewardPoints: rewardAmount,
+      pointsBalance: result.pointsBalance.toString()
     }
   }
 
@@ -376,7 +336,7 @@ export class RewardsService {
     return this.getConfig()
   }
 
-  async updateConfig(adminId: string, data: { enabled?: boolean; adUnitId?: string; rewardTokens?: string | number; dailyLimitPerUser?: number; rewardTokenValidDays?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
+  async updateConfig(adminId: string, data: { enabled?: boolean; adUnitId?: string; rewardPoints?: string | number; dailyLimitPerUser?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
     const before = await this.getConfig()
     const config = await this.prisma.adRewardConfig.upsert({
       where: { id: 'default' },
@@ -417,13 +377,12 @@ export class RewardsService {
     }
   }
 
-  private configData(data: { enabled?: boolean; adUnitId?: string; rewardTokens?: string | number; dailyLimitPerUser?: number; rewardTokenValidDays?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
+  private configData(data: { enabled?: boolean; adUnitId?: string; rewardPoints?: string | number; dailyLimitPerUser?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
     return {
       enabled: data.enabled,
       adUnitId: data.adUnitId,
-      rewardTokens: data.rewardTokens === undefined ? undefined : BigInt(data.rewardTokens),
+      rewardPoints: data.rewardPoints === undefined ? undefined : BigInt(data.rewardPoints),
       dailyLimitPerUser: data.dailyLimitPerUser,
-      rewardTokenValidDays: data.rewardTokenValidDays,
       minIntervalSeconds: data.minIntervalSeconds,
       sessionTtlSeconds: data.sessionTtlSeconds
     }

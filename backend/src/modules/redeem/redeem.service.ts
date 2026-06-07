@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { randomToken, sha256 } from '../../common/http'
+import { PointsService } from '../points/points.service'
 import { PrismaService } from '../prisma/prisma.service'
-import { QuotaService } from '../quota/quota.service'
 
 @Injectable()
 export class RedeemService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly quota: QuotaService
+    private readonly points: PointsService
   ) {}
 
   async redeem(userId: string, code: string) {
@@ -24,23 +24,20 @@ export class RedeemService {
       data: { status: 'used', usedByUserId: userId, usedAt: new Date() }
     })
 
-    return this.quota.grantTokens({
+    return this.points.addPoints({
       userId,
-      source: 'redeem_code',
-      sourceId: redeemCode.id,
-      tokens: redeemCode.plan.tokenAmount,
-      validDays: redeemCode.plan.validDays,
-      ledgerType: 'redeem_code',
+      points: redeemCode.plan.pointAmount,
+      type: 'redeem_code',
+      relatedId: redeemCode.id,
       remark: `兑换套餐：${redeemCode.plan.name}`
     })
   }
 
-  async createPlan(adminId: string, input: { name?: string; tokenAmount?: string | number; validDays?: number; remark?: string }) {
+  async createPlan(adminId: string, input: { name?: string; pointAmount?: string | number; remark?: string }) {
     const plan = await this.prisma.plan.create({
       data: {
         name: String(input.name || '').trim(),
-        tokenAmount: BigInt(input.tokenAmount || 0),
-        validDays: Number(input.validDays || 30),
+        pointAmount: BigInt(input.pointAmount || 0),
         remark: input.remark || ''
       }
     })

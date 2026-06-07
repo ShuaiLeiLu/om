@@ -80,7 +80,7 @@ export class RewardsController {
 
   @UseGuards(AdminSessionGuard)
   @Patch('admin/wechat/reward-config')
-  update(@CurrentAdmin() admin: { id: string }, @Body() body: { enabled?: boolean; adUnitId?: string; rewardTokens?: string | number; dailyLimitPerUser?: number; rewardTokenValidDays?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
+  update(@CurrentAdmin() admin: { id: string }, @Body() body: { enabled?: boolean; adUnitId?: string; rewardPoints?: string | number; dailyLimitPerUser?: number; minIntervalSeconds?: number; sessionTtlSeconds?: number }) {
     return this.rewards.updateConfig(admin.id, body)
   }
 

@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import DataTable from '../DataTable'
 import Badge from '../Badge'
-import { formatRelativeTime, formatTokens } from '@/lib/admin-format'
+import { formatRelativeTime, formatPoints } from '@/lib/admin-format'
 import { createAdminRedeemCodes, revokeAdminRedeemCode } from '@/lib/api'
 
 const STATUS_TONE = {
@@ -90,7 +90,7 @@ export default function CodesTab({ data, saving, setError, refresh }) {
                       <div className="flex min-w-0 flex-col text-left">
                         <span className="truncate">{p.name}</span>
                         <span className="truncate text-[10px] text-muted-foreground">
-                          {formatTokens(p.tokenAmount)} 算力点 / {p.validDays} 天
+                          {formatPoints(p.pointAmount)} 算力点
                         </span>
                       </div>
                     </SelectItem>

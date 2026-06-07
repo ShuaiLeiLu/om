@@ -3,7 +3,7 @@ import { formatBytes, formatNumber, formatRelativeTime } from '@/lib/utils'
 
 export { formatBytes, formatNumber, formatRelativeTime }
 
-export function formatTokens(value) {
+export function formatPoints(value) {
   const n = Number(value || 0)
   if (!Number.isFinite(n)) return String(value || 0)
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M'
@@ -29,14 +29,13 @@ export function llmRequestBadge(status) {
   }[status] || { tone: 'slate', label: status || '-' }
 }
 
-export function quotaLedgerBadge(type) {
+export function pointLedgerBadge(type) {
   return {
     redeem_code: { tone: 'fuchsia', label: '兑换码' },
     ad_reward: { tone: 'amber', label: '广告奖励' },
     recharge: { tone: 'emerald', label: '充值' },
     manual_adjustment: { tone: 'indigo', label: '手动调整' },
     model_usage: { tone: 'sky', label: '模型消耗' },
-    grant_expired: { tone: 'slate', label: '过期' },
     refund: { tone: 'emerald', label: '退还' }
   }[type] || { tone: 'slate', label: type || '-' }
 }

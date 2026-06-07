@@ -8,15 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import DataTable from '../DataTable'
 import Badge from '../Badge'
-import { formatRelativeTime, formatTokens } from '@/lib/admin-format'
+import { formatRelativeTime, formatPoints } from '@/lib/admin-format'
 import { createAdminPlan } from '@/lib/api'
 
 export default function PlansTab({ data, saving, runAction }) {
   const plans = data.plans || []
   const [form, setForm] = useState({
     name: '',
-    tokenAmount: '100',
-    validDays: '30',
+    pointAmount: '100',
     remark: ''
   })
 
@@ -25,7 +24,7 @@ export default function PlansTab({ data, saving, runAction }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">创建套餐</CardTitle>
-          <CardDescription>套餐用于生成兑换码，按算力点数量 + 有效期发放</CardDescription>
+          <CardDescription>套餐用于生成兑换码，按算力点数量发放</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -36,15 +35,14 @@ export default function PlansTab({ data, saving, runAction }) {
                 () =>
                   createAdminPlan({
                     name: form.name,
-                    tokenAmount: form.tokenAmount,
-                    validDays: Number(form.validDays || 30),
+                    pointAmount: form.pointAmount,
                     remark: form.remark
                   }),
                 '套餐已创建'
               )
-              setForm({ name: '', tokenAmount: '100', validDays: '30', remark: '' })
+              setForm({ name: '', pointAmount: '100', remark: '' })
             }}
-            className="grid gap-3 lg:grid-cols-[1.4fr_1fr_0.8fr_1.6fr_auto] lg:items-end"
+            className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1.6fr_auto] lg:items-end"
           >
             <Field label="套餐名">
               <Input
@@ -56,19 +54,10 @@ export default function PlansTab({ data, saving, runAction }) {
             </Field>
             <Field label="算力点数量">
               <Input
-                value={form.tokenAmount}
-                onChange={(e) => setForm({ ...form, tokenAmount: e.target.value })}
+                value={form.pointAmount}
+                onChange={(e) => setForm({ ...form, pointAmount: e.target.value })}
                 className="font-mono"
                 required
-              />
-            </Field>
-            <Field label="有效天数">
-              <Input
-                type="number"
-                min="1"
-                value={form.validDays}
-                onChange={(e) => setForm({ ...form, validDays: e.target.value })}
-                className="font-mono"
               />
             </Field>
             <Field label="备注">
@@ -112,22 +101,15 @@ export default function PlansTab({ data, saving, runAction }) {
               )
             },
             {
-              key: 'tokens',
+              key: 'points',
               label: '算力点',
               align: 'right',
               width: 120,
               render: (p) => (
                 <span className="font-mono font-semibold text-primary">
-                  {formatTokens(p.tokenAmount)}
+                  {formatPoints(p.pointAmount)}
                 </span>
               )
-            },
-            {
-              key: 'days',
-              label: '有效',
-              align: 'right',
-              width: 80,
-              render: (p) => <span className="text-foreground/80">{p.validDays} 天</span>
             },
             {
               key: 'createdAt',

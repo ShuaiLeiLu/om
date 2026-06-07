@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service'
 type Tx = Prisma.TransactionClient | PrismaService | PrismaClient
 
 @Injectable()
-export class ImageQuotaService {
+export class ImageUsageService {
   constructor(private readonly prisma: PrismaService) {}
 
   async retain(userId: string, imageId: string, bytes: number, tx: Tx = this.prisma) {

@@ -136,7 +136,7 @@ export class WechatService {
       openid: session.openid.slice(0, 6) + '***',
       bound: Boolean(session.userId),
       userId: session.userId,
-      tokenBalance: balance.toString(),
+      pointsBalance: balance.toString(),
       displayName: user?.displayName || '',
       avatarUrl: user?.avatarUrl || '',
       email: user?.email || null,
@@ -571,8 +571,20 @@ export class WechatService {
       await tx.userSession.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
       await tx.wechatQrSession.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
       await tx.wechatMiniappSession.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
-      await tx.tokenGrant.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
-      await tx.quotaLedger.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
+      const sourcePoints = await tx.pointAccount.findUnique({ where: { userId: sourceUserId } })
+      if (sourcePoints) {
+        const targetPoints = await tx.pointAccount.upsert({
+          where: { userId: targetUserId },
+          create: { userId: targetUserId, balance: BigInt(0) },
+          update: {}
+        })
+        await tx.pointAccount.update({
+          where: { userId: targetUserId },
+          data: { balance: targetPoints.balance + sourcePoints.balance }
+        })
+        await tx.pointAccount.delete({ where: { userId: sourceUserId } })
+      }
+      await tx.pointLedger.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
       await tx.conversation.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
       await tx.message.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
       await tx.llmRequest.updateMany({ where: { userId: sourceUserId }, data: { userId: targetUserId } })
@@ -624,10 +636,10 @@ export class WechatService {
   }
 
   private async userBalance(userId: string) {
-    const grants = await this.prisma.tokenGrant.findMany({
-      where: { userId, status: 'active', expiresAt: { gt: new Date() } },
-      select: { remainingTokens: true }
+    const account = await this.prisma.pointAccount.findUnique({
+      where: { userId },
+      select: { balance: true }
     })
-    return grants.reduce((sum, grant) => sum + grant.remainingTokens, BigInt(0))
+    return account?.balance || BigInt(0)
   }
 }

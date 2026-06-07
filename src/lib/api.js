@@ -24,7 +24,7 @@ function parseApiError(status, data) {
   if (status === 401 || message === 'unauthorized') return '请先登录'
   if (message === 'invalid_credentials') return '账号或密码不正确'
   if (message === 'username_password_required') return '请输入账号和密码'
-  if (message === 'token_insufficient') return '算力点不足，请先领取或兑换'
+  if (message === 'points_insufficient') return '算力点不足，请先领取或兑换'
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'sub2api_config_incomplete') return '模型网关未配置'
   if (message === 'sub2api_http_503') return '上游模型服务暂时不可用或繁忙，请稍后重试'
@@ -187,7 +187,7 @@ export function generateImage({ conversationId, modelId, prompt }) {
 
 // ---------- Account ----------
 
-export const fetchQuotaSummary = () => fetchJson('/api/quota/summary')
+export const fetchPointsSummary = () => fetchJson('/api/points/summary')
 export const fetchMe = () => fetchJson('/api/me')
 export const logout = () => fetchJson('/api/auth/logout', { method: 'POST' })
 
@@ -242,11 +242,11 @@ export function buildWechatOauthStartUrl({ mode = 'web', next = '/', popup = fal
 export const fetchWechatOauthStartUrl = ({ mode = 'web', next = '/', popup = false } = {}) =>
   fetchJson(buildWechatOauthStartUrl({ mode, next, popup, format: 'json' }), { timeout: 8000 })
 
-// ---------- Quota ----------
+// ---------- Points ----------
 
-export async function fetchQuotaLedger({ page = 1, pageSize = 20 } = {}) {
+export async function fetchPointsLedger({ page = 1, pageSize = 20 } = {}) {
   const qs = buildQuery({ page, pageSize })
-  const data = await fetchJson(`/api/quota/ledger?${qs}`)
+  const data = await fetchJson(`/api/points/ledger?${qs}`)
   return Array.isArray(data) ? data : []
 }
 
@@ -300,8 +300,8 @@ export function updateAdminUserStatus(userId, status) {
 export const deleteAdminUser = (userId) =>
   adminRequest(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' })
 
-export const adjustAdminQuota = (userId, body) =>
-  adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/quota-adjust`, { method: 'POST', body })
+export const adjustAdminPoints = (userId, body) =>
+  adminRequest(`/api/admin/users/${encodeURIComponent(userId)}/points-adjust`, { method: 'POST', body })
 
 export const fetchAdminModels = () => adminRequest('/api/admin/models')
 
@@ -322,8 +322,8 @@ export const revokeAdminRedeemCode = (codeId) =>
 export const fetchAdminLlmRequests = (params = {}) =>
   adminRequest(`/api/admin/llm-requests?${buildQuery(params)}`)
 
-export const fetchAdminQuotaLedger = (params = {}) =>
-  adminRequest(`/api/admin/quota-ledger?${buildQuery(params)}`)
+export const fetchAdminPointsLedger = (params = {}) =>
+  adminRequest(`/api/admin/points-ledger?${buildQuery(params)}`)
 
 export const fetchAdminUsageEvents = () => adminRequest('/api/admin/usage-events')
 
@@ -331,9 +331,6 @@ export const fetchAdminRechargeOrders = () => adminRequest('/api/admin/recharge-
 
 export const markAdminRechargeOrderPaid = (orderId) =>
   adminRequest(`/api/admin/recharge-orders/${encodeURIComponent(orderId)}/mark-paid`, { method: 'POST', body: {} })
-
-export const syncAdminSub2api = () =>
-  adminRequest('/api/admin/sub2api/sync', { method: 'POST' })
 
 export const fetchAdminWechatAccounts = (params = {}) =>
   adminRequest(`/api/admin/wechat/accounts?${buildQuery(params)}`)

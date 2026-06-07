@@ -35,7 +35,7 @@
       <view class="reward-amount">+{{rewardText}}</view>
       <view class="reward-unit">算力点 / 每次</view>
 
-      <view class="mt-4 quota-row text-secondary">
+      <view class="mt-4 points-row text-secondary">
         <text class="font-medium">今日剩余 {{remainingText}} 次</text>
         <text class="text-tertiary">日上限 {{limitText}} 次</text>
       </view>

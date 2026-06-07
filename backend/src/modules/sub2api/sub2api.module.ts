@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AdminModule } from '../admin/admin.module'
-import { QuotaModule } from '../quota/quota.module'
-import { Sub2apiController } from './sub2api.controller'
+import { PointsModule } from '../points/points.module'
 import { Sub2apiService } from './sub2api.service'
 
-@Module({ imports: [AdminModule, QuotaModule], controllers: [Sub2apiController], providers: [Sub2apiService], exports: [Sub2apiService] })
+@Module({ imports: [AdminModule, PointsModule], providers: [Sub2apiService], exports: [Sub2apiService] })
 export class Sub2apiModule {}

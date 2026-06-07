@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { LlmRequestStatus, Prisma, QuotaLedgerType } from '@prisma/client'
+import { LlmRequestStatus, PointLedgerType, Prisma } from '@prisma/client'
 import * as argon2 from 'argon2'
 import { Response } from 'express'
 import { randomToken, sha256, toPublicBigInt } from '../../common/http'
+import { PointsService } from '../points/points.service'
 import { PrismaService } from '../prisma/prisma.service'
 
 const ADMIN_COOKIE = 'chatty_admin_session'
@@ -42,6 +43,7 @@ const ADMIN_OAUTH_SELECT = {
 export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly points: PointsService,
     private readonly config: ConfigService
   ) {}
 
@@ -138,7 +140,7 @@ export class AdminService {
       imageTasks,
       imageTasks7d,
       conversations,
-      tokenLedger,
+      pointLedger,
       usageLedger,
       adLedger,
       storageUsage
@@ -153,9 +155,9 @@ export class AdminService {
       this.prisma.imageTask.count(),
       this.prisma.imageTask.count({ where: { createdAt: { gte: since } } }),
       this.prisma.conversation.count({ where: { status: 'active' } }),
-      this.prisma.quotaLedger.aggregate({ _sum: { deltaTokens: true } }),
-      this.prisma.quotaLedger.aggregate({ where: { type: 'model_usage' }, _sum: { deltaTokens: true } }),
-      this.prisma.quotaLedger.aggregate({ where: { type: 'ad_reward' }, _sum: { deltaTokens: true } })
+      this.prisma.pointLedger.aggregate({ _sum: { deltaPoints: true } }),
+      this.prisma.pointLedger.aggregate({ where: { type: 'model_usage' }, _sum: { deltaPoints: true } }),
+      this.prisma.pointLedger.aggregate({ where: { type: 'ad_reward' }, _sum: { deltaPoints: true } })
       ,
       this.prisma.storageUsage.aggregate({ _sum: { bytesTotal: true, imagesCount: true } })
     ])
@@ -170,9 +172,9 @@ export class AdminService {
       imageTasks,
       imageTasks7d,
       conversations,
-      totalTokenDelta: toPublicBigInt(tokenLedger._sum.deltaTokens || 0),
-      modelUsageTokens: toPublicBigInt(usageLedger._sum.deltaTokens || 0),
-      adRewardTokens: toPublicBigInt(adLedger._sum.deltaTokens || 0),
+      totalPointDelta: toPublicBigInt(pointLedger._sum.deltaPoints || 0),
+      modelUsagePoints: toPublicBigInt(usageLedger._sum.deltaPoints || 0),
+      adRewardPoints: toPublicBigInt(adLedger._sum.deltaPoints || 0),
       storageBytes: toPublicBigInt(storageUsage._sum.bytesTotal || 0),
       storedImages: storageUsage._sum.imagesCount || 0
     }
@@ -230,75 +232,21 @@ export class AdminService {
     return { ok: true, id: userId }
   }
 
-  async adjustQuota(adminId: string, userId: string, input: { tokens?: string | number; validDays?: number; remark?: string }) {
-    const tokens = BigInt(input.tokens || 0)
-    const validDays = Math.max(1, Math.min(3650, Number(input.validDays || 30)))
-    if (tokens === BigInt(0)) throw new BadRequestException('tokens_required')
-    // Cap absolute magnitude to 1e15 tokens — anything beyond is almost certainly a typo or abuse.
-    const MAX_TOKENS_PER_ADJUSTMENT = BigInt('1000000000000000')
-    const magnitude = tokens < BigInt(0) ? -tokens : tokens
-    if (magnitude > MAX_TOKENS_PER_ADJUSTMENT) throw new BadRequestException('tokens_too_large')
-    const expiresAt = new Date(Date.now() + validDays * 24 * 60 * 60 * 1000)
-    const result = await this.prisma.$transaction(async (tx) => {
-      if (tokens < BigInt(0)) {
-        let remaining = -tokens
-        const grants = await tx.tokenGrant.findMany({
-          where: { userId, status: 'active', remainingTokens: { gt: 0 }, expiresAt: { gt: new Date() } },
-          orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }]
-        })
-        for (const grant of grants) {
-          if (remaining <= BigInt(0)) break
-          const deduct = grant.remainingTokens < remaining ? grant.remainingTokens : remaining
-          remaining -= deduct
-          await tx.tokenGrant.update({
-            where: { id: grant.id },
-            data: {
-              remainingTokens: grant.remainingTokens - deduct,
-              status: grant.remainingTokens - deduct === BigInt(0) ? 'exhausted' : grant.status
-            }
-          })
-        }
-        if (remaining > BigInt(0)) throw new BadRequestException('token_insufficient')
-        const balance = await this.balance(tx, userId)
-        const ledger = await tx.quotaLedger.create({
-          data: {
-            userId,
-            type: 'manual_adjustment',
-            deltaTokens: tokens,
-            balanceAfter: balance,
-            relatedId: adminId,
-            remark: input.remark || ''
-          }
-        })
-        return { grant: null, ledger, balance }
-      }
-
-      const grant = await tx.tokenGrant.create({
-        data: {
-          userId,
-          source: 'manual_adjustment',
-          sourceId: adminId,
-          totalTokens: tokens,
-          remainingTokens: tokens,
-          expiresAt
-        }
-      })
-      const balance = await this.balance(tx, userId)
-      const ledger = await tx.quotaLedger.create({
-        data: {
-          userId,
-          grantId: grant.id,
-          type: 'manual_adjustment',
-          deltaTokens: tokens,
-          balanceAfter: balance,
-          relatedId: adminId,
-          remark: input.remark || ''
-        }
-      })
-      return { grant, ledger, balance }
+  async adjustPoints(adminId: string, userId: string, input: { points?: string | number; remark?: string }) {
+    const points = BigInt(input.points || 0)
+    if (points === BigInt(0)) throw new BadRequestException('points_required')
+    const MAX_POINTS_PER_ADJUSTMENT = BigInt('1000000000000000')
+    const magnitude = points < BigInt(0) ? -points : points
+    if (magnitude > MAX_POINTS_PER_ADJUSTMENT) throw new BadRequestException('points_too_large')
+    const result = await this.points.addPoints({
+      userId,
+      points,
+      type: 'manual_adjustment',
+      relatedId: adminId,
+      remark: input.remark || ''
     })
-    await this.audit(adminId, 'quota_adjust', 'user', userId, null, { tokens: tokens.toString() })
-    return { ...result, balance: result.balance.toString() }
+    await this.audit(adminId, 'points_adjust', 'user', userId, null, { points: points.toString() })
+    return result
   }
 
   listLlmRequests(query: { userId?: string; status?: string; page?: string; pageSize?: string }) {
@@ -319,17 +267,17 @@ export class AdminService {
     })
   }
 
-  listQuotaLedger(query: { userId?: string; type?: string; page?: string; pageSize?: string }) {
+  listPointLedger(query: { userId?: string; type?: string; page?: string; pageSize?: string }) {
     const { page, pageSize } = this.pagination(query)
-    const where: Prisma.QuotaLedgerWhereInput = {}
+    const where: Prisma.PointLedgerWhereInput = {}
     if (query.userId) where.userId = query.userId
-    if (this.isQuotaLedgerType(query.type)) where.type = query.type
-    return this.prisma.quotaLedger.findMany({
+    if (this.isPointLedgerType(query.type)) where.type = query.type
+    return this.prisma.pointLedger.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { user: { select: ADMIN_USER_SELECT }, grant: true }
+      include: { user: { select: ADMIN_USER_SELECT } }
     })
   }
 
@@ -396,14 +344,6 @@ export class AdminService {
     })
   }
 
-  private async balance(tx: Prisma.TransactionClient, userId: string) {
-    const grants = await tx.tokenGrant.findMany({
-      where: { userId, status: 'active', expiresAt: { gt: new Date() } },
-      select: { remainingTokens: true }
-    })
-    return grants.reduce((sum, grant) => sum + grant.remainingTokens, BigInt(0))
-  }
-
   private pagination(query: { page?: string; pageSize?: string }) {
     return {
       page: Math.max(1, Number(query.page || 1)),
@@ -415,8 +355,8 @@ export class AdminService {
     return ['pending', 'streaming', 'completed', 'failed', 'cancelled'].includes(String(status || ''))
   }
 
-  private isQuotaLedgerType(type?: string): type is QuotaLedgerType {
-    return ['redeem_code', 'ad_reward', 'recharge', 'manual_adjustment', 'model_usage', 'grant_expired', 'refund'].includes(String(type || ''))
+  private isPointLedgerType(type?: string): type is PointLedgerType {
+    return ['redeem_code', 'ad_reward', 'recharge', 'manual_adjustment', 'model_usage', 'refund'].includes(String(type || ''))
   }
 
   private cookieOptions(expiresAt: Date) {

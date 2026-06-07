@@ -7,26 +7,23 @@ import {
   Coins,
   DatabaseZap,
   Gift,
-  Loader2,
   MessageSquareText,
   UsersRound
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import AdminStatCard from '../AdminStatCard'
 import DataTable from '../DataTable'
 import Badge from '../Badge'
 import {
   formatBytes,
   formatNumber,
-  formatTokens,
+  formatPoints,
   formatRelativeTime,
   llmRequestBadge,
-  quotaLedgerBadge
+  pointLedgerBadge
 } from '@/lib/admin-format'
-import { syncAdminSub2api } from '@/lib/api'
 
-export default function OverviewTab({ data, runAction, saving }) {
+export default function OverviewTab({ data }) {
   const dashboard = data.dashboard
   const todayGranted = (data.rewardEvents || []).filter(
     (e) => e.result === 'granted' && isToday(e.createdAt)
@@ -64,15 +61,15 @@ export default function OverviewTab({ data, runAction, saving }) {
           icon={Coins}
           tone="amber"
           label="算力点 净变动"
-          value={formatTokens(dashboard?.totalTokenDelta)}
-          hint={`模型消耗 ${formatTokens(dashboard?.modelUsageTokens)}`}
+          value={formatPoints(dashboard?.totalPointDelta)}
+          hint={`模型消耗 ${formatPoints(dashboard?.modelUsagePoints)}`}
           loading={loading}
         />
         <AdminStatCard
           icon={Gift}
           tone="emerald"
           label="广告奖励 算力点"
-          value={formatTokens(dashboard?.adRewardTokens)}
+          value={formatPoints(dashboard?.adRewardPoints)}
           hint={`今日发放 ${todayGranted} 次`}
           loading={loading}
         />
@@ -101,23 +98,6 @@ export default function OverviewTab({ data, runAction, saving }) {
           loading={loading}
         />
       </div>
-
-      <Card>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Sub2API 用量同步</p>
-            <p className="mt-1 text-xs text-muted-foreground">手动拉取上游 usage 并据此扣减算力点</p>
-          </div>
-          <Button
-            variant="gradient"
-            onClick={() => runAction('sync', syncAdminSub2api, 'Sub2API 用量同步已触发')}
-            disabled={saving === 'sync'}
-          >
-            {saving === 'sync' ? <Loader2 className="animate-spin" /> : <DatabaseZap />}
-            立即同步
-          </Button>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card className="overflow-hidden">
@@ -178,7 +158,7 @@ export default function OverviewTab({ data, runAction, saving }) {
                 key: 'type',
                 label: '类型 / 备注',
                 render: (r) => {
-                  const b = quotaLedgerBadge(r.type)
+                  const b = pointLedgerBadge(r.type)
                   return (
                     <div className="min-w-0">
                       <Badge tone={b.tone}>{b.label}</Badge>
@@ -195,7 +175,7 @@ export default function OverviewTab({ data, runAction, saving }) {
                 align: 'right',
                 width: 110,
                 render: (r) => {
-                  const n = Number(r.deltaTokens || 0)
+                  const n = Number(r.deltaPoints || 0)
                   return (
                     <span
                       className={
@@ -205,7 +185,7 @@ export default function OverviewTab({ data, runAction, saving }) {
                       }
                     >
                       {n >= 0 ? '+' : ''}
-                      {formatTokens(r.deltaTokens)}
+                      {formatPoints(r.deltaPoints)}
                     </span>
                   )
                 }

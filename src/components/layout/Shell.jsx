@@ -39,7 +39,7 @@ export default function Shell({ children, workspace = 'chat' }) {
     deleteConversation
   } = useChatStore()
   const { selectedProvider, selectedModel, setSelectedModel, setSelectedProvider } = useModelStore()
-  const { user, quota, isAuthenticated, isLoading: isAuthLoading } = useAuthStore()
+  const { user, points, isAuthenticated, isLoading: isAuthLoading } = useAuthStore()
   const imageTaskIndex = useImageStore((s) => s.taskIndex)
   const activeTaskId = useImageStore((s) => s.activeTaskId)
   const setActiveTaskId = useImageStore((s) => s.setActiveTaskId)
@@ -229,7 +229,7 @@ export default function Shell({ children, workspace = 'chat' }) {
                   isAuthLoading
                     ? '同步登录状态中'
                     : isAuthenticated
-                      ? `${user?.displayName || '微信用户'}\n${formatNumber(quota?.tokenBalance || 0)} 算力点`
+                      ? `${user?.displayName || '微信用户'}\n${formatNumber(points?.pointsBalance || 0)} 算力点`
                       : '未登录'
                 }
                 placement="right"
@@ -269,7 +269,7 @@ export default function Shell({ children, workspace = 'chat' }) {
                     ) : isAuthenticated ? (
                       <>
                         <Coins size={9} className="text-gold-600" />
-                        <span className="font-mono text-gold-600">{formatNumber(quota?.tokenBalance || 0)}</span>
+                        <span className="font-mono text-gold-600">{formatNumber(points?.pointsBalance || 0)}</span>
                         <span className="text-[9px]">算力点</span>
                       </>
                     ) : (
@@ -289,7 +289,7 @@ export default function Shell({ children, workspace = 'chat' }) {
           inActiveChat={!!inActiveChat}
           provider={selectedProvider}
           model={selectedModel}
-          quota={quota}
+          points={points}
           isAuthenticated={isAuthenticated}
           onMenu={toggleSidebar}
           onCreate={createNewItem}
@@ -310,7 +310,7 @@ const MobileHeader = memo(function MobileHeader({
   inActiveChat,
   provider,
   model,
-  quota,
+  points,
   isAuthenticated,
   onMenu,
   onCreate
@@ -332,10 +332,10 @@ const MobileHeader = memo(function MobileHeader({
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-ink-900 leading-tight">{model?.name}</p>
-            {isAuthenticated && quota?.tokenBalance != null && (
+            {isAuthenticated && points?.pointsBalance != null && (
               <p className="flex items-center gap-1 text-[9px] text-ink-500 leading-tight">
                 <Coins size={8} className="text-gold-600" />
-                {formatNumber(quota.tokenBalance)} 算力点
+                {formatNumber(points.pointsBalance)} 算力点
               </p>
             )}
           </div>

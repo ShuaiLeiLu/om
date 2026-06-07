@@ -47,8 +47,8 @@ Page({
         loading: false,
         userInfo,
         rewardConfig,
-        balanceText: formatNumber(userInfo.tokenBalance || 0),
-        rewardText: formatNumber(rewardConfig ? rewardConfig.rewardTokens || 0 : 0),
+        balanceText: formatNumber(userInfo.pointsBalance || 0),
+        rewardText: formatNumber(rewardConfig ? rewardConfig.rewardPoints || 0 : 0),
         remainingText: formatNumber(rewardConfig ? rewardConfig.remainingToday || 0 : 0),
         bound: Boolean(userInfo.bound),
         emailLinked: Boolean(userInfo.email)
@@ -70,7 +70,7 @@ Page({
       const userInfo = await auth.fetchUserInfo();
       this.setData({
         userInfo,
-        balanceText: formatNumber(userInfo.tokenBalance || 0),
+        balanceText: formatNumber(userInfo.pointsBalance || 0),
         bound: Boolean(userInfo.bound),
         emailLinked: Boolean(userInfo.email)
       });

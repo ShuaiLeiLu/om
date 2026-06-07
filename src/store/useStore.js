@@ -109,19 +109,19 @@ export const useModelStore = create((set) => ({
 
 export const useAuthStore = create((set) => ({
   user: null,
-  quota: null,
+  points: null,
   isLoading: false,
   isAuthenticated: false,
   setAuthLoading: (isLoading) => set({ isLoading }),
-  setSession: ({ user, quota }) => set({
+  setSession: ({ user, points }) => set({
     user: user || null,
-    quota: quota || null,
+    points: points || null,
     isAuthenticated: Boolean(user),
     isLoading: false
   }),
   clearSession: () => set({
     user: null,
-    quota: null,
+    points: null,
     isAuthenticated: false,
     isLoading: false
   })

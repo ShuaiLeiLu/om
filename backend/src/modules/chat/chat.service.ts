@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config'
 import { Response } from 'express'
 import { randomToken } from '../../common/http'
 import { ModelsService } from '../models/models.service'
+import { PointsService } from '../points/points.service'
 import { PrismaService } from '../prisma/prisma.service'
-import { QuotaService } from '../quota/quota.service'
 import { Sub2apiService } from '../sub2api/sub2api.service'
 import {
   StreamUsage,
@@ -28,7 +28,7 @@ type ChatMessageInput = {
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly quota: QuotaService,
+    private readonly points: PointsService,
     private readonly models: ModelsService,
     private readonly config: ConfigService,
     private readonly sub2api: Sub2apiService
@@ -63,8 +63,8 @@ export class ChatService {
     input: { conversationId?: string; model: string; messages: ChatMessageInput[] },
     res: Response
   ) {
-    const balance = await this.quota.balance(userId)
-    if (balance <= BigInt(0)) throw new BadRequestException('token_insufficient')
+    const balance = await this.points.balance(userId)
+    if (balance <= BigInt(0)) throw new BadRequestException('points_insufficient')
     const model = await this.models.assertEnabled(input.model)
     const requestId = randomToken(18)
     const conversation = input.conversationId

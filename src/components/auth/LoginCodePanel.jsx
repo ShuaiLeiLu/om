@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, CheckCircle2, Hash, Loader2, Smartphone } from 'lucide-react'
-import { fetchMe, fetchQuotaSummary, verifyLoginCode } from '@/lib/api'
+import { fetchMe, fetchPointsSummary, verifyLoginCode } from '@/lib/api'
 import { useAuthStore } from '@/store/useStore'
 import { cn } from '@/lib/utils'
 
@@ -63,8 +63,8 @@ export function LoginCodePanel({ nextUrl = '/profile' }) {
     try {
       await verifyLoginCode(code)
       setStatus('success')
-      const [user, quota] = await Promise.all([fetchMe(), fetchQuotaSummary()])
-      setSession({ user, quota })
+      const [user, points] = await Promise.all([fetchMe(), fetchPointsSummary()])
+      setSession({ user, points })
       router.replace(nextUrl)
     } catch (err) {
       setStatus('error')

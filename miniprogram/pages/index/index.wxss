@@ -198,7 +198,7 @@
   padding: 16rpx 20rpx;
 }
 
-.quota-row {
+.points-row {
   display: flex;
   justify-content: space-between;
   color: #737b8c;

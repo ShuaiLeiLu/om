@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, Loader2, Ticket } from 'lucide-react'
-import { fetchQuotaSummary, redeemCode } from '@/lib/api'
+import { fetchPointsSummary, redeemCode } from '@/lib/api'
 import ProfileShell from '@/components/profile/ProfileShell'
 import { toast } from '@/components/ui/sonner'
 import { useAuthStore } from '@/store/useStore'
@@ -28,9 +28,9 @@ export default function RedeemPage() {
     try {
       setLoading(true)
       const grant = await redeemCode(rawCode)
-      const quota = await fetchQuotaSummary()
-      setSession({ user, quota })
-      const amount = formatTokens(grant?.remainingTokens || grant?.tokens || 0)
+      const points = await fetchPointsSummary()
+      setSession({ user, points })
+      const amount = formatPoints(grant?.ledger?.deltaPoints || grant?.deltaPoints || 0)
       toast.success('兑换成功', { description: amount ? `已到账 ${amount} 额度` : '额度已到账' })
       setCode(['', '', '', ''])
     } catch (err) {
@@ -122,7 +122,7 @@ function translateRedeemError(message) {
   return map[message] || message || '请稍后重试'
 }
 
-function formatTokens(value) {
+function formatPoints(value) {
   const n = Number(value || 0)
   if (!Number.isFinite(n) || n <= 0) return ''
   return new Intl.NumberFormat('zh-CN').format(n)

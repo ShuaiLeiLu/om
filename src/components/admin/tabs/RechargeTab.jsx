@@ -5,7 +5,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Button } from '@/components/ui/button'
 import DataTable from '../DataTable'
 import Badge from '../Badge'
-import { formatRelativeTime, formatTokens, shortId } from '@/lib/admin-format'
+import { formatRelativeTime, formatPoints, shortId } from '@/lib/admin-format'
 import { markAdminRechargeOrderPaid } from '@/lib/api'
 
 const STATUS = {
@@ -62,11 +62,11 @@ export default function RechargeTab({ data, saving, runAction }) {
             }
           },
           {
-            key: 'tokens',
+            key: 'points',
             label: '额度',
             align: 'right',
             width: 100,
-            render: (order) => <span className="font-mono text-celadon-700">{formatTokens(order.tokens)}</span>
+            render: (order) => <span className="font-mono text-celadon-700">{formatPoints(order.points)}</span>
           },
           {
             key: 'amount',

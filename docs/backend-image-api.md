@@ -71,10 +71,10 @@
 沿用项目现有错误格式：
 
 ```json
-{ "message": "token_insufficient" }
+{ "message": "points_insufficient" }
 ```
 
-常见错误：`unauthorized` / `token_insufficient` / `model_disabled` / `invalid_size` / `invalid_n` / `upstream_error`。
+常见错误：`unauthorized` / `points_insufficient` / `model_disabled` / `invalid_size` / `invalid_n` / `upstream_error`。
 
 ---
 
@@ -152,9 +152,9 @@ router.post('/api/images/generations', requireAuth, async (req, res) => {
   const modelRow = await db.findModel({ sub2apiModel: model, enabled: true, kind: 'image' })
   if (!modelRow) return res.status(400).json({ message: 'model_disabled' })
 
-  const estimated = estimateTokens({ n, size, quality })
-  if (req.user.tokenBalance < estimated)
-    return res.status(402).json({ message: 'token_insufficient' })
+  const estimated = estimatePoints({ n, size, quality })
+  if (req.user.pointsBalance < estimated)
+    return res.status(402).json({ message: 'points_insufficient' })
 
   try {
     const upstream = await fetch(`${modelRow.gateway}/v1/images/generations`, {

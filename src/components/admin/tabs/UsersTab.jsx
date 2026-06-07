@@ -28,16 +28,15 @@ import Badge from '../Badge'
 import FilterBar, { FilterSelect } from '../FilterBar'
 import Pagination from '../Pagination'
 import { formatRelativeTime, maskOpenid, userStatusBadge } from '@/lib/admin-format'
-import { adjustAdminQuota, deleteAdminUser, updateAdminUserStatus } from '@/lib/api'
+import { adjustAdminPoints, deleteAdminUser, updateAdminUserStatus } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export default function UsersTab({ data, filters, setFilter, saving, runAction }) {
   const users = data.users || []
   const f = filters.users || {}
-  const [quotaForm, setQuotaForm] = useState({
+  const [pointsForm, setPointsForm] = useState({
     userId: '',
-    tokens: '10',
-    validDays: '30',
+    points: '10',
     remark: '后台手动调整'
   })
   const [pendingToggle, setPendingToggle] = useState(null)
@@ -70,24 +69,23 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
           <form
             onSubmit={async (e) => {
               e.preventDefault()
-              if (!quotaForm.userId || !quotaForm.tokens) return
+              if (!pointsForm.userId || !pointsForm.points) return
               await runAction(
-                'quota',
+                'points',
                 () =>
-                  adjustAdminQuota(quotaForm.userId, {
-                    tokens: quotaForm.tokens,
-                    validDays: Number(quotaForm.validDays || 30),
-                    remark: quotaForm.remark
+                  adjustAdminPoints(pointsForm.userId, {
+                    points: pointsForm.points,
+                    remark: pointsForm.remark
                   }),
                 '额度已调整'
               )
             }}
-            className="grid gap-3 lg:grid-cols-[1.6fr_1fr_0.8fr_1.4fr_auto] lg:items-end"
+            className="grid gap-3 lg:grid-cols-[1.6fr_1fr_1.4fr_auto] lg:items-end"
           >
             <FieldGroup label="选择用户">
               <Select
-                value={quotaForm.userId}
-                onValueChange={(v) => setQuotaForm((p) => ({ ...p, userId: v }))}
+                value={pointsForm.userId}
+                onValueChange={(v) => setPointsForm((p) => ({ ...p, userId: v }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="选择用户" />
@@ -108,35 +106,26 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
             </FieldGroup>
             <FieldGroup label="算力点增减">
               <Input
-                value={quotaForm.tokens}
-                onChange={(e) => setQuotaForm((p) => ({ ...p, tokens: e.target.value }))}
+                value={pointsForm.points}
+                onChange={(e) => setPointsForm((p) => ({ ...p, points: e.target.value }))}
                 placeholder="-10 或 10"
-                className="font-mono"
-              />
-            </FieldGroup>
-            <FieldGroup label="有效天数">
-              <Input
-                type="number"
-                min="1"
-                value={quotaForm.validDays}
-                onChange={(e) => setQuotaForm((p) => ({ ...p, validDays: e.target.value }))}
                 className="font-mono"
               />
             </FieldGroup>
             <FieldGroup label="备注">
               <Input
-                value={quotaForm.remark}
-                onChange={(e) => setQuotaForm((p) => ({ ...p, remark: e.target.value }))}
+                value={pointsForm.remark}
+                onChange={(e) => setPointsForm((p) => ({ ...p, remark: e.target.value }))}
                 placeholder="补充说明"
               />
             </FieldGroup>
             <Button
               type="submit"
               variant="gradient"
-              disabled={saving === 'quota' || !quotaForm.userId}
+              disabled={saving === 'points' || !pointsForm.userId}
               className="h-9"
             >
-              {saving === 'quota' ? (
+              {saving === 'points' ? (
                 <Loader2 className="animate-spin" />
               ) : (
                 <Coins />
@@ -212,7 +201,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
                     size="icon"
                     className="h-8 w-8"
                     title="填到调整额度"
-                    onClick={() => setQuotaForm((p) => ({ ...p, userId: u.id }))}
+                    onClick={() => setPointsForm((p) => ({ ...p, userId: u.id }))}
                   >
                     <Coins />
                   </Button>

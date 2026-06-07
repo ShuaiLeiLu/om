@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import DataTable from '../DataTable'
 import Badge from '../Badge'
-import { formatRelativeTime, formatTokens } from '@/lib/admin-format'
+import { formatRelativeTime, formatPoints } from '@/lib/admin-format'
 import { updateAdminRewardConfig } from '@/lib/api'
 
 export default function RewardsTab({ data, setRewardConfig, saving, runAction }) {
@@ -33,9 +33,8 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
                   updateAdminRewardConfig({
                     enabled: Boolean(rewardConfig?.enabled),
                     adUnitId: rewardConfig?.adUnitId || '',
-                    rewardTokens: rewardConfig?.rewardTokens || 0,
+                    rewardPoints: rewardConfig?.rewardPoints || 0,
                     dailyLimitPerUser: Number(rewardConfig?.dailyLimitPerUser || 0),
-                    rewardTokenValidDays: Number(rewardConfig?.rewardTokenValidDays || 1),
                     minIntervalSeconds: Number(rewardConfig?.minIntervalSeconds || 0),
                     sessionTtlSeconds: Number(rewardConfig?.sessionTtlSeconds || 300)
                   }),
@@ -68,9 +67,9 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
               </Field>
               <Field label="单次奖励 算力点">
                 <Input
-                  value={rewardConfig?.rewardTokens || ''}
+                  value={rewardConfig?.rewardPoints || ''}
                   onChange={(e) =>
-                    setRewardConfig({ ...(rewardConfig || {}), rewardTokens: e.target.value })
+                    setRewardConfig({ ...(rewardConfig || {}), rewardPoints: e.target.value })
                   }
                   className="font-mono"
                 />
@@ -84,20 +83,6 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
                     setRewardConfig({
                       ...(rewardConfig || {}),
                       dailyLimitPerUser: e.target.value
-                    })
-                  }
-                  className="font-mono"
-                />
-              </Field>
-              <Field label="奖励有效天数">
-                <Input
-                  type="number"
-                  min="1"
-                  value={rewardConfig?.rewardTokenValidDays || ''}
-                  onChange={(e) =>
-                    setRewardConfig({
-                      ...(rewardConfig || {}),
-                      rewardTokenValidDays: e.target.value
                     })
                   }
                   className="font-mono"
@@ -200,7 +185,7 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
 
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle className="text-base">Sub2API Usage</CardTitle>
+            <CardTitle className="text-base">模型用量记录</CardTitle>
             <CardDescription>{usageEvents.length} 条</CardDescription>
           </CardHeader>
           <DataTable
@@ -215,7 +200,7 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
                       {e.modelId || 'unknown model'}
                     </p>
                     <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
-                      {e.sub2apiUsageId}
+                      {e.usageKey}
                     </p>
                   </div>
                 )
@@ -231,13 +216,13 @@ export default function RewardsTab({ data, setRewardConfig, saving, runAction })
                 )
               },
               {
-                key: 'tokens',
-                label: '算力点',
+                key: 'usage',
+                label: '原始用量',
                 align: 'right',
                 width: 100,
                 render: (e) => (
                   <span className="font-mono font-semibold text-primary">
-                    {formatTokens(e.totalTokens)}
+                    {formatPoints(e.totalTokens)}
                   </span>
                 )
               }

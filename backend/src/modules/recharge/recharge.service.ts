@@ -1,29 +1,29 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { RechargePaymentMethod } from '@prisma/client'
 import { randomToken } from '../../common/http'
+import { PointsService } from '../points/points.service'
 import { PrismaService } from '../prisma/prisma.service'
-import { QuotaService } from '../quota/quota.service'
 
 const ORDER_TTL_MS = 30 * 60 * 1000
 
 const RECHARGE_PLANS = [
-  { id: 'basic', tokens: BigInt(10_000), amountCents: 1200, label: '基础档' },
-  { id: 'plus', tokens: BigInt(50_000), amountCents: 5800, label: '畅享档' },
-  { id: 'pro', tokens: BigInt(200_000), amountCents: 19800, label: '尊享档' },
-  { id: 'master', tokens: BigInt(1_000_000), amountCents: 88800, label: '大师档' }
+  { id: 'basic', points: BigInt(10_000), amountCents: 1200, label: '基础档' },
+  { id: 'plus', points: BigInt(50_000), amountCents: 5800, label: '畅享档' },
+  { id: 'pro', points: BigInt(200_000), amountCents: 19800, label: '尊享档' },
+  { id: 'master', points: BigInt(1_000_000), amountCents: 88800, label: '大师档' }
 ] as const
 
 @Injectable()
 export class RechargeService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly quota: QuotaService
+    private readonly points: PointsService
   ) {}
 
   plans() {
     return RECHARGE_PLANS.map((plan) => ({
       ...plan,
-      tokens: plan.tokens.toString()
+      points: plan.points.toString()
     }))
   }
 
@@ -61,7 +61,7 @@ export class RechargeService {
       data: {
         orderNo: this.orderNo(),
         userId,
-        tokens: plan.tokens,
+        points: plan.points,
         amountCents: plan.amountCents,
         paymentMethod,
         expiresAt: new Date(Date.now() + ORDER_TTL_MS),
@@ -86,28 +86,7 @@ export class RechargeService {
         where: { id: order.id },
         data: { status: 'paid', paidAt: new Date() }
       })
-      const grant = await tx.tokenGrant.create({
-        data: {
-          userId: order.userId,
-          source: 'recharge',
-          sourceId: order.id,
-          totalTokens: order.tokens,
-          remainingTokens: order.tokens,
-          expiresAt: new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000)
-        }
-      })
-      const balance = await this.quota.balance(order.userId, tx)
-      await tx.quotaLedger.create({
-        data: {
-          userId: order.userId,
-          grantId: grant.id,
-          type: 'recharge',
-          deltaTokens: order.tokens,
-          balanceAfter: balance,
-          relatedId: order.id,
-          remark: `充值订单：${order.orderNo}`
-        }
-      })
+      await this.points.changePointsInTransaction(tx, order.userId, order.points, 'recharge', order.id, `充值订单：${order.orderNo}`)
       await tx.adminAuditLog.create({
         data: {
           adminUserId,

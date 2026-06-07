@@ -21,7 +21,7 @@ export class RedeemController {
 
   @UseGuards(AdminSessionGuard)
   @Post('admin/plans')
-  createPlan(@CurrentAdmin() admin: { id: string }, @Body() body: { name?: string; tokenAmount?: string | number; validDays?: number; remark?: string }) {
+  createPlan(@CurrentAdmin() admin: { id: string }, @Body() body: { name?: string; pointAmount?: string | number; remark?: string }) {
     return this.redeemService.createPlan(admin.id, body)
   }
 

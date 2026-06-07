@@ -7,7 +7,7 @@ Chatty / 万模AI 自有后端，按 `docs/后端PRD.md` 第一版实现。
 - NestJS + TypeScript
 - Prisma + PostgreSQL
 - Redis/BullMQ 预留
-- Sub2API 作为模型网关和 usage 来源
+- Sub2API 作为模型网关；用量计价由 Chatty 本地积分规则负责
 
 ## 本地启动
 
@@ -37,15 +37,7 @@ WECHAT_MINIAPP_APP_SECRET
 WECHAT_REWARDED_VIDEO_AD_UNIT_ID
 SUB2API_BASE_URL
 SUB2API_GATEWAY_API_KEY
-SUB2API_ADMIN_API_KEY
-SUB2API_ADMIN_TOKEN
-SUB2API_ADMIN_EMAIL
-SUB2API_ADMIN_PASSWORD
-SUB2API_ADMIN_LOGIN_PATH
-SUB2API_USAGE_PATH
-SUB2API_USAGE_PAGE_SIZE
-SUB2API_USAGE_SYNC_MAX_PAGES
-SUB2API_USAGE_SYNC_DISABLED
+SUB2API_IMAGE_GATEWAY_API_KEY
 ```
 
 不要把真实密钥提交到代码仓库。
@@ -58,22 +50,22 @@ SUB2API_USAGE_SYNC_DISABLED
 - 普通用户 Cookie session
 - 管理员账号密码登录
 - 用户禁用/启用
-- 管理员手动调 token
-- token grant 与 quota ledger
+- 管理员手动调积分
+- 积分账户与积分流水
 - 套餐与兑换码
 - 模型列表与后台模型开关
 - SSE 聊天代理到 Sub2API
 - 会话与消息服务端保存
 - 广告奖励配置、reward session、claim
-- Sub2API usage 手动 ingest、流式响应 usage 入库扣费、定时 usage 同步
+- 流式响应原始用量入库，并按本地积分规则扣费
 - 微信小程序码图片生成接口
 - 前端接入 `/api/chat/completions` SSE
 - Nginx `/api/*` 反代到 `chatty-backend:3001`
-- 后台 llm requests、quota ledger、audit logs、微信绑定查询和解绑接口
+- 后台 llm requests、积分流水、audit logs、微信绑定查询和解绑接口
 
 ## 仍需接入生产细节
 
-- 按生产 Sub2API 版本确认 `SUB2API_USAGE_PATH` 与响应字段。
+- 登录与用户权限后续接入统一身份源，并复用积分账户。
 - 后台管理 UI。
 
 ## 验证命令

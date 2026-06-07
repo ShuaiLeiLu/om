@@ -19,7 +19,7 @@ import {
   localLogin,
   localRegister,
   fetchMe,
-  fetchQuotaSummary,
+  fetchPointsSummary,
   sendLocalCode
 } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -95,8 +95,8 @@ export function LocalAuthPanel({ mode: externalMode, onModeChange, nextUrl = '/i
           return
         }
       }
-      const [user, quota] = await Promise.all([fetchMe(), fetchQuotaSummary()])
-      setSession({ user, quota })
+      const [user, points] = await Promise.all([fetchMe(), fetchPointsSummary()])
+      setSession({ user, points })
       router.replace(nextUrl === '/admin' ? '/image' : nextUrl)
     } catch (err) {
       setError(translateError(err?.message))

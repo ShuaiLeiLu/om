@@ -22,7 +22,7 @@ import InkStroke from '@/components/ui/InkStroke'
 
 export default function RewardsPage() {
   const router = useRouter()
-  const { user, quota, setSession } = useAuthStore()
+  const { user, points, setSession } = useAuthStore()
   
   const [config, setConfig] = useState(null)
   const [checkin, setCheckin] = useState(null)
@@ -66,7 +66,7 @@ export default function RewardsPage() {
     if (!user) return
     try {
       const res = await performCheckin()
-      toast.success('签到成功', { description: `已领取 ${res.rewardTokens} 算力点！` })
+      toast.success('签到成功', { description: `已领取 ${res.rewardPoints} 算力点！` })
       loadData()
     } catch (err) {
       toast.error('签到失败', { description: err?.message === 'already_checked_in' ? '今日已签到' : (err?.message || '请稍后重试') })
@@ -78,7 +78,7 @@ export default function RewardsPage() {
     if (!user) return
     try {
       const res = await claimTaskReward(taskType)
-      toast.success('领取成功', { description: `已领取 ${res.rewardTokens} 算力点！` })
+      toast.success('领取成功', { description: `已领取 ${res.rewardPoints} 算力点！` })
       loadData()
     } catch (err) {
       toast.error('领取失败', { description: err?.message || '请稍后重试' })
@@ -126,7 +126,7 @@ export default function RewardsPage() {
     setAdPlaying(false)
     try {
       const res = await claimRewards(currentSessionId)
-      toast.success('观看完成', { description: `已获得 ${res.rewardTokens} 算力点奖励！` })
+      toast.success('观看完成', { description: `已获得 ${res.rewardPoints} 算力点奖励！` })
       loadData()
     } catch (err) {
       toast.error('领取失败', { description: err?.message || '请稍后重试' })
@@ -201,7 +201,7 @@ export default function RewardsPage() {
               <LabelZH className="text-rice-50/80 tracking-widest text-[10px]">REWARDS · 砚 田</LabelZH>
               <h2 className="font-serif text-3xl md:text-4xl font-semibold mt-2">每一笔都是真实额度</h2>
               <p className="opacity-90 mt-2 text-sm leading-relaxed max-w-xl">
-                观看激励视频 30 秒即可获得 {config?.rewardTokens || 200} 额度。
+                观看激励视频 30 秒即可获得 {config?.rewardPoints || 200} 额度。
                 {config && `今日可领上限 ${config.dailyLimitPerUser} 次，当前剩余 ${config.remainingToday} 次。`}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">

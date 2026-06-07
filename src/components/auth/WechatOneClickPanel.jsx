@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { fetchMe, fetchQuotaSummary, buildWechatOauthStartUrl, fetchWechatOauthStartUrl } from '@/lib/api'
+import { fetchMe, fetchPointsSummary, buildWechatOauthStartUrl, fetchWechatOauthStartUrl } from '@/lib/api'
 import { useAuthStore } from '@/store/useStore'
 import { isWechatBrowser, isPopupSupported, preferredOauthMode } from '@/lib/env-detect'
 import { cn } from '@/lib/utils'
@@ -64,8 +64,8 @@ export function WechatOneClickPanel({
   const onSuccess = useCallback(async () => {
     try {
       setPhase('success')
-      const [user, quota] = await Promise.all([fetchMe(), fetchQuotaSummary()])
-      setSession({ user, quota })
+      const [user, points] = await Promise.all([fetchMe(), fetchPointsSummary()])
+      setSession({ user, points })
       router.replace(nextUrl)
     } catch (err) {
       setPhase('failed')
@@ -112,8 +112,8 @@ export function WechatOneClickPanel({
           fetchMe()
             .then((user) => {
               if (user) {
-                fetchQuotaSummary()
-                  .then((quota) => setSession({ user, quota }))
+                fetchPointsSummary()
+                  .then((points) => setSession({ user, points }))
                   .catch(() => {})
                 router.replace(nextUrl)
               } else {

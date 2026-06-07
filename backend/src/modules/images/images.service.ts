@@ -3,7 +3,7 @@ import { Image, ImageSource } from '@prisma/client'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../prisma/prisma.service'
 import { MinioService } from '../storage/minio.service'
-import { ImageQuotaService } from './image-quota.service'
+import { ImageUsageService } from './image-usage.service'
 import { normalizeImageContentType, objectKeyForHash, sha256Hex, sniffImageContentType } from './image-hasher'
 
 type UploadFile = {
@@ -21,7 +21,7 @@ export class ImagesService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly storage: MinioService,
-    private readonly quota: ImageQuotaService
+    private readonly imageUsage: ImageUsageService
   ) {}
 
   async uploadReference(userId: string, file: UploadFile) {
@@ -77,7 +77,7 @@ export class ImagesService {
         },
         update: { refCount: { increment: 1 } }
       })
-      await this.quota.retain(input.userId, row.id, row.bytes, tx)
+      await this.imageUsage.retain(input.userId, row.id, row.bytes, tx)
       return row
     })
 
@@ -105,7 +105,7 @@ export class ImagesService {
   }
 
   async usage(userId: string) {
-    return this.quota.usage(userId)
+    return this.imageUsage.usage(userId)
   }
 
   private async assertReadable(userId: string, imageId: string) {

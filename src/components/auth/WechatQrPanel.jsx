@@ -12,7 +12,7 @@ import {
   ScanLine,
   Smartphone
 } from 'lucide-react'
-import { createWechatLoginSession, fetchMe, fetchQuotaSummary, fetchWechatLoginSession, subscribeSessionSse } from '@/lib/api'
+import { createWechatLoginSession, fetchMe, fetchPointsSummary, fetchWechatLoginSession, subscribeSessionSse } from '@/lib/api'
 import { useAuthStore } from '@/store/useStore'
 import { cn } from '@/lib/utils'
 
@@ -68,8 +68,8 @@ export function WechatQrPanel({ nextUrl = '/profile' }) {
       stopped = true
       setStatus('confirmed')
       try {
-        const [user, quota] = await Promise.all([fetchMe(), fetchQuotaSummary()])
-        setSession({ user, quota })
+        const [user, points] = await Promise.all([fetchMe(), fetchPointsSummary()])
+        setSession({ user, points })
         router.replace(nextUrl)
       } catch (err) {
         setStatus('failed')

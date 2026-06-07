@@ -274,9 +274,9 @@ class MinioService {
 ```
 images/
 ├── images.module.ts
-├── images.service.ts         // 业务：上传、查询、删除、垃圾回收、配额
+├── images.service.ts         // 业务：上传、查询、删除、垃圾回收、存储用量
 ├── images.controller.ts      // /images 子路由
-├── image-quota.service.ts    // StorageUsage 增减
+├── image-usage.service.ts    // StorageUsage 增减
 ├── image-hasher.ts           // sha256 + 图片尺寸 sniff
 └── dto/                      // class-validator
 ```
@@ -368,8 +368,8 @@ class ImageTasksService {
 async generate(userId, input) {
   // 1. 校验参数（沿用 chat.service.validateImageParams）
   await this.validate(input)
-  // 2. 余额
-  await this.quota.assertEnough(userId)
+  // 2. 积分余额
+  await this.points.assertEnough(userId)
   // 3. 模型可用
   const model = await this.models.assertEnabled(input.model)
   // 4. 引用计数 refs（仅 edit 用）
@@ -622,7 +622,7 @@ Prometheus 指标（用 `prom-client`，需引入）：
 ### 单元
 - `image-hasher.test.ts`：sha256 一致性、ext 判定、尺寸 sniff
 - `minio.service.test.ts`：使用 `@testcontainers/minio` 拉起 MinIO 跑真 put/get/presign
-- `image-quota.service.test.ts`：增减、超限拦截
+- `image-usage.service.test.ts`：增减、超限拦截
 
 ### 集成（每次部署跑）
 - 上传一张参考图 → 校验 MinIO 对象存在 → 校验 StorageUsage 增加
@@ -643,7 +643,7 @@ Prometheus 指标（用 `prom-client`，需引入）：
 |----|------|
 | W1 D1 | 部 MinIO、写 `StorageModule` + `MinioService` + 健康检查 |
 | W1 D2 | Prisma 改 schema、migrate、单测 |
-| W1 D3 | `ImagesModule`：upload / get / delete / quota |
+| W1 D3 | `ImagesModule`：upload / get / delete / storage usage |
 | W1 D4 | `ImageTasksModule`：generate（先不接 edit）+ controller 别名兼容旧前端路径 |
 | W1 D5 | 加 edit / 参考图链路 |
 | W2 D1 | 前端 `lib/image/api.js` 接入 uploads；ReferenceUploader 改造 |

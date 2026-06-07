@@ -43,7 +43,7 @@ Page({
         loading: false,
         userInfo,
         avatarInitial: this.getAvatarInitial(userInfo),
-        balanceText: formatNumber(userInfo.tokenBalance || 0),
+        balanceText: formatNumber(userInfo.pointsBalance || 0),
         emailMasked: userInfo.email ? maskEmail(userInfo.email) : ''
       });
     } catch (error) {

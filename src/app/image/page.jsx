@@ -6,7 +6,7 @@ import { SlidersHorizontal, Wand2 } from 'lucide-react'
 import Shell from '@/components/layout/Shell'
 import { useAuthStore } from '@/store/useStore'
 import { useImageStore, newTaskId } from '@/store/useImageStore'
-import { fetchModels, fetchMe, fetchQuotaSummary } from '@/lib/api'
+import { fetchModels, fetchMe, fetchPointsSummary } from '@/lib/api'
 import { decorateProvider, fallbackProviders } from '@/lib/config'
 import { isImageGenerationModel } from '@/lib/model-badges'
 import { describeSize } from '@/lib/image/size'
@@ -67,12 +67,12 @@ function ImagePageInner() {
     fetchMe()
       .then(async (user) => {
         if (cancelled) return
-        setSession({ user, quota: null })
+        setSession({ user, points: null })
         try {
-          const quota = await fetchQuotaSummary()
-          if (!cancelled) setSession({ user, quota })
+          const points = await fetchPointsSummary()
+          if (!cancelled) setSession({ user, points })
         } catch (err) {
-          console.warn('[image] quota refresh failed', err)
+          console.warn('[image] points refresh failed', err)
         }
       })
       .catch(() => !cancelled && clearSession())

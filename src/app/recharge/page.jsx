@@ -96,7 +96,7 @@ export default function RechargePage() {
               )}
             >
               {plan.id === 'plus' && <span className="chip-verm chip absolute -top-2 right-3 px-2 py-0 text-[10px]">推荐</span>}
-              <div className="font-mono text-3xl font-semibold text-ink-900">{formatTokens(plan.tokens)}</div>
+              <div className="font-mono text-3xl font-semibold text-ink-900">{formatPoints(plan.points)}</div>
               <div className="label-zh mt-1 text-[10px] text-ink-500">{spacedLabel(plan.label)}</div>
               <div className="ink-stroke my-3 opacity-20" />
               <div className="flex items-baseline gap-2">
@@ -120,7 +120,7 @@ export default function RechargePage() {
           <div className="rounded-2xl border border-ink-700/10 bg-rice-100 p-4 text-sm">
             <div className="mb-1.5 flex justify-between">
               <span className="text-ink-500">购买额度</span>
-              <span className="font-mono font-medium">{formatTokens(selectedPlan?.tokens)}</span>
+              <span className="font-mono font-medium">{formatPoints(selectedPlan?.points)}</span>
             </div>
             <div className="mb-1.5 flex justify-between">
               <span className="text-ink-500">折扣</span>
@@ -169,7 +169,7 @@ function PayMethod({ label, mark, color, active, onClick }) {
   )
 }
 
-function formatTokens(value) {
+function formatPoints(value) {
   return new Intl.NumberFormat('zh-CN').format(Number(value || 0))
 }
 

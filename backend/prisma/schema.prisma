@@ -48,27 +48,12 @@ enum RedeemCodeStatus {
   expired
 }
 
-enum TokenGrantSource {
-  redeem_code
-  ad_reward
-  recharge
-  manual_adjustment
-}
-
-enum TokenGrantStatus {
-  active
-  exhausted
-  expired
-  revoked
-}
-
-enum QuotaLedgerType {
+enum PointLedgerType {
   redeem_code
   ad_reward
   recharge
   manual_adjustment
   model_usage
-  grant_expired
   refund
 }
 
@@ -189,8 +174,8 @@ model User {
   sessions        UserSession[]
   qrSessions     WechatQrSession[]
   miniSessions   WechatMiniappSession[]
-  tokenGrants    TokenGrant[]
-  quotaLedger    QuotaLedger[]
+  pointAccount   PointAccount?
+  pointLedger    PointLedger[]
   conversations  Conversation[]
   messages       Message[]
   llmRequests    LlmRequest[]
@@ -308,8 +293,7 @@ model WechatMiniappSession {
 model Plan {
   id          String       @id @default(uuid())
   name        String
-  tokenAmount BigInt
-  validDays   Int
+  pointAmount BigInt
   modelScope  Json?
   status      PlanStatus   @default(active)
   remark      String       @default("")
@@ -339,7 +323,7 @@ model RechargeOrder {
   id            String                @id @default(uuid())
   orderNo       String                @unique
   userId        String
-  tokens        BigInt
+  points        BigInt
   amountCents   Int
   currency      String                @default("CNY")
   paymentMethod RechargePaymentMethod
@@ -355,36 +339,24 @@ model RechargeOrder {
   @@index([status, createdAt])
 }
 
-model TokenGrant {
-  id              String           @id @default(uuid())
-  userId          String
-  source          TokenGrantSource
-  sourceId        String?
-  totalTokens     BigInt
-  remainingTokens BigInt
-  startsAt        DateTime         @default(now())
-  expiresAt       DateTime
-  status          TokenGrantStatus @default(active)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ledger          QuotaLedger[]
-
-  @@index([userId, status, expiresAt])
+model PointAccount {
+  userId    String   @id
+  balance   BigInt   @default(0)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model QuotaLedger {
+model PointLedger {
   id           String          @id @default(uuid())
   userId       String
-  grantId      String?
-  type         QuotaLedgerType
-  deltaTokens  BigInt
+  type         PointLedgerType
+  deltaPoints  BigInt
   balanceAfter BigInt
   relatedId    String?
   remark       String          @default("")
   createdAt    DateTime        @default(now())
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  grant        TokenGrant?     @relation(fields: [grantId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([relatedId])
@@ -446,7 +418,7 @@ model LlmRequest {
 
 model UsageEvent {
   id               String           @id @default(uuid())
-  sub2apiUsageId   String           @unique
+  usageKey         String           @unique
   llmRequestId     String?
   userId           String?
   modelId          String?
@@ -576,9 +548,8 @@ model AdRewardConfig {
   id                   String   @id @default(uuid())
   enabled              Boolean  @default(false)
   adUnitId             String   @default("")
-  rewardTokens         BigInt   @default(10)
+  rewardPoints         BigInt   @default(10)
   dailyLimitPerUser    Int      @default(5)
-  rewardTokenValidDays Int      @default(7)
   minIntervalSeconds   Int      @default(30)
   sessionTtlSeconds    Int      @default(300)
   updatedByAdminId     String?
@@ -592,7 +563,7 @@ model AdRewardSession {
   userId          String
   openid          String
   adUnitId        String
-  rewardTokens    BigInt
+  rewardPoints    BigInt
   status          RewardSessionStatus @default(pending)
   expiresAt       DateTime
   grantedAt       DateTime?
@@ -620,15 +591,6 @@ model AdRewardEvent {
 
   @@index([userId, createdAt])
   @@index([rewardSessionId])
-}
-
-model SyncState {
-  id            String    @id @default(uuid())
-  name          String    @unique
-  cursor        String?
-  lastSuccessAt DateTime?
-  lastError     String?
-  updatedAt     DateTime  @updatedAt
 }
 
 model AdminAuditLog {

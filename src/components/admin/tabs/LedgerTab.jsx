@@ -6,7 +6,7 @@ import Badge from '../Badge'
 import FilterBar, { FilterSelect } from '../FilterBar'
 import Pagination from '../Pagination'
 import { cn } from '@/lib/utils'
-import { formatRelativeTime, formatTokens, quotaLedgerBadge } from '@/lib/admin-format'
+import { formatRelativeTime, formatPoints, pointLedgerBadge } from '@/lib/admin-format'
 
 const TYPE_OPTIONS = [
   { value: 'redeem_code', label: '兑换码' },
@@ -14,7 +14,6 @@ const TYPE_OPTIONS = [
   { value: 'recharge', label: '充值' },
   { value: 'manual_adjustment', label: '手动调整' },
   { value: 'model_usage', label: '模型消耗' },
-  { value: 'grant_expired', label: '过期' },
   { value: 'refund', label: '退还' }
 ]
 
@@ -35,7 +34,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
 
       <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle className="text-base">额度流水</CardTitle>
+          <CardTitle className="text-base">积分流水</CardTitle>
           <CardDescription>{ledger.length} 条</CardDescription>
         </CardHeader>
         <DataTable
@@ -44,7 +43,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
               key: 'type',
               label: '类型 / 备注',
               render: (r) => {
-                const b = quotaLedgerBadge(r.type)
+                const b = pointLedgerBadge(r.type)
                 return (
                   <div className="min-w-0">
                     <Badge tone={b.tone}>{b.label}</Badge>
@@ -71,7 +70,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
               align: 'right',
               width: 120,
               render: (r) => {
-                const n = Number(r.deltaTokens || 0)
+                const n = Number(r.deltaPoints || 0)
                 return (
                   <span
                     className={cn(
@@ -80,7 +79,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
                     )}
                   >
                     {n >= 0 ? '+' : ''}
-                    {formatTokens(r.deltaTokens)}
+                    {formatPoints(r.deltaPoints)}
                   </span>
                 )
               }
@@ -92,7 +91,7 @@ export default function LedgerTab({ data, filters, setFilter }) {
               width: 120,
               render: (r) => (
                 <span className="font-mono text-[11px] text-ink-500">
-                  {formatTokens(r.balanceAfter)}
+                  {formatPoints(r.balanceAfter)}
                 </span>
               )
             },
