@@ -55,6 +55,7 @@ function ImagePageInner() {
   const refs = useImageStore((s) => s.refs)
   const activeTaskId = useImageStore((s) => s.activeTaskId)
   const setActiveTaskId = useImageStore((s) => s.setActiveTaskId)
+  const setFilter = useImageStore((s) => s.setFilter)
 
   const [providers, setProviders] = useState(fallbackProviders)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -107,7 +108,10 @@ function ImagePageInner() {
         const split = await splitExistingMidjourneyGrids()
         if (split > 0) console.info(`[image] split ${split} Midjourney grid tasks`)
         const restored = await restoreServerImageTasks()
-        if (restored > 0) console.info(`[image] restored ${restored} server image tasks`)
+        if (restored > 0) {
+          console.info(`[image] restored ${restored} server image tasks`)
+          setFilter('all')
+        }
         const cleaned = await cleanOrphanImages()
         if (cleaned > 0) console.info(`[image] cleaned ${cleaned} orphan images`)
         const tasks = await listTasks()
@@ -116,7 +120,7 @@ function ImagePageInner() {
         console.warn('[image] load tasks failed', err)
       }
     })()
-  }, [setTaskIndex, isAuthenticated])
+  }, [setTaskIndex, setFilter, isAuthenticated])
 
   async function restoreServerImageTasks() {
     if (!isAuthenticated) return 0
@@ -130,6 +134,7 @@ function ImagePageInner() {
     for (const serverTask of serverTasks) {
       if (localIds.has(serverTask.id)) continue
       const images = Array.isArray(serverTask.images) ? serverTask.images : []
+      if (serverTask.status !== 'done' || images.length === 0) continue
       const outputs = []
       for (const image of images) {
         if (!image?.url || downloadedImages >= 10) continue
@@ -155,14 +160,14 @@ function ImagePageInner() {
           console.warn('[image] failed to restore server output', err)
         }
       }
-      if (serverTask.status === 'done' && outputs.length === 0) continue
+      if (outputs.length === 0) continue
       const createdAt = serverTask.createdAt ? new Date(serverTask.createdAt).getTime() : Date.now()
       const finishedAt = serverTask.finishedAt ? new Date(serverTask.finishedAt).getTime() : null
       await upsertTask({
         id: `server_${serverTask.id}`,
         serverTaskId: serverTask.id,
         requestId: serverTask.requestId,
-        status: serverTask.status === 'done' ? 'done' : serverTask.status,
+        status: 'done',
         prompt: serverTask.prompt || '',
         modelId: serverTask.modelId,
         modelName: serverTask.modelId,
