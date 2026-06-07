@@ -14,6 +14,7 @@ import {
   listTasks,
   upsertTask,
   deleteTask,
+  listDeletedServerTaskIds,
   markStaleRunningTasks,
   cleanOrphanImages,
   putImage,
@@ -129,6 +130,7 @@ function ImagePageInner() {
       listTasks(),
       fetchServerImageTasks({ limit: 30 })
     ])
+    const deletedServerTaskIds = new Set(await listDeletedServerTaskIds())
     const staleServerTasks = localTasks.filter((task) =>
       String(task.id || '').startsWith('server_') &&
       (task.status !== 'done' || !Array.isArray(task.outputs) || task.outputs.length === 0)
@@ -139,6 +141,7 @@ function ImagePageInner() {
     let restored = 0
     let downloadedImages = 0
     for (const serverTask of serverTasks) {
+      if (deletedServerTaskIds.has(serverTask.id)) continue
       if (localIds.has(serverTask.id)) continue
       const images = Array.isArray(serverTask.images) ? serverTask.images : []
       if (serverTask.status !== 'done' || images.length === 0) continue
