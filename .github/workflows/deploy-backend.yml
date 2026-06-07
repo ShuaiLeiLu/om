@@ -35,14 +35,9 @@ jobs:
             set -eu
             APP_DIR="/opt/chatty"
             BRANCH="main"
-            ENV_KEEP="/tmp/chatty-image-storage.env"
+            ENV_KEEP="/opt/chatty-runtime/backend-image-storage.env"
 
             cd "$APP_DIR"
-            if [ -f "$APP_DIR/backend/.env" ]; then
-              grep -E '^(IMAGE_BACKEND|MINIO_.*)=' "$APP_DIR/backend/.env" > "$ENV_KEEP" || true
-            else
-              : > "$ENV_KEEP"
-            fi
             git fetch origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
 
