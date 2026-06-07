@@ -35,8 +35,14 @@ jobs:
             set -eu
             APP_DIR="/opt/chatty"
             BRANCH="main"
+            ENV_KEEP="/tmp/chatty-image-storage.env"
 
             cd "$APP_DIR"
+            if [ -f "$APP_DIR/backend/.env" ]; then
+              grep -E '^(IMAGE_BACKEND|MINIO_.*)=' "$APP_DIR/backend/.env" > "$ENV_KEEP" || true
+            else
+              : > "$ENV_KEEP"
+            fi
             git fetch origin "$BRANCH"
             git reset --hard "origin/$BRANCH"
 
@@ -44,6 +50,11 @@ jobs:
             cat > "$APP_DIR/backend/.env" <<'EOF'
             ${{ secrets.BACKEND_ENV }}
             EOF
+            if [ -s "$ENV_KEEP" ]; then
+              awk -F= 'NR==FNR { keep[$1]=$0; next } !($1 in keep) { print } END { for (key in keep) print keep[key] }' \
+                "$ENV_KEEP" "$APP_DIR/backend/.env" > "$APP_DIR/backend/.env.merged"
+              mv "$APP_DIR/backend/.env.merged" "$APP_DIR/backend/.env"
+            fi
             chmod 600 "$APP_DIR/backend/.env"
 
             sh scripts/deploy-backend.sh

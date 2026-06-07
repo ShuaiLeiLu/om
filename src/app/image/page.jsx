@@ -13,6 +13,7 @@ import { describeSize } from '@/lib/image/size'
 import {
   listTasks,
   upsertTask,
+  deleteTask,
   markStaleRunningTasks,
   cleanOrphanImages,
   putImage,
@@ -128,7 +129,13 @@ function ImagePageInner() {
       listTasks(),
       fetchServerImageTasks({ limit: 30 })
     ])
-    const localIds = new Set(localTasks.map((task) => task.serverTaskId || task.id))
+    const staleServerTasks = localTasks.filter((task) =>
+      String(task.id || '').startsWith('server_') &&
+      (task.status !== 'done' || !Array.isArray(task.outputs) || task.outputs.length === 0)
+    )
+    await Promise.all(staleServerTasks.map((task) => deleteTask(task.id)))
+    const activeLocalTasks = localTasks.filter((task) => !staleServerTasks.includes(task))
+    const localIds = new Set(activeLocalTasks.map((task) => task.serverTaskId || task.id))
     let restored = 0
     let downloadedImages = 0
     for (const serverTask of serverTasks) {
@@ -161,11 +168,13 @@ function ImagePageInner() {
         }
       }
       if (outputs.length === 0) continue
-      const createdAt = serverTask.createdAt ? new Date(serverTask.createdAt).getTime() : Date.now()
+      const serverCreatedAt = serverTask.createdAt ? new Date(serverTask.createdAt).getTime() : Date.now()
+      const createdAt = Date.now() - restored
       const finishedAt = serverTask.finishedAt ? new Date(serverTask.finishedAt).getTime() : null
       await upsertTask({
         id: `server_${serverTask.id}`,
         serverTaskId: serverTask.id,
+        serverCreatedAt,
         requestId: serverTask.requestId,
         status: 'done',
         prompt: serverTask.prompt || '',
