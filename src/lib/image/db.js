@@ -7,7 +7,7 @@
 // cleanup pass removes images not referenced by any task.
 
 const DB_NAME = 'chatty-image-playground'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const STORE_TASKS = 'tasks'
 const STORE_IMAGES = 'images'
 const DEFAULT_STALE_RUNNING_TASK_MS = 20 * 60 * 1000
