@@ -22,6 +22,7 @@ import { sha256Hex } from '@/lib/image/hash'
 import {
   generateImageRequest,
   editImageRequest,
+  fetchServerImageTasks,
   urlToBlob,
   getImageDimensions,
   splitMidjourneyGrid
@@ -105,6 +106,8 @@ function ImagePageInner() {
         if (stale > 0) console.info(`[image] marked ${stale} stale running tasks`)
         const split = await splitExistingMidjourneyGrids()
         if (split > 0) console.info(`[image] split ${split} Midjourney grid tasks`)
+        const restored = await restoreServerImageTasks()
+        if (restored > 0) console.info(`[image] restored ${restored} server image tasks`)
         const cleaned = await cleanOrphanImages()
         if (cleaned > 0) console.info(`[image] cleaned ${cleaned} orphan images`)
         const tasks = await listTasks()
@@ -113,7 +116,69 @@ function ImagePageInner() {
         console.warn('[image] load tasks failed', err)
       }
     })()
-  }, [setTaskIndex])
+  }, [setTaskIndex, isAuthenticated])
+
+  async function restoreServerImageTasks() {
+    if (!isAuthenticated) return 0
+    const [localTasks, serverTasks] = await Promise.all([
+      listTasks(),
+      fetchServerImageTasks({ limit: 30 })
+    ])
+    const localIds = new Set(localTasks.map((task) => task.serverTaskId || task.id))
+    let restored = 0
+    let downloadedImages = 0
+    for (const serverTask of serverTasks) {
+      if (localIds.has(serverTask.id)) continue
+      const images = Array.isArray(serverTask.images) ? serverTask.images : []
+      const outputs = []
+      for (const image of images) {
+        if (!image?.url || downloadedImages >= 10) continue
+        try {
+          const blob = await urlToBlob(image.url)
+          let dim = { width: image.width || null, height: image.height || null }
+          if (!dim.width || !dim.height) {
+            try {
+              dim = await getImageDimensions(blob)
+            } catch {}
+          }
+          const hash = await sha256Hex(blob)
+          await putImage({
+            hash,
+            blob,
+            type: blob.type || image.contentType || 'image/png',
+            width: dim.width,
+            height: dim.height
+          })
+          outputs.push(hash)
+          downloadedImages += 1
+        } catch (err) {
+          console.warn('[image] failed to restore server output', err)
+        }
+      }
+      if (serverTask.status === 'done' && outputs.length === 0) continue
+      const createdAt = serverTask.createdAt ? new Date(serverTask.createdAt).getTime() : Date.now()
+      const finishedAt = serverTask.finishedAt ? new Date(serverTask.finishedAt).getTime() : null
+      await upsertTask({
+        id: `server_${serverTask.id}`,
+        serverTaskId: serverTask.id,
+        requestId: serverTask.requestId,
+        status: serverTask.status === 'done' ? 'done' : serverTask.status,
+        prompt: serverTask.prompt || '',
+        modelId: serverTask.modelId,
+        modelName: serverTask.modelId,
+        params: serverTask.params || {},
+        sizePreset: null,
+        refs: [],
+        outputs,
+        error: serverTask.error || null,
+        createdAt,
+        finishedAt,
+        durationMs: serverTask.durationMs || (finishedAt ? Math.max(0, finishedAt - createdAt) : null)
+      })
+      restored += 1
+    }
+    return restored
+  }
 
   async function splitExistingMidjourneyGrids() {
     const tasks = await listTasks()
