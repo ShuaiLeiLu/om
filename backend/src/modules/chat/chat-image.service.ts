@@ -280,6 +280,7 @@ export class ChatImageService implements OnModuleInit {
         requestId,
         sub2apiRequestId: upstreamResult.sub2apiRequestId || requestId,
         model: model.sub2apiModel,
+        chargeKind: options.mode === 'edits' ? 'image_edit' : 'image_generation',
         usage: upstreamResult.usage,
         raw: {
           source: upstreamResult.source,

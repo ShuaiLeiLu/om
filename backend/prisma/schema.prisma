@@ -17,25 +17,6 @@ enum AdminRole {
   owner
 }
 
-enum SessionStatus {
-  active
-  revoked
-}
-
-enum QrSessionMode {
-  login
-  login_code
-}
-
-enum QrSessionStatus {
-  pending
-  scanned
-  confirmed
-  expired
-  cancelled
-  failed
-}
-
 enum PlanStatus {
   active
   disabled
@@ -116,36 +97,6 @@ enum ImageSource {
   system
 }
 
-enum VerificationPurpose {
-  register
-  reset_password
-  bind_email
-}
-
-enum VerificationStatus {
-  active
-  consumed
-  expired
-  exhausted
-}
-
-model EmailVerificationCode {
-  id          String              @id @default(uuid())
-  email       String
-  purpose     VerificationPurpose
-  codeHash    String
-  status      VerificationStatus  @default(active)
-  attempts    Int                 @default(0)
-  maxAttempts Int                 @default(5)
-  ip          String              @default("")
-  userAgent   String              @default("")
-  createdAt   DateTime            @default(now())
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  @@index([email, purpose, status])
-  @@index([createdAt])
-}
-
 enum ImageTaskMode {
   generate
   edit
@@ -164,16 +115,11 @@ model User {
   displayName     String                 @default("")
   avatarUrl       String                 @default("")
   email           String?                @unique
-  passwordHash    String?
-  emailVerifiedAt DateTime?
+  casdoorSubject  String?                @unique
   status          UserStatus             @default(active)
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   lastLoginAt     DateTime?
-  oauthAccounts   OauthAccount[]
-  sessions        UserSession[]
-  qrSessions     WechatQrSession[]
-  miniSessions   WechatMiniappSession[]
   pointAccount   PointAccount?
   pointLedger    PointLedger[]
   conversations  Conversation[]
@@ -193,101 +139,13 @@ model AdminUser {
   id           String          @id @default(uuid())
   username     String          @unique
   email        String          @unique
-  passwordHash String
+  casdoorSubject String?       @unique
   role         AdminRole       @default(admin)
   status       UserStatus      @default(active)
   lastLoginAt  DateTime?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   auditLogs    AdminAuditLog[]
-  sessions     AdminSession[]
-}
-
-model AdminSession {
-  id               String        @id @default(uuid())
-  adminUserId      String
-  refreshTokenHash String        @unique
-  status           SessionStatus @default(active)
-  expiresAt        DateTime
-  createdAt        DateTime      @default(now())
-  revokedAt        DateTime?
-  ip               String        @default("")
-  userAgent        String        @default("")
-  adminUser        AdminUser     @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
-
-  @@index([adminUserId])
-}
-
-model OauthAccount {
-  id          String    @id @default(uuid())
-  userId      String
-  provider    String
-  appid       String
-  openid      String
-  unionid     String?
-  nickname    String    @default("")
-  avatarUrl   String    @default("")
-  boundAt     DateTime  @default(now())
-  lastLoginAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, appid, openid])
-  @@index([unionid])
-  @@index([userId])
-}
-
-model UserSession {
-  id               String        @id @default(uuid())
-  userId           String
-  refreshTokenHash String
-  status           SessionStatus @default(active)
-  expiresAt        DateTime
-  createdAt        DateTime      @default(now())
-  revokedAt        DateTime?
-  ip               String        @default("")
-  userAgent        String        @default("")
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([refreshTokenHash])
-}
-
-model WechatQrSession {
-  id          String          @id @default(uuid())
-  sessionId   String          @unique
-  mode        QrSessionMode   @default(login)
-  scene       String          @unique
-  status      QrSessionStatus @default(pending)
-  userId      String?
-  openid      String?
-  unionid     String?
-  loginCode   String?
-  expiresAt   DateTime
-  scannedAt   DateTime?
-  confirmedAt DateTime?
-  createdAt   DateTime        @default(now())
-  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([scene])
-  @@index([status])
-  @@index([loginCode, mode, status])
-}
-
-model WechatMiniappSession {
-  id               String    @id @default(uuid())
-  sessionTokenHash String    @unique
-  openid           String
-  unionid          String?
-  userId           String?
-  expiresAt        DateTime
-  createdAt        DateTime  @default(now())
-  revokedAt        DateTime?
-  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([openid])
-  @@index([userId])
 }
 
 model Plan {

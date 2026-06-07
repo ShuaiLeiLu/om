@@ -19,7 +19,7 @@ export function LoginShell({ children, backHref = '/' }) {
           </Link>
           <div className="hidden items-center gap-1.5 rounded-full border border-celadon-600/15 bg-celadon-50 px-3.5 py-1.5 text-[10px] font-semibold tracking-wider text-celadon-700 sm:inline-flex">
             <ShieldCheck size={12} />
-            微信安全登录
+            统一账号登录
           </div>
         </header>
 
@@ -67,7 +67,7 @@ export function LoginMarketing({ inAuthFlow = false }) {
         <div className="mt-8 flex flex-wrap items-center gap-5 text-xs text-ink-500">
           <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-celadon-500" />20+ 模型</span>
           <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-verm-500" />实时画图</span>
-          <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-gold-500" />视频得额度</span>
+          <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-gold-500" />视频得算力点</span>
         </div>
 
         <div className="seal relative mt-14 flex h-16 w-16 flex-col items-center justify-center text-center">

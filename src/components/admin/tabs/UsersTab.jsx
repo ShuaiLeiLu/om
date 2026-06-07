@@ -27,7 +27,7 @@ import DataTable from '../DataTable'
 import Badge from '../Badge'
 import FilterBar, { FilterSelect } from '../FilterBar'
 import Pagination from '../Pagination'
-import { formatRelativeTime, maskOpenid, userStatusBadge } from '@/lib/admin-format'
+import { formatRelativeTime, userStatusBadge } from '@/lib/admin-format'
 import { adjustAdminPoints, deleteAdminUser, updateAdminUserStatus } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
@@ -47,7 +47,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
       <FilterBar
         search={f.q}
         onSearchChange={(v) => setFilter('users', { q: v, page: 1 })}
-        searchPlaceholder="昵称、openid、邮箱"
+        searchPlaceholder="昵称、Casdoor ID、邮箱"
       >
         <FilterSelect
           value={f.status}
@@ -63,7 +63,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
       <Card>
         <CardHeader>
           <CardTitle className="text-base">手动调整算力点</CardTitle>
-          <CardDescription>为单个用户增减额度，负数表示扣减</CardDescription>
+          <CardDescription>为单个用户增减算力点，负数表示扣减</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -77,7 +77,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
                     points: pointsForm.points,
                     remark: pointsForm.remark
                   }),
-                '额度已调整'
+                '算力点已调整'
               )
             }}
             className="grid gap-3 lg:grid-cols-[1.6fr_1fr_1.4fr_auto] lg:items-end"
@@ -152,7 +152,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-semibold text-foreground">
-                        {u.displayName || '微信用户'}
+                        {u.displayName || '统一账号用户'}
                       </p>
                       <Badge tone={b.tone}>{b.label}</Badge>
                     </div>
@@ -164,15 +164,15 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
               }
             },
             {
-              key: 'wechat',
-              label: '微信 / 邮箱',
+              key: 'identity',
+              label: '统一账号 / 邮箱',
               width: 220,
               render: (u) => (
                 <div className="min-w-0 text-[11px] text-muted-foreground">
                   <p className="truncate">
-                    {u.email || maskOpenid(u.oauthAccounts?.[0]?.openid) || '未绑定'}
+                    {u.email || u.casdoorSubject || '未绑定'}
                   </p>
-                  <p className="mt-0.5">OAuth {u.oauthAccounts?.length || 0} 个</p>
+                  <p className="mt-0.5 truncate">{u.casdoorSubject || 'Casdoor 待同步'}</p>
                 </div>
               )
             },
@@ -200,7 +200,7 @@ export default function UsersTab({ data, filters, setFilter, saving, runAction }
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    title="填到调整额度"
+                    title="填到调整算力点"
                     onClick={() => setPointsForm((p) => ({ ...p, userId: u.id }))}
                   >
                     <Coins />

@@ -2,80 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { randomToken } from '../../common/http'
 import { PrismaService } from '../prisma/prisma.service'
 import { PointsService } from '../points/points.service'
-import { WechatService } from '../wechat/wechat.service'
 
 @Injectable()
 export class RewardsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly points: PointsService,
-    private readonly wechat: WechatService
+    private readonly points: PointsService
   ) {}
-
-  async config(sessionToken: string) {
-    const session = await this.wechat.verifyMiniappSession(sessionToken)
-    const config = await this.getConfig()
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const claimed = session.userId
-      ? await this.prisma.adRewardSession.count({ where: { userId: session.userId, status: 'granted', createdAt: { gte: today } } })
-      : 0
-    return {
-      enabled: config.enabled,
-      adUnitId: config.adUnitId,
-      rewardPoints: config.rewardPoints.toString(),
-      dailyLimitPerUser: config.dailyLimitPerUser,
-      remainingToday: Math.max(0, config.dailyLimitPerUser - claimed)
-    }
-  }
-
-  async createSession(sessionToken: string) {
-    const mini = await this.wechat.verifyMiniappSession(sessionToken)
-    if (!mini.userId) throw new BadRequestException('wechat_not_bound')
-    const config = await this.getConfig()
-    if (!config.enabled) throw new BadRequestException('reward_disabled')
-    await this.assertCanClaim(mini.userId, config.dailyLimitPerUser, config.minIntervalSeconds)
-    const rewardSessionId = randomToken(24)
-    const session = await this.prisma.adRewardSession.create({
-      data: {
-        rewardSessionId,
-        userId: mini.userId,
-        openid: mini.openid,
-        adUnitId: config.adUnitId,
-        rewardPoints: config.rewardPoints,
-        expiresAt: new Date(Date.now() + config.sessionTtlSeconds * 1000)
-      }
-    })
-    return { rewardSessionId, adUnitId: config.adUnitId, expiresAt: session.expiresAt }
-  }
-
-  async claim(sessionToken: string, rewardSessionId: string) {
-    const mini = await this.wechat.verifyMiniappSession(sessionToken)
-    if (!mini.userId) throw new BadRequestException('wechat_not_bound')
-    const reward = await this.prisma.adRewardSession.findUnique({ where: { rewardSessionId } })
-    if (!reward || reward.userId !== mini.userId) throw new BadRequestException('reward_session_not_found')
-    if (reward.status === 'granted') return { ok: true, duplicated: true }
-    if (reward.expiresAt <= new Date()) throw new BadRequestException('reward_session_expired')
-    if (reward.status !== 'pending') throw new BadRequestException('reward_session_consumed')
-
-    const config = await this.getConfig()
-    await this.assertCanClaim(mini.userId, config.dailyLimitPerUser, config.minIntervalSeconds)
-    const result = await this.points.addPoints({
-      userId: mini.userId,
-      points: reward.rewardPoints,
-      type: 'ad_reward',
-      relatedId: reward.rewardSessionId,
-      remark: '激励视频广告奖励'
-    })
-    await this.prisma.adRewardSession.update({
-      where: { rewardSessionId },
-      data: { status: 'granted', grantedAt: new Date() }
-    })
-    await this.prisma.adRewardEvent.create({
-      data: { rewardSessionId, userId: mini.userId, openid: mini.openid, eventType: 'claim', result: 'granted' }
-    })
-    return { ok: true, rewardPoints: reward.rewardPoints.toString(), pointsBalance: result.pointsBalance }
-  }
 
   async webConfig(userId: string) {
     const config = await this.getConfig()
@@ -97,14 +30,12 @@ export class RewardsService {
     const config = await this.getConfig()
     if (!config.enabled) throw new BadRequestException('reward_disabled')
     await this.assertCanClaim(userId, config.dailyLimitPerUser, config.minIntervalSeconds)
-    const oauth = await this.prisma.oauthAccount.findFirst({ where: { userId, provider: 'wechat' } })
-    const openid = oauth?.openid || ''
     const rewardSessionId = randomToken(24)
     const session = await this.prisma.adRewardSession.create({
       data: {
         rewardSessionId,
         userId,
-        openid,
+        openid: '',
         adUnitId: config.adUnitId,
         rewardPoints: config.rewardPoints,
         expiresAt: new Date(Date.now() + config.sessionTtlSeconds * 1000)

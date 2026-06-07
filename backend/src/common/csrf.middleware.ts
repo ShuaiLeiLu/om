@@ -8,18 +8,15 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
 /**
  * Routes exempt from CSRF enforcement.
- * - wechat/miniapp/*: bearer-token auth from the native miniprogram, no cookie involved
- *   (wx.request does not send cookies, so CSRF defense is moot and would just break login).
  * - health/*: liveness probes from infrastructure.
- * - auth/wechat/oauth/callback: 302 callback from WeChat servers (GET-only but exempted defensively).
+ * - auth/casdoor/callback: OAuth callback (GET-only but exempted defensively).
  *
  * Patterns are matched substring-style against the full URL so they work whether or not the
  * NestJS global prefix ('/api') is included in the middleware's view of the path.
  */
 const EXEMPT_PATTERNS = [
-  '/wechat/miniapp/',
   '/health',
-  '/auth/wechat/oauth/callback'
+  '/auth/casdoor/callback'
 ]
 
 function isExempt(url: string) {

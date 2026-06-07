@@ -63,7 +63,7 @@ export default function RechargeTab({ data, saving, runAction }) {
           },
           {
             key: 'points',
-            label: '额度',
+            label: '算力点',
             align: 'right',
             width: 100,
             render: (order) => <span className="font-mono text-celadon-700">{formatPoints(order.points)}</span>

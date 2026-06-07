@@ -1,13 +1,20 @@
 # 图片生成与编辑 API 对接文档
 
-本文档描述了重构后的前端对后端的需求。前端代码位于 `src/app/image/` 与 `src/lib/image/`，通过 `fetch('/api/images/...')` 调用后端。Next.js 的 `next.config.mjs` 将 `/api/*` 反向代理到 `NEXT_PUBLIC_API_BASE_URL`（默认 `http://127.0.0.1:3001`）。
+> 最后更新：2026-06-07。本文档描述当前 Nest 后端已实现接口，历史参考实现片段仅作为背景。
 
-后端只需新增 / 扩展两个端点：
+前端代码位于 `src/app/image/` 与相关组件中，通过 `fetch('/api/images/...')` 调用后端。Next.js 的 `next.config.mjs` 将 `/api/*` 反向代理到 `NEXT_PUBLIC_API_BASE_URL`（默认 `http://127.0.0.1:3001`）。
 
-- `POST /api/images/generations` —— 文本生图（扩展原有端点）
-- `POST /api/images/edits` —— 参考图编辑（新增）
+当前后端已实现以下端点：
 
-两个端点均要求登录会话（cookie），并在调用上游模型前完成 Token 余额扣减、模型可用性校验、审计日志写入等公共流程，与 `/api/chat/completions` 保持一致。
+- `POST /api/images/generations`：文本生图
+- `POST /api/images/edits`：参考图编辑
+- `POST /api/images/uploads`：multipart 上传参考图
+- `GET /api/images/tasks`：当前用户图片任务历史
+- `GET /api/images/usage`：当前用户图片存储统计
+- `GET /api/images/:id`：当前用户图片元数据
+- `GET /api/images/:id/raw`：当前用户私有图片内容
+
+所有端点均要求普通用户登录会话（cookie）。生图和编辑会在调用上游模型前完成积分扣减、模型可用性校验、审计日志写入等公共流程，与 `/api/chat/completions` 保持一致。
 
 ---
 
@@ -80,7 +87,13 @@
 
 ## 2. POST /api/images/edits
 
-参考图编辑接口。请求体与 `generations` 几乎一致，多一个 `images` 数组：
+参考图编辑接口。当前支持三种参考图输入：
+
+- multipart/form-data 字段 `images`，最多 16 个文件，单图 25 MB。
+- JSON `images` data URL 数组，用于兼容旧前端。
+- `imageIds`，引用已经通过 `POST /api/images/uploads` 上传并归属于当前用户的图片。
+
+JSON 请求体与 `generations` 几乎一致，多一个 `images` 或 `imageIds`：
 
 ```json
 {
@@ -91,6 +104,7 @@
     "data:image/png;base64,...",
     "data:image/jpeg;base64,..."
   ],
+  "imageIds": ["img_xxx"],
   "size":   "string",
   "quality": "low|medium|high",
   "output_format": "png|jpeg|webp",
@@ -110,7 +124,44 @@
 
 ---
 
-## 3. 与上游 OpenAI gpt-image-2 的映射
+## 3. POST /api/images/uploads
+
+上传参考图到服务端对象存储。请求必须为 multipart/form-data：
+
+| 字段 | 说明 |
+|------|------|
+| `file` | 图片文件，单图最大 25 MB |
+
+成功后返回图片元数据，包含可供后续编辑接口使用的 `imageId`/`id`、hash、contentType、bytes 和短期私有访问地址等字段。后端会按 SHA-256 做物理去重，但用户侧使用统计仍按当前用户独立记录。
+
+---
+
+## 4. GET /api/images/tasks
+
+读取当前登录用户的图片任务历史：
+
+```http
+GET /api/images/tasks?limit=30
+```
+
+`limit` 默认为 30。响应包含生成/编辑任务、输入图、输出图、状态、模型、提示词、参数和时间信息。
+
+---
+
+## 5. GET /api/images/usage
+
+读取当前用户图片存储统计。当前 `StorageUsage` 主要用于统计与后续配额预留，生产侧仍可以通过环境变量控制上传大小和 GC 行为。
+
+---
+
+## 6. GET /api/images/:id 与 /raw
+
+- `GET /api/images/:id`：返回当前用户可访问图片的元数据。
+- `GET /api/images/:id/raw`：后端鉴权后代理返回图片二进制，响应头包含 `Content-Type` 与 `Cache-Control: private, max-age=1800`。
+
+---
+
+## 7. 与上游 OpenAI gpt-image-2 的映射
 
 如果你后端直接对接 OpenAI 的 Images API：
 
@@ -130,7 +181,7 @@
 
 ---
 
-## 4. Node.js 参考实现片段（Express + 上游 OpenAI）
+## 8. 历史 Node.js 参考实现片段（Express + 上游 OpenAI）
 
 ```js
 import express from 'express'
@@ -258,21 +309,20 @@ export default router
 
 ---
 
-## 5. 计费建议
+## 9. 计费说明
 
-OpenAI gpt-image-2 按 token 计费，三档定价示例（请以最新官方为准）：
+Chatty 当前使用本地积分定价，核心环境变量：
 
-| Quality | 单图费用（参考） |
-|---------|----------------|
-| low     | ~$0.011 |
-| medium  | ~$0.042 |
-| high    | ~$0.167 |
+```text
+POINT_PRICE_IMAGE_GENERATION=20
+POINT_PRICE_IMAGE_EDIT=30
+```
 
-后端可以在响应里附带 `usage.image_tokens`，前端目前不直接展示，但会落到 `tasks` 详情记录中。
+模型返回的 `usage` 和上游请求信息会进入审计记录，但用户余额扣减以本地积分规则为准。
 
 ---
 
-## 6. 流式 vs 一次性返回
+## 10. 流式 vs 一次性返回
 
 当前接口是一次性返回（同步生成）。如果未来要支持渐进式渲染，可以扩展为 SSE：
 

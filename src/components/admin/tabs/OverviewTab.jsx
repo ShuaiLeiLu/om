@@ -148,7 +148,7 @@ export default function OverviewTab({ data }) {
 
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle className="text-base">最近额度流水</CardTitle>
+            <CardTitle className="text-base">最近算力点流水</CardTitle>
             <CardDescription>今日发放 {todayGranted} 次广告奖励</CardDescription>
           </CardHeader>
           <DataTable

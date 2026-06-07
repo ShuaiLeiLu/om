@@ -1,8 +1,47 @@
-# 图片对接 MinIO 后端改造计划
+# 图片对接 MinIO 后端说明
 
-> 目标：把生成图片、用户上传的参考图、任务历史统统迁到服务端 MinIO + Postgres，前端不再以 IndexedDB 为权威存储（仅做本地缓存）。
+> 最后更新：2026-06-07。MinIO/S3 图片存储已在当前后端落地，本文前半部分是当前实现说明，后半部分保留原改造计划作为设计背景。
 >
-> 现状：`backend/src/modules/chat/chat.service.ts` 的 `generateImage` / `editImage` 已支持完整参数，但生成结果直接以 base64 dataURL 或上游 signed URL 透传给前端，前端写入浏览器 IndexedDB。
+> 当前目标：生成图片、用户上传参考图和任务历史以服务端 PostgreSQL + MinIO/S3 为权威存储，浏览器 IndexedDB 只作为本地缓存。
+
+## 当前实现概览
+
+已落地内容：
+
+- Prisma 迁移：`20260513143000_add_image_storage`
+- Nest 模块：`backend/src/modules/storage/`、`backend/src/modules/images/`
+- 聊天图片服务：`backend/src/modules/chat/chat-image.service.ts`
+- 数据表/模型：`Image`、`ImageTask`、`ImageTaskInput`、`ImageTaskOutput`、`StorageUsage`、`UserImageRef`
+- 上传接口：`POST /api/images/uploads`
+- 任务历史：`GET /api/images/tasks`
+- 使用统计：`GET /api/images/usage`
+- 私有图片读取：`GET /api/images/:id`、`GET /api/images/:id/raw`
+- 生图与编辑：`POST /api/images/generations`、`POST /api/images/edits`
+
+## 当前环境变量
+
+```text
+IMAGE_BACKEND=minio
+IMAGE_PRESIGN_TTL_SECONDS=21600
+IMAGE_UPLOAD_MAX_BYTES=26214400
+IMAGE_USER_STORAGE_DEFAULT_BYTES=0
+IMAGE_GC_DRY_RUN=false
+IMAGE_GC_OLDER_THAN_HOURS=24
+MINIO_ENDPOINT
+MINIO_PUBLIC_ENDPOINT
+MINIO_REGION
+MINIO_ACCESS_KEY
+MINIO_SECRET_KEY
+MINIO_BUCKET
+MINIO_FORCE_PATH_STYLE=true
+```
+
+生产建议：
+
+- Bucket 保持 private。
+- 后端持有 `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`，前端和小程序不得持有对象存储凭据。
+- `MINIO_PUBLIC_ENDPOINT` 用于生成客户端可访问 URL；如果没有公网对象存储域名，可通过后端 `/api/images/:id/raw` 代理读取。
+- `IMAGE_UPLOAD_MAX_BYTES` 当前默认 25 MB，与参考图上传限制一致。
 
 ## 锁定的关键决策
 
@@ -12,6 +51,28 @@
 | 参考图记账 | 同 hash 多用户上传 → 每人独立计 bytes（即使物理只存一份） |
 | 入库时机 | 上游返回后**同步**下载并 putObject 到 MinIO 后才返回前端 |
 | 存储额度 | 不限量；`StorageUsage` 仅用于统计/监控，预留字段以备后续接限额 |
+
+## 当前接口
+
+```text
+POST /api/images/uploads
+GET  /api/images/usage
+GET  /api/images/tasks?limit=30
+GET  /api/images/:id
+GET  /api/images/:id/raw
+POST /api/images/generations
+POST /api/images/edits
+```
+
+`POST /api/images/edits` 支持三类参考图输入：
+
+- multipart `images` 文件。
+- JSON `images` data URL 数组，兼容旧前端。
+- `imageIds`，引用服务端已上传图片。
+
+---
+
+以下为原设计背景，保留用于理解取舍与后续扩展。
 
 
 ---

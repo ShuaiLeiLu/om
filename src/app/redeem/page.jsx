@@ -31,7 +31,7 @@ export default function RedeemPage() {
       const points = await fetchPointsSummary()
       setSession({ user, points })
       const amount = formatPoints(grant?.ledger?.deltaPoints || grant?.deltaPoints || 0)
-      toast.success('兑换成功', { description: amount ? `已到账 ${amount} 额度` : '额度已到账' })
+      toast.success('兑换成功', { description: amount ? `已到账 ${amount} 算力点` : '算力点已到账' })
       setCode(['', '', '', ''])
     } catch (err) {
       toast.error('兑换失败', { description: translateRedeemError(err?.message) })
@@ -46,7 +46,7 @@ export default function RedeemPage() {
         <div>
           <p className="label-zh text-[10px] text-celadon-700">兑 换 · REDEEM</p>
           <h1 className="mt-1 font-serif text-3xl font-semibold text-ink-900">兑换码</h1>
-          <p className="mt-1 text-sm text-ink-500">输入兑换码，额度立即到账</p>
+          <p className="mt-1 text-sm text-ink-500">输入兑换码，算力点立即到账</p>
         </div>
         <Link href="/profile" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-ink-700/10 bg-rice-50 px-4 text-xs font-semibold text-ink-600 shadow-[var(--shadow-paper)] lg:hidden">
           <ArrowLeft size={13} />

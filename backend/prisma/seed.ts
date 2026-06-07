@@ -1,18 +1,16 @@
 import { PrismaClient } from '@prisma/client'
-import * as argon2 from 'argon2'
 
 const prisma = new PrismaClient()
 
 async function main() {
   const username = process.env.DEFAULT_ADMIN_USERNAME || 'admin'
   const email = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com'
-  const password = process.env.DEFAULT_ADMIN_PASSWORD || 'admin@123'
+  const casdoorSubject = process.env.DEFAULT_ADMIN_CASDOOR_SUBJECT || null
 
-  const passwordHash = await argon2.hash(password)
   await prisma.adminUser.upsert({
     where: { username },
-    update: { email, passwordHash },
-    create: { username, email, passwordHash, role: 'owner' }
+    update: { email, ...(casdoorSubject ? { casdoorSubject } : {}) },
+    create: { username, email, casdoorSubject, role: 'owner' }
   })
 
   await prisma.adRewardConfig.upsert({

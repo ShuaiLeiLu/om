@@ -181,6 +181,7 @@ export class ChatService {
         requestId,
         sub2apiRequestId,
         model: model.sub2apiModel,
+        chargeKind: 'chat',
         usage,
         raw: { source: 'chat_stream', sub2apiRequestId }
       })

@@ -1,18 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { CurrentAdmin } from '../../common/current-user'
-import { getClientIp, getUserAgent } from '../../common/http'
 import { AdminSessionGuard } from '../../common/session.guard'
 import { AdminService } from './admin.service'
 
 @Controller('admin')
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
-
-  @Post('auth/login')
-  login(@Body() body: { username?: string; email?: string; password?: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.admin.login(body, res, { ip: getClientIp(req), userAgent: getUserAgent(req) })
-  }
 
   @Post('auth/logout')
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -79,15 +73,4 @@ export class AdminController {
     return this.admin.listAuditLogs(query)
   }
 
-  @UseGuards(AdminSessionGuard)
-  @Get('wechat/accounts')
-  wechatAccounts(@Query() query: { q?: string; page?: string; pageSize?: string }) {
-    return this.admin.listWechatAccounts(query)
-  }
-
-  @UseGuards(AdminSessionGuard)
-  @Post('wechat/accounts/:id/unbind')
-  unbindWechat(@CurrentAdmin() admin: { id: string }, @Param('id') id: string) {
-    return this.admin.unbindWechatAccount(admin.id, id)
-  }
 }

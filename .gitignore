@@ -1,9 +1,12 @@
 node_modules/
 backend/node_modules/
+backend/.npm-cache/
 
 .next/
 out/
 backend/dist/
+.codegraph/
+*.tsbuildinfo
 
 .env
 .env.*

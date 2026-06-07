@@ -1,42 +1,28 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { LlmRequestStatus, PointLedgerType, Prisma } from '@prisma/client'
-import * as argon2 from 'argon2'
+import { randomUUID } from 'crypto'
 import { Response } from 'express'
-import { randomToken, sha256, toPublicBigInt } from '../../common/http'
+import { toPublicBigInt } from '../../common/http'
+import { signSession } from '../../common/signed-session'
 import { PointsService } from '../points/points.service'
 import { PrismaService } from '../prisma/prisma.service'
 
 const ADMIN_COOKIE = 'chatty_admin_session'
 const DAY_MS = 24 * 60 * 60 * 1000
 const HOUR_MS = 60 * 60 * 1000
-
-// Admin sessions are short-lived but auto-renewed by the guard while the admin is active.
-// Initial lifetime keeps idle attack windows small; renewal threshold avoids db churn on every request.
 const ADMIN_SESSION_TTL_MS = 12 * HOUR_MS
-const ADMIN_SESSION_RENEW_THRESHOLD_MS = 6 * HOUR_MS
 
-// Whitelist of user fields safe to return in admin list responses.
-// Never include passwordHash here.
 const ADMIN_USER_SELECT = {
   id: true,
   displayName: true,
   avatarUrl: true,
   email: true,
-  emailVerifiedAt: true,
+  casdoorSubject: true,
   status: true,
   createdAt: true,
   updatedAt: true,
   lastLoginAt: true
-} as const
-
-const ADMIN_OAUTH_SELECT = {
-  id: true,
-  provider: true,
-  openid: true,
-  unionid: true,
-  nickname: true,
-  boundAt: true
 } as const
 
 @Injectable()
@@ -47,33 +33,36 @@ export class AdminService {
     private readonly config: ConfigService
   ) {}
 
-  async login(input: { username?: string; email?: string; password?: string }, res: Response, meta: { ip: string; userAgent: string }) {
-    const login = String(input.username || input.email || '').trim()
-    const password = String(input.password || '')
-    if (!login || !password) throw new BadRequestException('username_password_required')
-    return this.loginWithIdentifier(login, password, res, meta)
-  }
-
-  async tryLoginWithIdentifier(login: string, password: string, res: Response, meta: { ip: string; userAgent: string }) {
-    if (!login || !password) return null
-    const admin = await this.prisma.adminUser.findFirst({
-      where: { OR: [{ username: login }, { email: login.toLowerCase() }] }
+  async loginCasdoorAdmin(
+    input: { subject: string; username: string; email: string; role: 'admin' | 'owner' },
+    res: Response,
+    meta: { ip: string; userAgent: string }
+  ) {
+    const username = input.username || `casdoor_${input.subject}`
+    const email = input.email.toLowerCase()
+    const existing = await this.prisma.adminUser.findFirst({
+      where: { OR: [{ casdoorSubject: input.subject }, { username }, { email }] }
     })
-    if (!admin || admin.status !== 'active') return null
-    const ok = await argon2.verify(admin.passwordHash, password)
-    if (!ok) return null
-
-    return this.createAdminSession(admin, res, meta)
-  }
-
-  private async loginWithIdentifier(login: string, password: string, res: Response, meta: { ip: string; userAgent: string }) {
-    const admin = await this.prisma.adminUser.findFirst({
-      where: { OR: [{ username: login }, { email: login.toLowerCase() }] }
-    })
-    if (!admin || admin.status !== 'active') throw new UnauthorizedException('invalid_credentials')
-    const ok = await argon2.verify(admin.passwordHash, password)
-    if (!ok) throw new UnauthorizedException('invalid_credentials')
-
+    const admin = existing
+      ? await this.prisma.adminUser.update({
+          where: { id: existing.id },
+          data: {
+            username: existing.username,
+            email: existing.email || email,
+            casdoorSubject: existing.casdoorSubject || input.subject,
+            role: input.role,
+            status: 'active'
+          }
+        })
+      : await this.prisma.adminUser.create({
+          data: {
+            username,
+            email,
+            casdoorSubject: input.subject,
+            role: input.role,
+            status: 'active'
+          }
+        })
     return this.createAdminSession(admin, res, meta)
   }
 
@@ -82,40 +71,21 @@ export class AdminService {
     res: Response,
     meta: { ip: string; userAgent: string }
   ) {
-    const token = randomToken()
     const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_MS)
-    await this.prisma.adminSession.create({
-      data: { adminUserId: admin.id, refreshTokenHash: sha256(token), expiresAt, ip: meta.ip, userAgent: meta.userAgent }
-    })
+    const token = signSession({
+      typ: 'admin',
+      sub: admin.id,
+      exp: Math.floor(expiresAt.getTime() / 1000),
+      nonce: randomUUID()
+    }, this.adminSessionSecret())
     await this.prisma.adminUser.update({ where: { id: admin.id }, data: { lastLoginAt: new Date() } })
     res.cookie(ADMIN_COOKIE, token, this.cookieOptions(expiresAt))
     await this.audit(admin.id, 'admin_login', 'admin_user', admin.id, null, { ip: meta.ip })
     return { id: admin.id, username: admin.username, role: admin.role, expiresAt }
   }
 
-  /**
-   * Called by AdminSessionGuard on each authenticated request. If the session is close to
-   * expiring, extend it and refresh the cookie so an actively-used session never logs out
-   * mid-task — but an idle session still dies within ADMIN_SESSION_TTL_MS.
-   */
-  async maybeRollSession(sessionId: string, token: string, currentExpiresAt: Date, res: Response) {
-    const remainingMs = currentExpiresAt.getTime() - Date.now()
-    if (remainingMs > ADMIN_SESSION_RENEW_THRESHOLD_MS) return
-    const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_MS)
-    await this.prisma.adminSession.update({
-      where: { id: sessionId },
-      data: { expiresAt }
-    })
-    res.cookie(ADMIN_COOKIE, token, this.cookieOptions(expiresAt))
-  }
-
   async logout(token: string | undefined, res: Response) {
-    if (token) {
-      await this.prisma.adminSession.updateMany({
-        where: { refreshTokenHash: sha256(token), status: 'active' },
-        data: { status: 'revoked', revokedAt: new Date() }
-      })
-    }
+    void token
     res.clearCookie(ADMIN_COOKIE, { path: '/' })
     return { ok: true }
   }
@@ -188,7 +158,8 @@ export class AdminService {
     if (query.q) {
       where.OR = [
         { displayName: { contains: query.q, mode: 'insensitive' } },
-        { oauthAccounts: { some: { openid: { contains: query.q } } } }
+        { email: { contains: query.q, mode: 'insensitive' } },
+        { casdoorSubject: { contains: query.q, mode: 'insensitive' } }
       ]
     }
     return this.prisma.user.findMany({
@@ -196,35 +167,22 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      select: {
-        ...ADMIN_USER_SELECT,
-        oauthAccounts: { select: ADMIN_OAUTH_SELECT }
-      }
+      select: ADMIN_USER_SELECT
     })
   }
 
   async updateUserStatus(adminId: string, userId: string, status: 'active' | 'disabled') {
     const before = await this.prisma.user.findUnique({ where: { id: userId } })
     const user = await this.prisma.user.update({ where: { id: userId }, data: { status } })
-    if (status === 'disabled') {
-      await this.prisma.userSession.updateMany({ where: { userId }, data: { status: 'revoked', revokedAt: new Date() } })
-    }
     await this.audit(adminId, `user_${status}`, 'user', userId, before, user)
     return user
   }
 
   async deleteUser(adminId: string, userId: string) {
-    const before = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { oauthAccounts: true }
-    })
+    const before = await this.prisma.user.findUnique({ where: { id: userId } })
     if (!before) throw new BadRequestException('user_not_found')
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.userSession.updateMany({
-        where: { userId },
-        data: { status: 'revoked', revokedAt: new Date() }
-      })
       await tx.imageTask.deleteMany({ where: { userId } })
       await tx.user.delete({ where: { id: userId } })
     })
@@ -297,40 +255,6 @@ export class AdminService {
     })
   }
 
-  listWechatAccounts(query: { q?: string; page?: string; pageSize?: string }) {
-    const { page, pageSize } = this.pagination(query)
-    const where: Prisma.OauthAccountWhereInput = { provider: 'wechat_miniapp' }
-    if (query.q) {
-      where.OR = [
-        { openid: { contains: query.q } },
-        { unionid: { contains: query.q } },
-        { nickname: { contains: query.q, mode: 'insensitive' } },
-        { user: { displayName: { contains: query.q, mode: 'insensitive' } } }
-      ]
-    }
-    return this.prisma.oauthAccount.findMany({
-      where,
-      orderBy: { boundAt: 'desc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: { user: { select: ADMIN_USER_SELECT } }
-    })
-  }
-
-  async unbindWechatAccount(adminId: string, accountId: string) {
-    const before = await this.prisma.oauthAccount.findUnique({ where: { id: accountId } })
-    if (!before || before.provider !== 'wechat_miniapp') throw new BadRequestException('wechat_account_not_found')
-    await this.prisma.$transaction(async (tx) => {
-      await tx.oauthAccount.delete({ where: { id: accountId } })
-      await tx.wechatMiniappSession.updateMany({
-        where: { openid: before.openid },
-        data: { userId: null, revokedAt: new Date() }
-      })
-    })
-    await this.audit(adminId, 'wechat_unbind', 'oauth_account', accountId, before, null)
-    return { ok: true }
-  }
-
   async audit(adminUserId: string | null, action: string, targetType: string, targetId: string | null, before: unknown, after: unknown) {
     await this.prisma.adminAuditLog.create({
       data: {
@@ -362,5 +286,9 @@ export class AdminService {
   private cookieOptions(expiresAt: Date) {
     const isProd = this.config.get<string>('NODE_ENV') === 'production'
     return { httpOnly: true, secure: isProd, sameSite: 'lax' as const, path: '/', expires: expiresAt }
+  }
+
+  private adminSessionSecret() {
+    return this.config.get<string>('ADMIN_SESSION_SECRET') || this.config.get<string>('COOKIE_SECRET') || 'chatty-admin-session-secret'
   }
 }

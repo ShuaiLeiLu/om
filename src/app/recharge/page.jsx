@@ -72,8 +72,8 @@ export default function RechargePage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="label-zh text-[10px] text-celadon-700">充 值 · RECHARGE</p>
-          <h1 className="mt-1 font-serif text-3xl font-semibold text-ink-900">购买额度</h1>
-          <p className="mt-1 text-sm text-ink-500">额度永久有效，购买后立即到账</p>
+          <h1 className="mt-1 font-serif text-3xl font-semibold text-ink-900">购买算力点</h1>
+          <p className="mt-1 text-sm text-ink-500">算力点永久有效，购买后立即到账</p>
         </div>
         <Link href="/profile" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-ink-700/10 bg-rice-50 px-4 text-xs font-semibold text-ink-600 shadow-[var(--shadow-paper)] lg:hidden">
           <ArrowLeft size={13} />
@@ -119,7 +119,7 @@ export default function RechargePage() {
           <div className="ink-stroke my-5 opacity-20" />
           <div className="rounded-2xl border border-ink-700/10 bg-rice-100 p-4 text-sm">
             <div className="mb-1.5 flex justify-between">
-              <span className="text-ink-500">购买额度</span>
+              <span className="text-ink-500">购买算力点</span>
               <span className="font-mono font-medium">{formatPoints(selectedPlan?.points)}</span>
             </div>
             <div className="mb-1.5 flex justify-between">
@@ -137,7 +137,7 @@ export default function RechargePage() {
             {payLabel(paymentMethod)} · {formatPrice(selectedPlan?.amountCents)}
           </button>
           <p className="mt-4 text-center text-[10px] leading-relaxed text-ink-400">
-            充值即视为同意《充值协议》。额度仅用于本平台 AI 调用，不支持提现。
+            充值即视为同意《充值协议》。算力点仅用于本平台 AI 调用，不支持提现。
           </p>
           {orders.length > 0 && (
             <div className="mt-5 rounded-2xl border border-ink-700/10 bg-rice-100 p-3">

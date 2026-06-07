@@ -1,13 +1,28 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { PointLedgerType, Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 
-const RAW_TOKEN_POINT_UNIT = BigInt(1000)
-const MODEL_CALL_BASE_POINTS = BigInt(1)
+export type ModelUsageKind = 'chat' | 'image_generation' | 'image_edit'
+
+const MODEL_USAGE_POINT_DEFAULTS: Record<ModelUsageKind, bigint> = {
+  chat: BigInt(1),
+  image_generation: BigInt(20),
+  image_edit: BigInt(30)
+}
+
+const MODEL_USAGE_POINT_ENV: Record<ModelUsageKind, string> = {
+  chat: 'POINT_PRICE_CHAT',
+  image_generation: 'POINT_PRICE_IMAGE_GENERATION',
+  image_edit: 'POINT_PRICE_IMAGE_EDIT'
+}
 
 @Injectable()
 export class PointsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService
+  ) {}
 
   async balance(userId: string, tx: Prisma.TransactionClient = this.prisma) {
     const account = await tx.pointAccount.findUnique({
@@ -98,24 +113,12 @@ export class PointsService {
     return { ledger, pointsBalance: updated.balance.toString() }
   }
 
-  priceModelUsage(input?: {
-    promptTokens?: bigint | number
-    completionTokens?: bigint | number
-    totalTokens?: bigint | number
-  }) {
-    const promptTokens = this.bigintFrom(input?.promptTokens)
-    const completionTokens = this.bigintFrom(input?.completionTokens)
-    const providedTotal = this.bigintFrom(input?.totalTokens)
-    const totalTokens = providedTotal > BigInt(0) ? providedTotal : promptTokens + completionTokens
-    const usagePoints = totalTokens > BigInt(0)
-      ? (totalTokens + RAW_TOKEN_POINT_UNIT - BigInt(1)) / RAW_TOKEN_POINT_UNIT
-      : BigInt(0)
-    return MODEL_CALL_BASE_POINTS + usagePoints
-  }
-
-  private bigintFrom(value: bigint | number | undefined) {
-    if (typeof value === 'bigint') return value
-    if (typeof value === 'number' && Number.isFinite(value)) return BigInt(Math.max(0, Math.floor(value)))
-    return BigInt(0)
+  priceModelUsage(kind: ModelUsageKind = 'chat') {
+    const raw = this.config.get<string>(MODEL_USAGE_POINT_ENV[kind])
+    if (raw != null && String(raw).trim() !== '') {
+      const parsed = Number(raw)
+      if (Number.isFinite(parsed) && parsed >= 0) return BigInt(Math.floor(parsed))
+    }
+    return MODEL_USAGE_POINT_DEFAULTS[kind]
   }
 }

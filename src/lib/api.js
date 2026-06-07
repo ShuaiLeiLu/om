@@ -22,8 +22,6 @@ async function readJson(res) {
 function parseApiError(status, data) {
   const message = data?.message || data?.error || ''
   if (status === 401 || message === 'unauthorized') return '请先登录'
-  if (message === 'invalid_credentials') return '账号或密码不正确'
-  if (message === 'username_password_required') return '请输入账号和密码'
   if (message === 'points_insufficient') return '算力点不足，请先领取或兑换'
   if (message === 'model_disabled') return '当前模型暂不可用'
   if (message === 'sub2api_config_incomplete') return '模型网关未配置'
@@ -191,56 +189,18 @@ export const fetchPointsSummary = () => fetchJson('/api/points/summary')
 export const fetchMe = () => fetchJson('/api/me')
 export const logout = () => fetchJson('/api/auth/logout', { method: 'POST' })
 
-// ---------- WeChat QR login ----------
-
-export const createWechatLoginSession = () =>
-  fetchJson('/api/auth/wechat-miniapp/sessions', { method: 'POST' })
-
-export const fetchWechatLoginSession = (sessionId) =>
-  fetchJson(`/api/auth/wechat-miniapp/sessions/${encodeURIComponent(sessionId)}`)
-
-export function subscribeSessionSse(sessionId) {
-  return new EventSource(`/api/auth/wechat-miniapp/sessions/${encodeURIComponent(sessionId)}/sse`)
-}
-
-export const verifyLoginCode = (code) =>
-  fetchJson('/api/auth/wechat-miniapp/login-code/verify', { method: 'POST', body: { code } })
-
-// ---------- Local auth ----------
-
-export const sendLocalCode = ({ email, purpose = 'register' }) =>
-  fetchJson('/api/auth/local/send-code', { method: 'POST', body: { email, purpose } })
-
-export const localResetPassword = ({ email, code, newPassword }) =>
-  fetchJson('/api/auth/local/reset-password', { method: 'POST', body: { email, code, newPassword } })
-
-export const localLogin = ({ email, password }) =>
-  fetchJson('/api/auth/local/login', { method: 'POST', body: { email, password } })
-
-export const localRegister = ({ email, password, displayName, code }) =>
-  fetchJson('/api/auth/local/register', { method: 'POST', body: { email, password, displayName, code } })
-
-export const localChangePassword = ({ oldPassword, newPassword }) =>
-  fetchJson('/api/auth/local/change-password', { method: 'POST', body: { oldPassword, newPassword } })
-
 export async function fetchAuthCapabilities() {
   try {
     return await fetchJson('/api/auth/capabilities', { timeout: 8000 })
   } catch {
-    // 后端未启用 capabilities 时仍保留本地账号入口，避免邮箱登录被误隐藏。
-    return { qrcode: true, local: true, wechatOauthWeb: false, wechatOauthH5: false }
+    return { qrcode: false, loginCode: false, local: false, casdoor: true, casdoorRequired: true, wechatOauthWeb: false, wechatOauthH5: false }
   }
 }
 
-// 一键登录：拼接前端发起的授权 URL。
-// 实际跳转 / popup 打开由调用方决定。
-export function buildWechatOauthStartUrl({ mode = 'web', next = '/', popup = false, format = 'redirect' } = {}) {
-  const params = new URLSearchParams({ mode, next, popup: popup ? '1' : '0', format })
-  return `/api/auth/wechat/oauth/start?${params.toString()}`
+export function buildCasdoorOauthStartUrl({ next = '/', popup = false, format = 'redirect' } = {}) {
+  const params = new URLSearchParams({ next, popup: popup ? '1' : '0', format })
+  return `/api/auth/casdoor/start?${params.toString()}`
 }
-
-export const fetchWechatOauthStartUrl = ({ mode = 'web', next = '/', popup = false } = {}) =>
-  fetchJson(buildWechatOauthStartUrl({ mode, next, popup, format: 'json' }), { timeout: 8000 })
 
 // ---------- Points ----------
 
@@ -281,9 +241,6 @@ export const claimTaskReward = (taskType) =>
   fetchJson('/api/rewards/tasks/claim', { method: 'POST', body: { taskType } })
 
 // ---------- Admin ----------
-
-export const adminLogin = ({ username, password }) =>
-  adminRequest('/api/admin/auth/login', { method: 'POST', body: { username, password } })
 
 export const adminLogout = () => adminRequest('/api/admin/auth/logout', { method: 'POST' })
 export const fetchAdminMe = () => adminRequest('/api/admin/me')
@@ -331,12 +288,6 @@ export const fetchAdminRechargeOrders = () => adminRequest('/api/admin/recharge-
 
 export const markAdminRechargeOrderPaid = (orderId) =>
   adminRequest(`/api/admin/recharge-orders/${encodeURIComponent(orderId)}/mark-paid`, { method: 'POST', body: {} })
-
-export const fetchAdminWechatAccounts = (params = {}) =>
-  adminRequest(`/api/admin/wechat/accounts?${buildQuery(params)}`)
-
-export const unbindAdminWechatAccount = (accountId) =>
-  adminRequest(`/api/admin/wechat/accounts/${encodeURIComponent(accountId)}/unbind`, { method: 'POST' })
 
 export const fetchAdminRewardConfig = () => adminRequest('/api/admin/wechat/reward-config')
 

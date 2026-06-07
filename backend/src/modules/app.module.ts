@@ -9,7 +9,6 @@ import { AuthModule } from './auth/auth.module'
 import { ChatModule } from './chat/chat.module'
 import { HealthModule } from './health/health.module'
 import { ImagesModule } from './images/images.module'
-import { MiniappAiModule } from './miniapp-ai/miniapp-ai.module'
 import { ModelsModule } from './models/models.module'
 import { PrismaModule } from './prisma/prisma.module'
 import { PointsModule } from './points/points.module'
@@ -18,7 +17,6 @@ import { RedeemModule } from './redeem/redeem.module'
 import { RewardsModule } from './rewards/rewards.module'
 import { StorageModule } from './storage/storage.module'
 import { Sub2apiModule } from './sub2api/sub2api.module'
-import { WechatModule } from './wechat/wechat.module'
 
 @Module({
   imports: [
@@ -32,14 +30,12 @@ import { WechatModule } from './wechat/wechat.module'
     PrismaModule,
     HealthModule,
     AuthModule,
-    WechatModule,
     PointsModule,
     ImagesModule,
     RechargeModule,
     RedeemModule,
     ModelsModule,
     ChatModule,
-    MiniappAiModule,
     StorageModule,
     Sub2apiModule,
     RewardsModule,

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
-import { PointsService } from '../points/points.service'
+import { ModelUsageKind, PointsService } from '../points/points.service'
 import { PrismaService } from '../prisma/prisma.service'
 
 type RawUsage = Record<string, unknown> & {
@@ -36,6 +36,10 @@ type NormalizedUsage = {
   raw: RawUsage
 }
 
+type UsageIngestOptions = {
+  chargeKind?: ModelUsageKind
+}
+
 @Injectable()
 export class Sub2apiService {
   constructor(
@@ -43,7 +47,7 @@ export class Sub2apiService {
     private readonly points: PointsService
   ) {}
 
-  async ingestUsage(raw: RawUsage) {
+  async ingestUsage(raw: RawUsage, options: UsageIngestOptions = {}) {
     const usage = this.normalizeUsage(raw)
     if (!usage) return { ok: false, reason: 'usage_id_required' }
 
@@ -102,11 +106,7 @@ export class Sub2apiService {
       })
 
       if (request?.userId) {
-        const chargePoints = this.points.priceModelUsage({
-          promptTokens: usage.promptTokens,
-          completionTokens: usage.completionTokens,
-          totalTokens: usage.totalTokens
-        })
+        const chargePoints = this.points.priceModelUsage(options.chargeKind || 'chat')
         await this.points.consumePointsInTransaction(
           tx,
           request.userId,
@@ -124,6 +124,7 @@ export class Sub2apiService {
     requestId: string
     sub2apiRequestId?: string
     model?: string
+    chargeKind?: ModelUsageKind
     usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number; promptTokens?: number; completionTokens?: number; totalTokens?: number }
     raw?: Record<string, unknown>
   }) {
@@ -137,7 +138,7 @@ export class Sub2apiService {
       completion_tokens: input.usage?.completion_tokens ?? input.usage?.completionTokens,
       total_tokens: input.usage?.total_tokens ?? input.usage?.totalTokens,
       ...(input.raw || {})
-    })
+    }, { chargeKind: input.chargeKind })
   }
 
   private normalizeUsage(raw: RawUsage): NormalizedUsage | null {

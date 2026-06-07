@@ -1,35 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, KeyRound, Loader2 } from 'lucide-react'
-import { adminLogin } from '@/lib/api'
-import { cn } from '@/lib/utils'
+import { ArrowLeft, ShieldCheck } from 'lucide-react'
+import { buildCasdoorOauthStartUrl } from '@/lib/api'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
-  const [form, setForm] = useState({ username: '', password: '', code: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const canSubmit = form.username.trim() && form.password.trim()
-
-  async function onSubmit(e) {
-    e.preventDefault()
-    if (!canSubmit || loading) return
-    try {
-      setLoading(true)
-      setError('')
-      await adminLogin({
-        username: form.username.trim(),
-        password: form.password
-      })
-      router.replace('/admin')
-    } catch (err) {
-      setError(err?.message || '司理凭证校验失败')
-    } finally {
-      setLoading(false)
-    }
+  function startCasdoorAdminLogin() {
+    window.location.href = buildCasdoorOauthStartUrl({ next: '/admin', popup: false, format: 'redirect' })
   }
 
   return (
@@ -69,73 +46,25 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="flex items-center bg-rice-50 p-8 lg:p-12">
-            <form onSubmit={onSubmit} className="mx-auto w-full max-w-sm space-y-3">
+            <div className="mx-auto w-full max-w-sm space-y-3">
               <div className="mb-6">
-                <h2 className="font-serif text-2xl font-semibold text-ink-900">司理凭证</h2>
-                <p className="mt-1 text-xs text-ink-500">请输入您的管理员凭证</p>
+                <h2 className="font-serif text-2xl font-semibold text-ink-900">统一账号</h2>
+                <p className="mt-1 text-xs text-ink-500">请使用 Casdoor 授权进入后台</p>
               </div>
 
-              <AdminField
-                label="司 理 账 号"
-                value={form.username}
-                onChange={(value) => setForm((prev) => ({ ...prev, username: value }))}
-                placeholder="admin@wanmo.ai"
-                autoComplete="username"
-              />
-              <AdminField
-                label="密 钥"
-                type="password"
-                value={form.password}
-                onChange={(value) => setForm((prev) => ({ ...prev, password: value }))}
-                placeholder="请输入密钥"
-                autoComplete="current-password"
-              />
-              <AdminField
-                label="二 次 验 证 · 6 位"
-                value={form.code}
-                onChange={(value) => setForm((prev) => ({ ...prev, code: value }))}
-                placeholder="暂未启用"
-                inputClassName="tracking-[0.3em]"
-              />
-
-              {error && (
-                <div className="rounded-xl border border-verm-500/25 bg-verm-500/10 px-3 py-2 text-xs text-verm-600">
-                  {error}
-                </div>
-              )}
-
               <button
-                type="submit"
-                disabled={!canSubmit || loading}
-                className={cn(
-                  'mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-celadon-600 to-celadon-500 px-5 py-3 text-sm font-semibold text-rice-50 shadow-[var(--shadow-ink)] transition hover:brightness-105 active:scale-[0.98]',
-                  (!canSubmit || loading) && 'pointer-events-none opacity-50'
-                )}
+                type="button"
+                onClick={startCasdoorAdminLogin}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-celadon-600 to-celadon-500 px-5 py-3 text-sm font-semibold text-rice-50 shadow-[var(--shadow-ink)] transition hover:brightness-105 active:scale-[0.98]"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={15} />}
-                进 入 司 理 处
+                <ShieldCheck size={15} />
+                使用统一账号进入司理处
               </button>
               <p className="pt-1 text-center text-[10px] text-ink-400">操作将记入审计 · IP 与设备同时入档</p>
-            </form>
+            </div>
           </div>
         </section>
       </div>
     </main>
-  )
-}
-
-function AdminField({ label, value, onChange, type = 'text', placeholder, autoComplete, inputClassName }) {
-  return (
-    <label className="block rounded-xl border border-ink-700/10 bg-rice-50 px-4 py-3 transition focus-within:border-celadon-500/45 focus-within:bg-white">
-      <span className="label-zh text-[10px] text-ink-500">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        className={cn('mt-1 w-full bg-transparent text-base text-ink-900 outline-none placeholder:text-ink-400 sm:text-sm', inputClassName)}
-      />
-    </label>
   )
 }

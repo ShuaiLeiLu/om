@@ -1,24 +1,27 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
-import { Response } from 'express'
-import { AdminService } from '../modules/admin/admin.service'
+import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../modules/prisma/prisma.service'
-import { sha256 } from './http'
+import { verifySession } from './signed-session'
 
 @Injectable()
 export class UserSessionGuard implements CanActivate {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService
+  ) {}
 
   async canActivate(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest()
-    const token = req.cookies?.chatty_session
-    if (!token) throw new UnauthorizedException('unauthorized')
-    const session = await this.prisma.userSession.findFirst({
-      where: { refreshTokenHash: sha256(token), status: 'active', expiresAt: { gt: new Date() } },
-      include: { user: true }
-    })
-    if (!session || session.user.status !== 'active') throw new UnauthorizedException('unauthorized')
-    req.user = { id: session.userId, status: session.user.status }
+    const payload = verifySession(req.cookies?.chatty_session, this.userSessionSecret(), 'user')
+    if (!payload) throw new UnauthorizedException('unauthorized')
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } })
+    if (!user || user.status !== 'active') throw new UnauthorizedException('unauthorized')
+    req.user = { id: user.id, status: user.status }
     return true
+  }
+
+  private userSessionSecret() {
+    return this.config.get<string>('USER_SESSION_SECRET') || this.config.get<string>('COOKIE_SECRET') || 'chatty-user-session-secret'
   }
 }
 
@@ -26,22 +29,21 @@ export class UserSessionGuard implements CanActivate {
 export class AdminSessionGuard implements CanActivate {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly admin: AdminService
+    private readonly config: ConfigService
   ) {}
 
   async canActivate(context: ExecutionContext) {
     const http = context.switchToHttp()
     const req = http.getRequest()
-    const res = http.getResponse<Response>()
-    const token = req.cookies?.chatty_admin_session
-    if (!token) throw new UnauthorizedException('unauthorized')
-    const session = await this.prisma.adminSession.findFirst({
-      where: { refreshTokenHash: sha256(token), status: 'active', expiresAt: { gt: new Date() } },
-      include: { adminUser: true }
-    })
-    if (!session || session.adminUser.status !== 'active') throw new UnauthorizedException('unauthorized')
-    req.admin = { id: session.adminUserId, role: session.adminUser.role, status: session.adminUser.status }
-    await this.admin.maybeRollSession(session.id, token, session.expiresAt, res)
+    const payload = verifySession(req.cookies?.chatty_admin_session, this.adminSessionSecret(), 'admin')
+    if (!payload) throw new UnauthorizedException('unauthorized')
+    const admin = await this.prisma.adminUser.findUnique({ where: { id: payload.sub } })
+    if (!admin || admin.status !== 'active') throw new UnauthorizedException('unauthorized')
+    req.admin = { id: admin.id, role: admin.role, status: admin.status }
     return true
+  }
+
+  private adminSessionSecret() {
+    return this.config.get<string>('ADMIN_SESSION_SECRET') || this.config.get<string>('COOKIE_SECRET') || 'chatty-admin-session-secret'
   }
 }

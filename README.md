@@ -2,15 +2,18 @@
 
 Chatty / 万模AI 是一个面向多模型 AI 服务的全栈应用，包含 Web 端、后端服务和微信小程序端。项目支持多模型聊天、图片生成、用户登录、额度与兑换码、广告奖励、后台管理，以及通过 Sub2API 统一转发模型请求。
 
+> 最后更新：2026-06-07。本文按当前仓库代码与环境变量模板整理。
+>
 > 主文档以中文维护；英文说明见文末 [English Quick Reference](#english-quick-reference)。
 
 ## 功能概览
 
 - Web 应用：基于 Next.js，提供聊天、图片生成、个人中心、登录和后台管理页面。
 - 后端服务：基于 NestJS + Prisma，提供用户认证、会话、模型、额度、兑换码、奖励、管理后台和 Sub2API 代理接口。
-- 微信小程序：提供小程序入口、AI 页面、奖励页、个人中心和扫码登录能力。
+- 微信小程序：提供小程序入口、奖励页、个人中心、网页登录码和扫码登录能力。
 - 模型接入：通过 Sub2API 统一接入 OpenAI、Gemini、DeepSeek、智谱、通义千问、Moonshot、Grok 等模型。
-- 图片生成：支持图片生成任务、参考图上传、任务画廊、对象存储和图片配额。
+- 统一登录：支持 Casdoor、邮箱密码、微信开放平台网页登录、微信公众号 H5 授权、小程序登录与扫码登录；`CASDOOR_AUTH_REQUIRED=true` 时只允许 Casdoor 登录。
+- 图片生成：支持文本生图、参考图编辑、multipart 参考图上传、服务端任务历史、MinIO/S3 对象存储、图片使用统计和短期私有访问。
 - 生产部署：提供前端、后端 Dockerfile 和 `docker-compose.prod.yml`。
 
 ## 技术栈
@@ -35,7 +38,7 @@ Chatty / 万模AI 是一个面向多模型 AI 服务的全栈应用，包含 Web
 │   └── store/            # Zustand 状态管理
 ├── backend/              # NestJS 后端服务
 │   ├── prisma/           # Prisma schema、迁移和 seed
-│   └── src/modules/      # auth、chat、images、admin、points 等业务模块
+│   └── src/modules/      # auth、chat、images、admin、points、recharge 等业务模块
 ├── miniprogram/          # 微信小程序
 ├── docs/                 # 后端图片与 MinIO 相关设计文档
 ├── public/               # 静态资源
@@ -79,6 +82,8 @@ cp backend/.env.example backend/.env
 - `USER_SESSION_SECRET`
 - `SUB2API_BASE_URL`
 - `SUB2API_GATEWAY_API_KEY`
+- `SUB2API_IMAGE_GATEWAY_API_KEY`（图片模型可使用独立 key 池）
+- `CASDOOR_*`（启用统一登录时）
 - `SUB2API_ADMIN_*`
 - `MINIO_*`（启用图片存储时）
 - `WECHAT_*`（启用微信相关能力时）
@@ -129,6 +134,31 @@ miniprogram/utils/config.local.example.js
 - `WECHAT_APP_ID`：小程序 AppID
 - `REWARDED_VIDEO_AD_UNIT_ID`：激励视频广告位 ID
 
+## 认证与账户
+
+当前后端同时提供多种登录入口，前端通过 `GET /api/auth/capabilities` 动态显示可用方式：
+
+- Casdoor OAuth：`/api/auth/casdoor/start`、`/api/auth/casdoor/callback`
+- 邮箱密码：注册、登录、修改密码、找回密码和邮箱验证码
+- 微信开放平台网页登录：`/api/auth/wechat/oauth/start?mode=web`
+- 微信公众号 H5 授权：`/api/auth/wechat/oauth/start?mode=h5`
+- 微信小程序：`wx.login -> code2Session`、网页登录二维码和登录码
+
+管理后台有独立 session 与账号体系，默认管理员由 `backend/prisma/seed.ts` 和 `DEFAULT_ADMIN_*` 环境变量初始化。
+
+## 图片与存储
+
+图片链路已服务端化：
+
+- `POST /api/images/generations`：文本生图
+- `POST /api/images/edits`：参考图编辑，支持 multipart `images`、旧版 data URL，以及服务端 `imageIds`
+- `POST /api/images/uploads`：上传参考图到对象存储并返回图片元数据
+- `GET /api/images/tasks`：读取当前用户图片任务历史
+- `GET /api/images/:id`、`GET /api/images/:id/raw`：读取图片元数据或私有图片内容
+- `GET /api/images/usage`：读取用户图片存储统计
+
+权威存储为 PostgreSQL + MinIO/S3，浏览器 IndexedDB 只适合作为本地缓存。详见 [图片 API 文档](docs/backend-image-api.md) 与 [MinIO 当前实现说明](docs/backend-minio-plan.md)。
+
 ## 常用命令
 
 ```bash
@@ -143,6 +173,9 @@ npm run lint --prefix backend
 
 # 后端构建
 npm run build --prefix backend
+
+# 后端生产迁移
+npm run prisma:deploy --prefix backend
 
 # 生成 Prisma Client
 npm run prisma:generate --prefix backend
@@ -197,6 +230,7 @@ chmod +x scripts/deploy-remote.sh
 - `backend/.env` 已配置生产环境变量。
 - `docker-compose.prod.yml` 中的 `APP_ORIGIN`、`NEXT_PUBLIC_API_BASE_URL`、网络名和端口符合部署环境。
 - Sub2API、PostgreSQL、Redis、MinIO/S3 与微信平台配置均可访问。
+- Casdoor、SMTP、微信开放平台/公众号配置与 `APP_ORIGIN`、回调域名一致。
 
 项目还包含 `nginx.conf`，其中 `/api/*` 会反向代理到 `chatty-backend:3001`，并关闭代理缓冲以支持 SSE 流式聊天。
 
@@ -204,7 +238,9 @@ chmod +x scripts/deploy-remote.sh
 
 - [后端说明](backend/README.md)
 - [图片 API 文档](docs/backend-image-api.md)
-- [MinIO 接入计划](docs/backend-minio-plan.md)
+- [MinIO 当前实现说明](docs/backend-minio-plan.md)
+- [后端配置清单](backend/CONFIG_CHECKLIST.md)
+- [前端重构设计规范](docs/Chatty-Redesign/设计规范.md)
 
 ## 验证建议
 
@@ -212,6 +248,7 @@ chmod +x scripts/deploy-remote.sh
 
 ```bash
 npm run build
+npm run lint --prefix backend
 npm run build --prefix backend
 ```
 

@@ -19,7 +19,7 @@ export function ProfileShell({ active = 'profile', children }) {
             <ProfileNavItem href="/chat" icon={MessageSquare} label="对话" active={active === 'chat'} />
             <ProfileNavItem href="/image" icon={ImageIcon} label="绘图" active={active === 'image'} />
             <ProfileNavItem href="/profile" icon={Coins} label="个人中心" active={active === 'profile'} />
-            <ProfileNavItem href="/rewards" icon={PlayCircle} label="看视频得额度" active={active === 'rewards'} />
+            <ProfileNavItem href="/rewards" icon={PlayCircle} label="看视频得算力点" active={active === 'rewards'} />
             <ProfileNavItem href="/redeem" icon={Ticket} label="兑换码" active={active === 'redeem'} />
             <ProfileNavItem href="/recharge" icon={Gift} label="充值" active={active === 'recharge'} />
             <ProfileNavItem icon={Settings} label="设置" active={active === 'settings'} />

@@ -14,8 +14,7 @@ import {
   fetchAdminRewardConfig,
   fetchAdminRewardEvents,
   fetchAdminUsageEvents,
-  fetchAdminUsers,
-  fetchAdminWechatAccounts
+  fetchAdminUsers
 } from '@/lib/api'
 
 const ADMIN_LOGIN_URL = '/login?next=/admin'
@@ -41,7 +40,6 @@ export function useAdminData(activeTab, isAuthed) {
     ledger: [],
     rechargeOrders: [],
     usageEvents: [],
-    wechatAccounts: [],
     rewardConfig: null,
     rewardEvents: [],
     auditLogs: []
@@ -50,7 +48,6 @@ export function useAdminData(activeTab, isAuthed) {
     users: { q: '', status: '', page: 1 },
     requests: { status: '', page: 1 },
     ledger: { type: '', page: 1 },
-    wechat: { q: '', page: 1 },
     audit: { action: '', page: 1 }
   })
   const [loading, setLoading] = useState(true)
@@ -113,13 +110,6 @@ export function useAdminData(activeTab, isAuthed) {
         } else if (tab === 'recharge') {
           const orders = await fetchAdminRechargeOrders()
           setData((d) => ({ ...d, rechargeOrders: arrayOf(orders) }))
-        } else if (tab === 'wechat') {
-          const res = await fetchAdminWechatAccounts({
-            q: f.wechat.q,
-            page: f.wechat.page,
-            pageSize: 40
-          })
-          setData((d) => ({ ...d, wechatAccounts: arrayOf(res) }))
         } else if (tab === 'rewards') {
           const [config, events, usage] = await Promise.all([
             fetchAdminRewardConfig(),

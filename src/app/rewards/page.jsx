@@ -182,7 +182,7 @@ export default function RewardsPage() {
         <div>
           <p className="label-zh text-[10px] text-celadon-700">奖 励 · REWARDS</p>
           <h1 className="mt-1 font-serif text-3xl font-semibold text-ink-900">奖励中心</h1>
-          <p className="mt-1 text-sm text-ink-500">签到、看视频或完成每日任务得额度</p>
+          <p className="mt-1 text-sm text-ink-500">签到、看视频或完成每日任务得算力点</p>
         </div>
         <Link href="/profile" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-ink-700/10 bg-rice-50 px-4 text-xs font-semibold text-ink-600 shadow-[var(--shadow-paper)] lg:hidden">
           <ArrowLeft size={13} />
@@ -199,9 +199,9 @@ export default function RewardsPage() {
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <LabelZH className="text-rice-50/80 tracking-widest text-[10px]">REWARDS · 砚 田</LabelZH>
-              <h2 className="font-serif text-3xl md:text-4xl font-semibold mt-2">每一笔都是真实额度</h2>
+              <h2 className="font-serif text-3xl md:text-4xl font-semibold mt-2">每一笔都是真实算力点</h2>
               <p className="opacity-90 mt-2 text-sm leading-relaxed max-w-xl">
-                观看激励视频 30 秒即可获得 {config?.rewardPoints || 200} 额度。
+                观看激励视频 30 秒即可获得 {config?.rewardPoints || 200} 算力点。
                 {config && `今日可领上限 ${config.dailyLimitPerUser} 次，当前剩余 ${config.remainingToday} 次。`}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -264,7 +264,7 @@ export default function RewardsPage() {
               </div>
               <p className="text-xs text-ink-500 mt-2 leading-relaxed">
                 当前已连续签到 <span className="font-mono text-celadon-700 font-semibold">{checkin?.streak || 0}</span> 天。
-                {checkin?.checkedInToday ? '明日签到可获得双倍或更高奖励！' : `今日签到可领 ${checkin?.todayReward || 100} 额度。`}
+                {checkin?.checkedInToday ? '明日签到可获得双倍或更高奖励！' : `今日签到可领 ${checkin?.todayReward || 100} 算力点。`}
               </p>
             </div>
             
@@ -291,7 +291,7 @@ export default function RewardsPage() {
                 +5,000<span className="text-base text-ink-500 ml-1 font-sans">/ 人</span>
               </div>
               <p className="text-xs text-ink-500 mt-2 leading-relaxed">
-                朋友通过您的链接注册并完成首次对话，双方各得 5,000 额度。
+                朋友通过您的链接注册并完成首次对话，双方各得 5,000 算力点。
               </p>
               
               <div className="rounded-xl bg-rice-100 border border-ink-700/8 px-3 py-2.5 mt-4 flex items-center gap-2">
@@ -319,7 +319,7 @@ export default function RewardsPage() {
         <div className="card overflow-hidden bg-rice-50 shadow-[var(--shadow-paper)]">
           <div className="px-5 py-4 border-b border-ink-700/8">
             <h3 className="font-serif font-semibold text-base text-ink-950">每 日 任 务</h3>
-            <p className="text-[11px] text-ink-500 mt-0.5">完成任务额外获得额度，每日 0 点刷新</p>
+            <p className="text-[11px] text-ink-500 mt-0.5">完成任务额外获得算力点，每日 0 点刷新</p>
           </div>
           <div className="divide-y divide-ink-700/5">
             {/* Task 1 */}
@@ -374,7 +374,7 @@ export default function RewardsPage() {
             <LabelZH className="text-celadon-700">小 程 序 扫 码</LabelZH>
             <h3 className="font-serif text-lg font-semibold text-ink-900 mt-1">在微信小程序观看</h3>
             <p className="text-xs text-ink-500 mt-1.5 leading-relaxed">
-              请打开微信扫描下方小程序码，在小程序端直接观看视频广告，额度同样会实时同步到您的万模账户中。
+              请打开微信扫描下方小程序码，在小程序端直接观看视频广告，算力点同样会实时同步到您的万模账户中。
             </p>
             
             <div className="my-5 mx-auto w-48 h-48 border border-ink-700/10 rounded-2xl bg-white p-3 flex items-center justify-center">

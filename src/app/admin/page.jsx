@@ -13,7 +13,6 @@ import {
   MessageSquareText,
   PlugZap,
   ShieldCheck,
-  Smartphone,
   UsersRound
 } from 'lucide-react'
 import { adminLogout, fetchAdminMe } from '@/lib/api'
@@ -27,7 +26,6 @@ import CodesTab from '@/components/admin/tabs/CodesTab'
 import RequestsTab from '@/components/admin/tabs/RequestsTab'
 import LedgerTab from '@/components/admin/tabs/LedgerTab'
 import RechargeTab from '@/components/admin/tabs/RechargeTab'
-import WechatTab from '@/components/admin/tabs/WechatTab'
 import RewardsTab from '@/components/admin/tabs/RewardsTab'
 import AuditTab from '@/components/admin/tabs/AuditTab'
 
@@ -40,9 +38,8 @@ const TABS = [
   { id: 'plans', label: '套餐', icon: Gift, component: PlansTab },
   { id: 'codes', label: '兑换码', icon: KeyRound, component: CodesTab },
   { id: 'requests', label: 'LLM 请求', icon: MessageSquareText, component: RequestsTab },
-  { id: 'ledger', label: '额度流水', icon: Coins, component: LedgerTab },
+  { id: 'ledger', label: '算力点流水', icon: Coins, component: LedgerTab },
   { id: 'recharge', label: '充值订单', icon: CreditCard, component: RechargeTab },
-  { id: 'wechat', label: '微信绑定', icon: Smartphone, component: WechatTab },
   { id: 'rewards', label: '广告奖励', icon: PlugZap, component: RewardsTab },
   { id: 'audit', label: '审计日志', icon: ShieldCheck, component: AuditTab }
 ]

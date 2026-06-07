@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Body,
   Controller,
   Get,
   Post,
@@ -9,23 +8,18 @@ import {
   Res,
   UseGuards
 } from '@nestjs/common'
-import { Throttle } from '@nestjs/throttler'
 import { Request, Response } from 'express'
 import { CurrentUser } from '../../common/current-user'
 import { getClientIp, getUserAgent } from '../../common/http'
 import { UserSessionGuard } from '../../common/session.guard'
 import { AuthService } from './auth.service'
-import { EmailVerificationService } from './email-verification.service'
-import { LocalAuthService } from './local-auth.service'
-import { WechatOauthService } from './wechat-oauth.service'
+import { CasdoorOauthService } from './casdoor-oauth.service'
 
 @Controller()
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
-    private readonly local: LocalAuthService,
-    private readonly wechatOauth: WechatOauthService,
-    private readonly verification: EmailVerificationService
+    private readonly casdoor: CasdoorOauthService
   ) {}
 
   // ---------- 基础 ----------
@@ -60,146 +54,57 @@ export class AuthController {
   /** 前端用来动态显示登录入口（微信一键 / 扫码 / 账号密码）。 */
   @Get('auth/capabilities')
   capabilities() {
+    const casdoorRequired = this.casdoor.isRequired()
     return {
-      qrcode: true,
-      local: true,
-      wechatOauthWeb: this.wechatOauth.isWebEnabled(),
-      wechatOauthH5: this.wechatOauth.isH5Enabled()
+      qrcode: false,
+      loginCode: false,
+      local: false,
+      casdoor: this.casdoor.isEnabled(),
+      casdoorRequired,
+      wechatOauthWeb: false,
+      wechatOauthH5: false
     }
   }
 
-  // ---------- 邮箱 + 密码 ----------
+  // ---------- Casdoor 统一登录 ----------
 
-  /** 发送邮箱验证码。purpose: register | reset_password | bind_email */
-  @Throttle({ medium: { limit: 5, ttl: 60_000 } })
-  @Post('auth/local/send-code')
-  sendCode(
-    @Body() body: { email?: string; purpose?: 'register' | 'reset_password' | 'bind_email' },
-    @Req() req: Request
-  ) {
-    const purpose = body.purpose === 'reset_password'
-      ? 'reset_password'
-      : body.purpose === 'bind_email'
-        ? 'bind_email'
-        : 'register'
-    return this.verification.sendCode({
-      email: String(body.email || ''),
-      purpose,
-      ip: getClientIp(req),
-      userAgent: getUserAgent(req)
-    })
-  }
-
-  @Throttle({ medium: { limit: 5, ttl: 60_000 } })
-  @Post('auth/local/register')
-  async register(
-    @Body()
-    body: {
-      email?: string
-      password?: string
-      code?: string
-      displayName?: string
-    },
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
-  ) {
-    const user = await this.local.register({
-      email: String(body.email || ''),
-      password: String(body.password || ''),
-      code: String(body.code || ''),
-      displayName: body.displayName ? String(body.displayName) : undefined,
-      req,
-      res
-    })
-    return { user }
-  }
-
-  @Throttle({ medium: { limit: 5, ttl: 60_000 } })
-  @Post('auth/local/reset-password')
-  resetPassword(@Body() body: { email?: string; code?: string; newPassword?: string }) {
-    return this.local.resetPassword({
-      email: String(body.email || ''),
-      code: String(body.code || ''),
-      newPassword: String(body.newPassword || '')
-    })
-  }
-
-  @Throttle({ medium: { limit: 10, ttl: 60_000 } })
-  @Post('auth/local/login')
-  async localLogin(
-    @Body() body: { email?: string; password?: string },
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
-  ) {
-    const user = await this.local.login({
-      email: String(body.email || ''),
-      password: String(body.password || ''),
-      req,
-      res
-    })
-    return { user }
-  }
-
-  @UseGuards(UserSessionGuard)
-  @Post('auth/local/change-password')
-  async changePassword(
-    @CurrentUser() user: { id: string },
-    @Body() body: { oldPassword?: string; newPassword?: string }
-  ) {
-    return this.local.changePassword({
-      userId: user.id,
-      oldPassword: String(body.oldPassword || ''),
-      newPassword: String(body.newPassword || '')
-    })
-  }
-
-  // ---------- 微信 OAuth 一键登录 ----------
-
-  @Get('auth/wechat/oauth/start')
-  startOauth(
-    @Query('mode') modeRaw: string | undefined,
+  @Get('auth/casdoor/start')
+  startCasdoorOauth(
     @Query('next') next: string | undefined,
     @Query('popup') popup: string | undefined,
     @Query('format') format: string | undefined,
     @Res({ passthrough: true }) res: Response
   ) {
-    const mode = modeRaw === 'h5' ? 'h5' : 'web'
-    const isPopup = popup === '1' || popup === 'true'
-    const built = this.wechatOauth.buildAuthorizeUrl({ mode, next, popup: isPopup })
-    if (format === 'json') {
-      return { url: built.url, expiresIn: built.expiresIn }
-    }
+    const built = this.casdoor.buildAuthorizeUrl({
+      next,
+      popup: popup === '1' || popup === 'true'
+    })
+    if (format === 'json') return { url: built.url, expiresIn: built.expiresIn }
     res.redirect(302, built.url)
     return
   }
 
-  @Get('auth/wechat/oauth/callback')
-  async callbackOauth(
+  @Get('auth/casdoor/callback')
+  async callbackCasdoorOauth(
     @Query('code') code: string | undefined,
     @Query('state') state: string | undefined,
     @Req() req: Request,
     @Res() res: Response
   ) {
     if (!code || !state) {
-      res
-        .status(400)
-        .type('html')
-        .send(this.wechatOauth.buildPopupCallbackHtml(false, '缺少 code 或 state'))
+      res.status(400).type('html').send(this.casdoor.buildPopupCallbackHtml(false, '缺少 code 或 state'))
       return
     }
     try {
-      const result = await this.wechatOauth.handleCallback({ code, state, req, res })
+      const result = await this.casdoor.handleCallback({ code, state, req, res })
       if (result.popup) {
-        res.type('html').send(this.wechatOauth.buildPopupCallbackHtml(true))
+        res.type('html').send(this.casdoor.buildPopupCallbackHtml(true))
       } else {
-        res.redirect(302, result.next || '/')
+        res.redirect(302, result.next || (result.type === 'admin' ? '/admin' : '/'))
       }
     } catch (err) {
       const message = err instanceof BadRequestException ? err.message : (err as Error).message
-      res
-        .status(401)
-        .type('html')
-        .send(this.wechatOauth.buildPopupCallbackHtml(false, message || '登录失败'))
+      res.status(401).type('html').send(this.casdoor.buildPopupCallbackHtml(false, message || '登录失败'))
     }
   }
 }
