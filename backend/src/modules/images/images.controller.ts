@@ -32,7 +32,9 @@ export class ImagesController {
 
   @Get(':id/raw')
   async raw(@CurrentUser() user: { id: string }, @Param('id') id: string, @Res() res: Response) {
-    const url = await this.images.rawUrlForUser(user.id, id)
-    res.redirect(302, url)
+    const image = await this.images.blobForUser(user.id, id)
+    res.setHeader('Content-Type', image.contentType)
+    res.setHeader('Cache-Control', 'private, max-age=1800')
+    res.send(image.buffer)
   }
 }

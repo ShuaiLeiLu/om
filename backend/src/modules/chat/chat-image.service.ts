@@ -619,7 +619,7 @@ export class ChatImageService implements OnModuleInit {
         source: 'generated',
         taskHint: requestId
       })
-      persisted.push({ id: stored.id, url: stored.url })
+      persisted.push({ id: stored.id, url: `/api/images/${encodeURIComponent(stored.id)}/raw` })
     }
     return persisted
   }

@@ -90,6 +90,10 @@ export class ImagesService {
   }
 
   async referenceBlobForUser(userId: string, imageId: string) {
+    return this.blobForUser(userId, imageId)
+  }
+
+  async blobForUser(userId: string, imageId: string) {
     const image = await this.assertReadable(userId, imageId)
     const object = await this.storage.getObject(image.objectKey)
     return {
