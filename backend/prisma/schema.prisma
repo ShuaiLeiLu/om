@@ -340,6 +340,7 @@ model ImageTask {
   status           ImageTaskStatus   @default(pending)
   error            String?
   requestId        String            @unique
+  clientTaskId     String?
   sub2apiRequestId String?
   startedAt        DateTime?
   finishedAt       DateTime?
@@ -354,6 +355,7 @@ model ImageTask {
 
   @@index([userId, createdAt])
   @@index([userId, status])
+  @@index([userId, clientTaskId])
 }
 
 model ImageTaskInput {

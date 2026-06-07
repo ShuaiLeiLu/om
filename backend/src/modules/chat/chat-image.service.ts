@@ -69,6 +69,7 @@ export type ImageGenerateInput = {
   output_compression?: number
   moderation?: 'auto' | 'low'
   n?: number
+  clientTaskId?: string
 }
 export type DecodedReferenceImage = { buffer: Buffer; contentType: string }
 export type ImageEditInput = ImageGenerateInput & {
@@ -121,17 +122,31 @@ export class ChatImageService implements OnModuleInit {
 
   async onModuleInit() {
     if (this.config.get<string>('IMAGE_REQUEST_RECOVERY_ON_STARTUP') === 'false') return
-    await this.prisma.llmRequest.updateMany({
-      where: {
-        status: 'streaming',
-        modelId: { in: ['gpt-image-2', 'midjourney'] }
-      },
-      data: {
-        status: 'failed',
-        errorMessage: 'image_request_interrupted',
-        completedAt: new Date()
-      }
-    })
+    const now = new Date()
+    await this.prisma.$transaction([
+      this.prisma.llmRequest.updateMany({
+        where: {
+          status: 'streaming',
+          modelId: { in: ['gpt-image-2', 'midjourney'] }
+        },
+        data: {
+          status: 'failed',
+          errorMessage: 'image_request_interrupted',
+          completedAt: now
+        }
+      }),
+      this.prisma.imageTask.updateMany({
+        where: {
+          status: { in: ['pending', 'running'] },
+          modelId: { in: ['gpt-image-2', 'midjourney'] }
+        },
+        data: {
+          status: 'failed',
+          error: 'image_request_interrupted',
+          finishedAt: now
+        }
+      })
+    ])
   }
 
   async generateImage(userId: string, input: ImageGenerateInput) {
@@ -208,6 +223,7 @@ export class ChatImageService implements OnModuleInit {
             paramsJson: this.imageParamsJson(input),
             status: 'running',
             requestId,
+            clientTaskId: this.safeClientTaskId(input.clientTaskId),
             startedAt: new Date()
           }
         })
@@ -271,6 +287,7 @@ export class ChatImageService implements OnModuleInit {
             data: {
               status: 'done',
               finishedAt: new Date(),
+              durationMs: Math.max(0, Date.now() - (imageTask.startedAt?.getTime() || imageTask.createdAt.getTime())),
               sub2apiRequestId: upstreamResult.sub2apiRequestId || requestId
             }
           })
@@ -314,7 +331,8 @@ export class ChatImageService implements OnModuleInit {
             data: {
               status: 'failed',
               error: normalizedError instanceof Error ? normalizedError.message : String(normalizedError),
-              finishedAt: new Date()
+              finishedAt: new Date(),
+              durationMs: Math.max(0, Date.now() - (imageTask.startedAt?.getTime() || imageTask.createdAt.getTime()))
             }
           })
           .catch(() => undefined)
@@ -635,6 +653,11 @@ export class ChatImageService implements OnModuleInit {
       n: input.n || 1,
       referenceImageIds: 'imageIds' in input ? input.imageIds || [] : []
     }
+  }
+
+  private safeClientTaskId(value?: string) {
+    const id = String(value || '').trim()
+    return /^[A-Za-z0-9_-]{1,80}$/.test(id) ? id : null
   }
 
   private async imageToBuffer(image: string, fallbackMime: string) {

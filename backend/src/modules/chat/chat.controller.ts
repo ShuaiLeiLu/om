@@ -89,6 +89,7 @@ export class ChatController {
       output_compression?: number
       moderation?: 'auto' | 'low'
       n?: number
+      clientTaskId?: string
     }
   ) {
     return this.chatImage.generateImage(user.id, {
@@ -100,7 +101,8 @@ export class ChatController {
       output_format: body.output_format,
       output_compression: body.output_compression,
       moderation: body.moderation,
-      n: body.n
+      n: body.n,
+      clientTaskId: body.clientTaskId
     })
   }
 
@@ -139,6 +141,7 @@ export class ChatController {
       output_compression?: number | string
       moderation?: 'auto' | 'low'
       n?: number | string
+      clientTaskId?: string
     },
     @UploadedFiles() files?: Express.Multer.File[]
   ) {
@@ -164,7 +167,8 @@ export class ChatController {
           ? Number(body.output_compression)
           : undefined,
       moderation: body.moderation,
-      n: body.n != null && body.n !== '' ? Number(body.n) : undefined
+      n: body.n != null && body.n !== '' ? Number(body.n) : undefined,
+      clientTaskId: body.clientTaskId
     })
   }
 

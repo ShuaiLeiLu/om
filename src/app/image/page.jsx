@@ -23,6 +23,7 @@ import { sha256Hex } from '@/lib/image/hash'
 import {
   generateImageRequest,
   editImageRequest,
+  resolveImageTask,
   urlToBlob,
   getImageDimensions,
   splitMidjourneyGrid
@@ -100,6 +101,7 @@ function ImagePageInner() {
 
   // load tasks
   useEffect(() => {
+    let cancelled = false
     ;(async () => {
       try {
         const stale = await markStaleRunningTasks()
@@ -111,12 +113,37 @@ function ImagePageInner() {
         const cleaned = await cleanOrphanImages()
         if (cleaned > 0) console.info(`[image] cleaned ${cleaned} orphan images`)
         const tasks = await listTasks()
+        if (cancelled) return
         setTaskIndex(tasks)
+        await syncServerTasks(tasks)
       } catch (err) {
         console.warn('[image] load tasks failed', err)
       }
     })()
+    return () => {
+      cancelled = true
+    }
   }, [setTaskIndex])
+
+  useEffect(() => {
+    const running = taskIndex.filter((task) => task.status === 'running' || task.status === 'pending')
+    if (running.length === 0) return undefined
+    let cancelled = false
+    const sync = async () => {
+      if (cancelled) return
+      try {
+        await syncServerTasks(running)
+      } catch (err) {
+        console.warn('[image] task sync failed', err)
+      }
+    }
+    sync()
+    const timer = window.setInterval(sync, 5000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [taskIndex])
 
   async function removeRestoredServerTasks() {
     const tasks = await listTasks()
@@ -159,6 +186,91 @@ function ImagePageInner() {
       updated += 1
     }
     return updated
+  }
+
+  async function saveOutputImages(images, { modelId: outputModelId, outputFormat }) {
+    const outputHashes = []
+    const shouldSplitGrid = outputModelId === 'midjourney'
+    for (const src of images || []) {
+      try {
+        const blob = await urlToBlob(src)
+        const blobs = shouldSplitGrid
+          ? await splitMidjourneyGrid(blob, blob.type || `image/${outputFormat}`)
+          : [blob]
+        for (const outputBlob of blobs) {
+          let dim = { width: null, height: null }
+          try {
+            dim = await getImageDimensions(outputBlob)
+          } catch {}
+          const hash = await sha256Hex(outputBlob)
+          await putImage({
+            hash,
+            blob: outputBlob,
+            type: outputBlob.type || blob.type || `image/${outputFormat}`,
+            width: dim.width,
+            height: dim.height
+          })
+          outputHashes.push(hash)
+        }
+      } catch (err) {
+        console.warn('[image] failed to save output', err)
+      }
+    }
+    return outputHashes
+  }
+
+  async function applyServerTaskToLocal(localTask, serverTask) {
+    if (!localTask || !serverTask) return false
+    if (serverTask.status !== 'done' && serverTask.status !== 'failed' && serverTask.status !== 'canceled') return false
+    const images = Array.isArray(serverTask.images)
+      ? serverTask.images.map((image) => image?.url).filter(Boolean)
+      : []
+    const outputHashes = serverTask.status === 'done'
+      ? await saveOutputImages(images, {
+          modelId: localTask.modelId || serverTask.modelId,
+          outputFormat: localTask.params?.output_format || serverTask.params?.output_format || 'png'
+        })
+      : []
+    const finalTask = {
+      ...localTask,
+      status: serverTask.status === 'done' && outputHashes.length > 0 ? 'done' : 'failed',
+      outputs: outputHashes,
+      finishedAt: serverTask.finishedAt || Date.now(),
+      durationMs: serverTask.durationMs || (
+        serverTask.finishedAt && localTask.createdAt ? Math.max(0, serverTask.finishedAt - localTask.createdAt) : null
+      ),
+      error: serverTask.status === 'done' && outputHashes.length === 0
+        ? '服务端已完成，但图片拉取失败，请刷新后重试'
+        : serverTask.error || null,
+      requestId: serverTask.requestId
+    }
+    await upsertTask(finalTask)
+    updateTaskInIndex(localTask.id, {
+      status: finalTask.status,
+      prompt: finalTask.prompt,
+      outputs: finalTask.outputs,
+      finishedAt: finalTask.finishedAt
+    })
+    return true
+  }
+
+  async function syncServerTasks(tasks) {
+    const running = tasks.filter((task) => task.status === 'running' || task.status === 'pending')
+    for (const task of running) {
+      try {
+        const localTask = await getTask(task.id)
+        if (!localTask) continue
+        const serverTask = await resolveImageTask({
+          clientTaskId: task.id,
+          prompt: localTask.prompt,
+          modelId: localTask.modelId,
+          createdAt: localTask.createdAt
+        })
+        await applyServerTaskToLocal(localTask, serverTask)
+      } catch (err) {
+        console.warn('[image] failed to sync task', task.id, err)
+      }
+    }
   }
 
   const imageModels = useMemo(() => {
@@ -233,6 +345,7 @@ function ImagePageInner() {
 
       const basePayload = {
         model: modelId,
+        clientTaskId: taskId,
         prompt: baseTask.prompt,
         size: params.size,
         quality: params.quality,
@@ -259,34 +372,8 @@ function ImagePageInner() {
         result = await generateImageRequest(basePayload)
       }
 
-      const outputHashes = []
       const images = Array.isArray(result?.images) ? result.images : []
-      const shouldSplitGrid = modelId === 'midjourney'
-      for (const src of images) {
-        try {
-          const blob = await urlToBlob(src)
-          const blobs = shouldSplitGrid
-            ? await splitMidjourneyGrid(blob, blob.type || `image/${params.output_format}`)
-            : [blob]
-          for (const outputBlob of blobs) {
-            let dim = { width: null, height: null }
-            try {
-              dim = await getImageDimensions(outputBlob)
-            } catch {}
-            const hash = await sha256Hex(outputBlob)
-            await putImage({
-              hash,
-              blob: outputBlob,
-              type: outputBlob.type || blob.type || `image/${params.output_format}`,
-              width: dim.width,
-              height: dim.height
-            })
-            outputHashes.push(hash)
-          }
-        } catch (err) {
-          console.warn('[image] failed to save output', err)
-        }
-      }
+      const outputHashes = await saveOutputImages(images, { modelId, outputFormat: params.output_format })
 
       const finalTask = {
         ...baseTask,

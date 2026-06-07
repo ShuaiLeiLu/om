@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { memoryStorage } from 'multer'
 import { Response } from 'express'
@@ -23,6 +23,19 @@ export class ImagesController {
   @Get('usage')
   usage(@CurrentUser() user: { id: string }) {
     return this.images.usage(user.id)
+  }
+
+  @Get('tasks/client/:clientTaskId')
+  taskByClientId(@CurrentUser() user: { id: string }, @Param('clientTaskId') clientTaskId: string) {
+    return this.images.taskByClientId(user.id, clientTaskId)
+  }
+
+  @Post('tasks/resolve')
+  resolveTask(
+    @CurrentUser() user: { id: string },
+    @Body() body: { clientTaskId?: string; prompt?: string; modelId?: string; createdAt?: number }
+  ) {
+    return this.images.resolveTaskForClient(user.id, body)
   }
 
   @Get(':id')

@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
-import { Image, ImageSource } from '@prisma/client'
+import { Image, ImageSource, ImageTask, Prisma } from '@prisma/client'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../prisma/prisma.service'
 import { MinioService } from '../storage/minio.service'
@@ -11,6 +11,13 @@ type UploadFile = {
   mimetype: string
   size: number
   originalname?: string
+}
+
+type ClientTaskResolveInput = {
+  clientTaskId?: string
+  prompt?: string
+  modelId?: string
+  createdAt?: number
 }
 
 @Injectable()
@@ -112,6 +119,86 @@ export class ImagesService {
     return this.imageUsage.usage(userId)
   }
 
+  async taskByClientId(userId: string, clientTaskId: string) {
+    const id = this.safeClientTaskId(clientTaskId)
+    if (!id) throw new BadRequestException('invalid_client_task_id')
+    const task = await this.prisma.imageTask.findFirst({
+      where: { userId, clientTaskId: id },
+      orderBy: { createdAt: 'desc' },
+      include: this.imageTaskInclude()
+    })
+    if (!task) throw new NotFoundException('image_task_not_found')
+    return this.taskToDto(userId, task)
+  }
+
+  async resolveTaskForClient(userId: string, input: ClientTaskResolveInput) {
+    const clientTaskId = this.safeClientTaskId(input.clientTaskId)
+    const byClientId = clientTaskId
+      ? await this.prisma.imageTask.findFirst({
+          where: { userId, clientTaskId },
+          orderBy: { createdAt: 'desc' },
+          include: this.imageTaskInclude()
+        })
+      : null
+    if (byClientId) return this.taskToDto(userId, byClientId)
+
+    const prompt = String(input.prompt || '').trim()
+    const modelId = String(input.modelId || '').trim()
+    const createdAtMs = Number(input.createdAt || 0)
+    if (!prompt || !modelId || !Number.isFinite(createdAtMs) || createdAtMs <= 0) {
+      throw new BadRequestException('invalid_task_resolve_input')
+    }
+    const createdAt = new Date(createdAtMs)
+    const task = await this.prisma.imageTask.findFirst({
+      where: {
+        userId,
+        modelId,
+        prompt,
+        createdAt: {
+          gte: new Date(createdAt.getTime() - 5 * 60 * 1000),
+          lte: new Date(createdAt.getTime() + 15 * 60 * 1000)
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      include: this.imageTaskInclude()
+    })
+    if (!task) throw new NotFoundException('image_task_not_found')
+    return this.taskToDto(userId, task)
+  }
+
+  private async taskToDto(
+    userId: string,
+    task: ImageTask & { outputs: Array<{ ordinal: number; image: Image }> }
+  ) {
+    const finishedAt = task.finishedAt ? task.finishedAt.getTime() : null
+    const createdAt = task.createdAt.getTime()
+    return {
+      id: task.id,
+      clientTaskId: task.clientTaskId,
+      requestId: task.requestId,
+      sub2apiRequestId: task.sub2apiRequestId,
+      status: task.status,
+      error: task.error,
+      prompt: task.prompt,
+      modelId: task.modelId,
+      params: task.paramsJson,
+      createdAt,
+      startedAt: task.startedAt ? task.startedAt.getTime() : null,
+      finishedAt,
+      durationMs: task.durationMs ?? (finishedAt ? Math.max(0, finishedAt - createdAt) : null),
+      images: await Promise.all(task.outputs.map((output) => this.toDto(userId, output.image)))
+    }
+  }
+
+  private imageTaskInclude() {
+    return {
+      outputs: {
+        orderBy: { ordinal: 'asc' },
+        include: { image: true }
+      }
+    } satisfies Prisma.ImageTaskInclude
+  }
+
   private async assertReadable(userId: string, imageId: string) {
     const image = await this.prisma.image.findUnique({
       where: { id: imageId },
@@ -156,5 +243,10 @@ export class ImagesService {
       responseContentType: contentType,
       responseDisposition: 'inline'
     })
+  }
+
+  private safeClientTaskId(value?: string) {
+    const id = String(value || '').trim()
+    return /^[A-Za-z0-9_-]{1,80}$/.test(id) ? id : ''
   }
 }

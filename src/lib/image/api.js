@@ -101,6 +101,34 @@ export async function generateImageRequest(payload, { signal } = {}) {
   return data
 }
 
+export async function fetchImageTaskByClientId(clientTaskId, { signal } = {}) {
+  if (!clientTaskId) return null
+  const res = await fetchImageApi(`/api/images/tasks/client/${encodeURIComponent(clientTaskId)}`, {
+    method: 'GET',
+    credentials: 'include',
+    signal
+  })
+  const data = await readJson(res)
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(parseError(res.status, data))
+  return data
+}
+
+export async function resolveImageTask(payload, { signal } = {}) {
+  const csrf = readCsrfCookie()
+  const res = await fetchImageApi('/api/images/tasks/resolve', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
+    body: JSON.stringify(payload || {}),
+    signal
+  })
+  const data = await readJson(res)
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(parseError(res.status, data))
+  return data
+}
+
 // `payload.refBlobs`: optional array of { blob: Blob, ext?: string } sent as multipart files.
 // If absent, sends a JSON body (legacy base64 path) for backward compatibility.
 export async function editImageRequest(payload, { signal } = {}) {
