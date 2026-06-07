@@ -206,29 +206,31 @@ function ImagePageInner() {
       return
     }
 
-    const taskId = newTaskId()
-    const baseTask = {
-      id: taskId,
-      status: 'running',
-      prompt: prompt.trim(),
-      modelId,
-      modelName: selectedModel?.name,
-      params: { ...params },
-      sizePreset: { ...sizePreset },
-      refs: refs.map((r) => r.hash),
-      outputs: [],
-      error: null,
-      createdAt: Date.now(),
-      finishedAt: null,
-      durationMs: null
-    }
-    await upsertTask(baseTask)
-    addTaskToIndex(baseTask)
-
+    let taskId = null
+    let baseTask = null
     setIsGenerating(true)
     const startedAt = performance.now()
 
     try {
+      taskId = newTaskId()
+      baseTask = {
+        id: taskId,
+        status: 'running',
+        prompt: prompt.trim(),
+        modelId,
+        modelName: selectedModel?.name,
+        params: { ...params },
+        sizePreset: { ...sizePreset },
+        refs: refs.map((r) => r.hash),
+        outputs: [],
+        error: null,
+        createdAt: Date.now(),
+        finishedAt: null,
+        durationMs: null
+      }
+      await upsertTask(baseTask)
+      addTaskToIndex(baseTask)
+
       const basePayload = {
         model: modelId,
         prompt: baseTask.prompt,
@@ -314,15 +316,21 @@ function ImagePageInner() {
       }
     } catch (err) {
       const message = err?.message || '生成失败'
-      const finalTask = {
-        ...baseTask,
-        status: 'failed',
-        finishedAt: Date.now(),
-        durationMs: Math.round(performance.now() - startedAt),
-        error: message
+      if (baseTask && taskId) {
+        const finalTask = {
+          ...baseTask,
+          status: 'failed',
+          finishedAt: Date.now(),
+          durationMs: Math.round(performance.now() - startedAt),
+          error: message
+        }
+        try {
+          await upsertTask(finalTask)
+        } catch (saveErr) {
+          console.warn('[image] failed to save failed task', saveErr)
+        }
+        updateTaskInIndex(taskId, { status: 'failed' })
       }
-      await upsertTask(finalTask)
-      updateTaskInIndex(taskId, { status: 'failed' })
       setError(message)
       toast({ variant: 'error', title: '生成失败', description: message })
     } finally {

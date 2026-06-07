@@ -32,8 +32,22 @@ function openDb() {
         db.createObjectStore(STORE_IMAGES, { keyPath: 'hash' })
       }
     }
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
+    req.onsuccess = () => {
+      const db = req.result
+      db.onversionchange = () => {
+        db.close()
+        dbPromise = null
+      }
+      resolve(db)
+    }
+    req.onerror = () => {
+      dbPromise = null
+      reject(req.error)
+    }
+    req.onblocked = () => {
+      dbPromise = null
+      reject(new Error('图片本地缓存被其他页面占用，请关闭其他万模 AI 标签页后刷新重试'))
+    }
   })
   return dbPromise
 }
