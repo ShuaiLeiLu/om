@@ -14,7 +14,7 @@ import {
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useImageStore } from '@/store/useImageStore'
-import { getTask, getImageObjectUrl, deleteTask, getImage, markServerTaskDeleted } from '@/lib/image/db'
+import { getTask, getImageObjectUrl, deleteTask, getImage } from '@/lib/image/db'
 import { useToast } from '@/components/ui/toast'
 import { downloadBlob, formatRelativeTime, formatBytes } from '@/lib/utils'
 import { describeSize } from '@/lib/image/size'
@@ -127,7 +127,6 @@ export function TaskDetailDialog({ taskId, onClose }) {
   const handleDelete = useCallback(async () => {
     if (!task) return
     if (!confirm('确认删除这条任务？图片和元数据会被清除（其他任务引用的图片会保留）。')) return
-    if (task.serverTaskId) await markServerTaskDeleted(task.serverTaskId)
     await deleteTask(task.id)
     removeTaskFromIndex(task.id)
     toast({ variant: 'success', title: '已删除' })

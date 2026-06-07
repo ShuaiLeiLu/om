@@ -112,55 +112,6 @@ export class ImagesService {
     return this.imageUsage.usage(userId)
   }
 
-  async tasksForUser(userId: string, rawLimit = 30) {
-    const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? Math.floor(rawLimit) : 30, 1), 100)
-    const tasks = await this.prisma.imageTask.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      include: {
-        outputs: {
-          orderBy: { ordinal: 'asc' },
-          include: {
-            image: {
-              select: {
-                id: true,
-                hash: true,
-                contentType: true,
-                bytes: true,
-                width: true,
-                height: true,
-                createdAt: true
-              }
-            }
-          }
-        }
-      }
-    })
-
-    return tasks.map((task) => ({
-      id: task.id,
-      requestId: task.requestId,
-      sub2apiRequestId: task.sub2apiRequestId,
-      status: task.status,
-      mode: task.mode,
-      modelId: task.modelId,
-      prompt: task.prompt,
-      params: task.paramsJson,
-      error: task.error,
-      createdAt: task.createdAt,
-      startedAt: task.startedAt,
-      finishedAt: task.finishedAt,
-      durationMs: task.durationMs,
-      images: task.outputs.map((output) => ({
-        ordinal: output.ordinal,
-        revisedPrompt: output.revisedPrompt,
-        ...output.image,
-        url: `/api/images/${encodeURIComponent(output.image.id)}/raw`
-      }))
-    }))
-  }
-
   private async assertReadable(userId: string, imageId: string) {
     const image = await this.prisma.image.findUnique({
       where: { id: imageId },

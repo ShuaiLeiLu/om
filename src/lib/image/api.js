@@ -134,16 +134,6 @@ export async function editImageRequest(payload, { signal } = {}) {
   return data
 }
 
-export async function fetchServerImageTasks({ limit = 30 } = {}) {
-  const res = await fetchImageApi(`/api/images/tasks?limit=${encodeURIComponent(limit)}`, {
-    method: 'GET',
-    credentials: 'include'
-  })
-  const data = await readJson(res)
-  if (!res.ok) throw new Error(parseError(res.status, data))
-  return Array.isArray(data) ? data : []
-}
-
 // Convert an arbitrary image URL/dataURL into a Blob (handles both data: and http(s):).
 export async function urlToBlob(url) {
   if (!url) throw new Error('empty url')

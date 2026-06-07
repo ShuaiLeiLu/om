@@ -14,7 +14,6 @@ import {
   listTasks,
   upsertTask,
   deleteTask,
-  listDeletedServerTaskIds,
   markStaleRunningTasks,
   cleanOrphanImages,
   putImage,
@@ -24,7 +23,6 @@ import { sha256Hex } from '@/lib/image/hash'
 import {
   generateImageRequest,
   editImageRequest,
-  fetchServerImageTasks,
   urlToBlob,
   getImageDimensions,
   splitMidjourneyGrid
@@ -57,7 +55,6 @@ function ImagePageInner() {
   const refs = useImageStore((s) => s.refs)
   const activeTaskId = useImageStore((s) => s.activeTaskId)
   const setActiveTaskId = useImageStore((s) => s.setActiveTaskId)
-  const setFilter = useImageStore((s) => s.setFilter)
 
   const [providers, setProviders] = useState(fallbackProviders)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -109,11 +106,8 @@ function ImagePageInner() {
         if (stale > 0) console.info(`[image] marked ${stale} stale running tasks`)
         const split = await splitExistingMidjourneyGrids()
         if (split > 0) console.info(`[image] split ${split} Midjourney grid tasks`)
-        const restored = await restoreServerImageTasks()
-        if (restored > 0) {
-          console.info(`[image] restored ${restored} server image tasks`)
-          setFilter('all')
-        }
+        const removedServerTasks = await removeRestoredServerTasks()
+        if (removedServerTasks > 0) console.info(`[image] removed ${removedServerTasks} restored server tasks`)
         const cleaned = await cleanOrphanImages()
         if (cleaned > 0) console.info(`[image] cleaned ${cleaned} orphan images`)
         const tasks = await listTasks()
@@ -122,79 +116,14 @@ function ImagePageInner() {
         console.warn('[image] load tasks failed', err)
       }
     })()
-  }, [setTaskIndex, setFilter, isAuthenticated])
+  }, [setTaskIndex])
 
-  async function restoreServerImageTasks() {
-    if (!isAuthenticated) return 0
-    const [localTasks, serverTasks] = await Promise.all([
-      listTasks(),
-      fetchServerImageTasks({ limit: 30 })
-    ])
-    const deletedServerTaskIds = new Set(await listDeletedServerTaskIds())
-    const staleServerTasks = localTasks.filter((task) =>
-      String(task.id || '').startsWith('server_') &&
-      (task.status !== 'done' || !Array.isArray(task.outputs) || task.outputs.length === 0)
-    )
-    await Promise.all(staleServerTasks.map((task) => deleteTask(task.id)))
-    const activeLocalTasks = localTasks.filter((task) => !staleServerTasks.includes(task))
-    const localIds = new Set(activeLocalTasks.map((task) => task.serverTaskId || task.id))
-    let restored = 0
-    let downloadedImages = 0
-    for (const serverTask of serverTasks) {
-      if (deletedServerTaskIds.has(serverTask.id)) continue
-      if (localIds.has(serverTask.id)) continue
-      const images = Array.isArray(serverTask.images) ? serverTask.images : []
-      if (serverTask.status !== 'done' || images.length === 0) continue
-      const outputs = []
-      for (const image of images) {
-        if (!image?.url || downloadedImages >= 10) continue
-        try {
-          const blob = await urlToBlob(image.url)
-          let dim = { width: image.width || null, height: image.height || null }
-          if (!dim.width || !dim.height) {
-            try {
-              dim = await getImageDimensions(blob)
-            } catch {}
-          }
-          const hash = await sha256Hex(blob)
-          await putImage({
-            hash,
-            blob,
-            type: blob.type || image.contentType || 'image/png',
-            width: dim.width,
-            height: dim.height
-          })
-          outputs.push(hash)
-          downloadedImages += 1
-        } catch (err) {
-          console.warn('[image] failed to restore server output', err)
-        }
-      }
-      if (outputs.length === 0) continue
-      const serverCreatedAt = serverTask.createdAt ? new Date(serverTask.createdAt).getTime() : Date.now()
-      const createdAt = Date.now() - restored
-      const finishedAt = serverTask.finishedAt ? new Date(serverTask.finishedAt).getTime() : null
-      await upsertTask({
-        id: `server_${serverTask.id}`,
-        serverTaskId: serverTask.id,
-        serverCreatedAt,
-        requestId: serverTask.requestId,
-        status: 'done',
-        prompt: serverTask.prompt || '',
-        modelId: serverTask.modelId,
-        modelName: serverTask.modelId,
-        params: serverTask.params || {},
-        sizePreset: null,
-        refs: [],
-        outputs,
-        error: serverTask.error || null,
-        createdAt,
-        finishedAt,
-        durationMs: serverTask.durationMs || (finishedAt ? Math.max(0, finishedAt - createdAt) : null)
-      })
-      restored += 1
-    }
-    return restored
+  async function removeRestoredServerTasks() {
+    const tasks = await listTasks()
+    const restored = tasks.filter((task) => String(task.id || '').startsWith('server_') || task.serverTaskId)
+    if (restored.length === 0) return 0
+    await Promise.all(restored.map((task) => deleteTask(task.id)))
+    return restored.length
   }
 
   async function splitExistingMidjourneyGrids() {

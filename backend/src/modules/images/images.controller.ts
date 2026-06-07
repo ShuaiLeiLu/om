@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common'
+import { Controller, Get, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { memoryStorage } from 'multer'
 import { Response } from 'express'
@@ -23,11 +23,6 @@ export class ImagesController {
   @Get('usage')
   usage(@CurrentUser() user: { id: string }) {
     return this.images.usage(user.id)
-  }
-
-  @Get('tasks')
-  tasks(@CurrentUser() user: { id: string }, @Query('limit') limit?: string) {
-    return this.images.tasksForUser(user.id, Number(limit || 30))
   }
 
   @Get(':id')

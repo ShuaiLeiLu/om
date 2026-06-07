@@ -2,16 +2,14 @@
 // Two object stores:
 //   - tasks: { id, status, prompt, params, refs[hash], outputs[hash], createdAt, finishedAt, durationMs, error, modelId }
 //   - images: { hash, blob, type, width, height, bytes, createdAt }
-//   - deletedServerTasks: { id, deletedAt }
 //
 // Images are reference-counted via task refs/outputs. On startup, an orphan
 // cleanup pass removes images not referenced by any task.
 
 const DB_NAME = 'chatty-image-playground'
-const DB_VERSION = 2
+const DB_VERSION = 1
 const STORE_TASKS = 'tasks'
 const STORE_IMAGES = 'images'
-const STORE_DELETED_SERVER_TASKS = 'deletedServerTasks'
 const DEFAULT_STALE_RUNNING_TASK_MS = 20 * 60 * 1000
 
 let dbPromise = null
@@ -32,9 +30,6 @@ function openDb() {
       }
       if (!db.objectStoreNames.contains(STORE_IMAGES)) {
         db.createObjectStore(STORE_IMAGES, { keyPath: 'hash' })
-      }
-      if (!db.objectStoreNames.contains(STORE_DELETED_SERVER_TASKS)) {
-        db.createObjectStore(STORE_DELETED_SERVER_TASKS, { keyPath: 'id' })
       }
     }
     req.onsuccess = () => resolve(req.result)
@@ -104,20 +99,6 @@ export async function deleteTask(id) {
 export async function clearAllTasks() {
   const store = await tx(STORE_TASKS, 'readwrite')
   await reqToPromise(store.clear())
-}
-
-// ---------- deleted server tasks ----------
-
-export async function markServerTaskDeleted(serverTaskId) {
-  if (!serverTaskId) return false
-  const store = await tx(STORE_DELETED_SERVER_TASKS, 'readwrite')
-  await reqToPromise(store.put({ id: serverTaskId, deletedAt: Date.now() }))
-  return true
-}
-
-export async function listDeletedServerTaskIds() {
-  const store = await tx(STORE_DELETED_SERVER_TASKS)
-  return reqToPromise(store.getAllKeys())
 }
 
 // ---------- images ----------
